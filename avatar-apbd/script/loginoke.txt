@@ -1,0 +1,301 @@
+import React, { useState } from 'react';
+import { 
+  ArrowRight, Lock, Mail, Eye, EyeOff, 
+  LayoutDashboard, FileSpreadsheet, ShieldAlert, 
+  History, Settings, LogOut, Radio, Activity, CheckCircle, Users
+} from 'lucide-react';
+import { supabase } from './supabaseClient';
+
+export default function App() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // State navigasi halaman utama
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    // Koneksi ke Supabase Auth
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    
+    if (error) {
+      alert(`Akses Ditolak: ${error.message}`);
+    } else {
+      setUserEmail(data.user.email);
+      setIsLoggedIn(true); // Pindah otomatis ke Dashboard Utama
+    }
+    setLoading(false);
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setIsLoggedIn(false);
+    setEmail('');
+    setPassword('');
+  };
+
+  // =========================================================
+  // 1. TAMPILAN MODUL DASHBOARD UTAMA (ULTRA NEON TERANG)
+  // =========================================================
+  if (isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-[#090d16] text-white font-sans relative overflow-hidden select-none">
+        
+        {/* Pendaran Cahaya Latar Belakang */}
+        <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-cyan-400/15 rounded-full blur-[140px] pointer-events-none animate-pulse duration-[6000ms]"></div>
+        <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-blue-500/15 rounded-full blur-[140px] pointer-events-none animate-pulse duration-[6000ms] delay-1000"></div>
+
+        {/* HEADER / TOP BAR */}
+        <header className="w-full border-b-2 border-cyan-400/40 bg-slate-950 px-6 py-4 flex justify-between items-center relative z-20 shadow-[0_4px_30px_rgba(6,182,212,0.15)]">
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.5)] bg-slate-950 flex items-center justify-center">
+              <img src="/logo-avatar1.png" alt="Logo" className="w-full h-full object-cover" />
+            </div>
+            <div>
+              <h1 className="text-xl font-black tracking-widest text-cyan-300 font-mono drop-shadow-[0_0_10px_rgba(34,211,238,0.6)]">AVATAR APBD</h1>
+              <p className="text-[10px] font-mono tracking-[0.15em] text-cyan-400 font-bold uppercase">CORE COMMAND PANEL</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="hidden md:flex flex-col text-right font-mono">
+              <span className="text-[10px] font-bold text-slate-400 tracking-wider">OPERATOR ONLINE</span>
+              <span className="text-xs font-bold text-cyan-300">{userEmail}</span>
+            </div>
+            <button 
+              onClick={handleLogout}
+              className="px-4 py-2.5 bg-red-600 border-2 border-red-400 rounded-xl text-white hover:bg-red-500 transition-all duration-300 flex items-center gap-2 text-xs font-mono font-black tracking-wider cursor-pointer shadow-[0_0_20px_rgba(239,68,68,0.4)] active:scale-95"
+            >
+              <LogOut size={14} className="stroke-[3]" />
+              <span className="hidden sm:inline">TERMINATE ACCESS</span>
+            </button>
+          </div>
+        </header>
+
+        {/* MAIN PANEL */}
+        <main className="max-w-7xl mx-auto px-6 py-8 relative z-10">
+          
+          {/* BANNER STATUS KONEKSI */}
+          <div className="w-full bg-slate-950 border-2 border-cyan-500/30 rounded-2xl p-4 mb-8 flex flex-wrap items-center justify-between gap-4 shadow-[0_0_25px_rgba(6,182,212,0.08)]">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-cyan-500 text-slate-950 rounded-xl shadow-[0_0_15px_rgba(6,182,212,0.5)]">
+                <Radio size={20} className="stroke-[2.5]" />
+              </div>
+              <div className="font-mono">
+                <h2 className="text-xs font-black text-cyan-300 tracking-wider">STATUS KONEKSI NODE KENDALI</h2>
+                <p className="text-xs text-emerald-400 font-bold flex items-center gap-2 mt-0.5 animate-pulse">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block shadow-[0_0_10px_rgba(52,211,153,1)]"></span> 
+                  SECURE LINK ACTIVE (MAIN ENCRYPTION)
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex gap-6 font-mono text-xs font-bold text-slate-300 pr-2">
+              <div className="flex items-center gap-2"><Activity size={15} className="text-cyan-400 animate-bounce" /> LATENCY: <span className="text-cyan-300">14 MS</span></div>
+              <div className="flex items-center gap-2"><CheckCircle size={15} className="text-emerald-400" /> DATABASE: <span className="text-emerald-400">READY</span></div>
+            </div>
+          </div>
+
+          {/* GRID MENU UTAMA TERANG */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            {/* MENU 1: CYAN */}
+            <div className="bg-slate-950 border-2 border-slate-800 hover:border-cyan-400 p-6 rounded-2xl shadow-lg hover:shadow-[0_0_35px_rgba(34,211,238,0.25)] transition-all duration-300 group cursor-pointer flex flex-col justify-between min-h-[190px]">
+              <div className="flex justify-between items-start">
+                <div className="p-3 bg-cyan-500/10 border-2 border-cyan-400 text-cyan-400 rounded-xl transition-all duration-300 group-hover:bg-cyan-400 group-hover:text-slate-950 group-hover:shadow-[0_0_20px_rgba(34,211,238,0.6)]">
+                  <FileSpreadsheet size={26} className="stroke-[2]" />
+                </div>
+                <span className="text-[10px] font-mono text-cyan-400 bg-cyan-950 border border-cyan-400 px-2 py-0.5 rounded-md uppercase tracking-wider font-black">UTAMA</span>
+              </div>
+              <div className="mt-4">
+                <h3 className="text-lg font-black font-mono tracking-wide text-slate-100 group-hover:text-cyan-300 transition-colors">Verifikasi Dokumen RKA</h3>
+                <p className="text-xs text-slate-300 mt-2 leading-relaxed">Sistem cerdas pembacaan dan validasi otomatis berkas RKA SKPD Pemda.</p>
+              </div>
+            </div>
+
+            {/* MENU 2: BLUE */}
+            <div className="bg-slate-950 border-2 border-slate-800 hover:border-blue-400 p-6 rounded-2xl shadow-lg hover:shadow-[0_0_35px_rgba(59,130,246,0.25)] transition-all duration-300 group cursor-pointer flex flex-col justify-between min-h-[190px]">
+              <div className="flex justify-between items-start">
+                <div className="p-3 bg-blue-500/10 border-2 border-blue-400 text-blue-400 rounded-xl transition-all duration-300 group-hover:bg-blue-400 group-hover:text-slate-950 group-hover:shadow-[0_0_20px_rgba(59,130,246,0.6)]">
+                  <ShieldAlert size={26} className="stroke-[2]" />
+                </div>
+                <span className="text-[10px] font-mono text-blue-400 bg-blue-950 border border-blue-400 px-2 py-0.5 rounded-md uppercase tracking-wider font-black">VALIDASI</span>
+              </div>
+              <div className="mt-4">
+                <h3 className="text-lg font-black font-mono tracking-wide text-slate-100 group-hover:text-blue-300 transition-colors">Aturan & Batasan APBD</h3>
+                <p className="text-xs text-slate-300 mt-2 leading-relaxed">Konfigurasi regulasi, pagu indikatif, dan batas atas anggaran belanja daerah.</p>
+              </div>
+            </div>
+
+            {/* MENU 3: PURPLE */}
+            <div className="bg-slate-950 border-2 border-slate-800 hover:border-purple-400 p-6 rounded-2xl shadow-lg hover:shadow-[0_0_35px_rgba(168,85,247,0.25)] transition-all duration-300 group cursor-pointer flex flex-col justify-between min-h-[190px]">
+              <div className="flex justify-between items-start">
+                <div className="p-3 bg-purple-500/10 border-2 border-purple-400 text-purple-400 rounded-xl transition-all duration-300 group-hover:bg-purple-400 group-hover:text-slate-950 group-hover:shadow-[0_0_20px_rgba(168,85,247,0.6)]">
+                  <History size={26} className="stroke-[2]" />
+                </div>
+                <span className="text-[10px] font-mono text-purple-400 bg-purple-950 border border-purple-400 px-2 py-0.5 rounded-md uppercase tracking-wider font-black">ARSIP</span>
+              </div>
+              <div className="mt-4">
+                <h3 className="text-lg font-black font-mono tracking-wide text-slate-100 group-hover:text-purple-300 transition-colors">Riwayat Verifikasi</h3>
+                <p className="text-xs text-slate-300 mt-2 leading-relaxed">Pusat data pelacakan audit transaksi berkas yang telah dikerjakan sebelumnya.</p>
+              </div>
+            </div>
+
+            {/* MENU 4: GREEN */}
+            <div className="bg-slate-950 border-2 border-slate-800 hover:border-emerald-400 p-6 rounded-2xl shadow-lg hover:shadow-[0_0_35px_rgba(16,185,129,0.25)] transition-all duration-300 group cursor-pointer flex flex-col justify-between min-h-[190px]">
+              <div className="flex justify-between items-start">
+                <div className="p-3 bg-emerald-500/10 border-2 border-emerald-400 text-emerald-400 rounded-xl transition-all duration-300 group-hover:bg-emerald-400 group-hover:text-slate-950 group-hover:shadow-[0_0_20px_rgba(16,185,129,0.6)]">
+                  <Users size={26} className="stroke-[2]" />
+                </div>
+                <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950 border border-emerald-400 px-2 py-0.5 rounded-md uppercase tracking-wider font-black">SKPD</span>
+              </div>
+              <div className="mt-4">
+                <h3 className="text-lg font-black font-mono tracking-wide text-slate-100 group-hover:text-emerald-300 transition-colors">Manajemen Akun SKPD</h3>
+                <p className="text-xs text-slate-300 mt-2 leading-relaxed">Kelola otoritas akses user dinas, badan, dan kantor instansi se-daerah.</p>
+              </div>
+            </div>
+
+            {/* MENU 5: AMBER */}
+            <div className="bg-slate-950 border-2 border-slate-800 hover:border-amber-400 p-6 rounded-2xl shadow-lg hover:shadow-[0_0_35px_rgba(245,158,11,0.25)] transition-all duration-300 group cursor-pointer flex flex-col justify-between min-h-[190px]">
+              <div className="flex justify-between items-start">
+                <div className="p-3 bg-amber-500/10 border-2 border-amber-400 text-amber-400 rounded-xl transition-all duration-300 group-hover:bg-amber-400 group-hover:text-slate-950 group-hover:shadow-[0_0_20px_rgba(245,158,11,0.6)]">
+                  <LayoutDashboard size={26} className="stroke-[2]" />
+                </div>
+                <span className="text-[10px] font-mono text-amber-400 bg-amber-950 border border-amber-400 px-2 py-0.5 rounded-md uppercase tracking-wider font-black">GRAFIK</span>
+              </div>
+              <div className="mt-4">
+                <h3 className="text-lg font-black font-mono tracking-wide text-slate-100 group-hover:text-amber-300 transition-colors">Analitik Grafik APBD</h3>
+                <p className="text-xs text-slate-300 mt-2 leading-relaxed">Visualisasi real-time persentase kelayakan usulan anggaran secara makro.</p>
+              </div>
+            </div>
+
+            {/* MENU 6: SILVER */}
+            <div className="bg-slate-950 border-2 border-slate-800 hover:border-slate-300 p-6 rounded-2xl shadow-lg hover:shadow-[0_0_35px_rgba(255,255,255,0.15)] transition-all duration-300 group cursor-pointer flex flex-col justify-between min-h-[190px]">
+              <div className="flex justify-between items-start">
+                <div className="p-3 bg-slate-500/10 border-2 border-slate-400 text-slate-300 rounded-xl transition-all duration-300 group-hover:bg-white group-hover:text-slate-950 group-hover:shadow-[0_0_20px_rgba(255,255,255,0.4)]">
+                  <Settings size={26} className="stroke-[2]" />
+                </div>
+                <span className="text-[10px] font-mono text-slate-400 bg-slate-900 border border-slate-400 px-2 py-0.5 rounded-md uppercase tracking-wider font-black">MANAJEMEN</span>
+              </div>
+              <div className="mt-4">
+                <h3 className="text-lg font-black font-mono tracking-wide text-slate-100 group-hover:text-white transition-colors">Konfigurasi Enkripsi</h3>
+                <p className="text-xs text-slate-300 mt-2 leading-relaxed">Pengaturan profil internal, kunci API Supabase, dan pembatasan sesi login.</p>
+              </div>
+            </div>
+
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // =========================================================
+  // 2. TAMPILAN LOCK SCREEN / MODUL LOGIN (100% STRUKTUR ASLI ANDA)
+  // =========================================================
+  return (
+    <div className="min-h-screen bg-[#020617] text-slate-100 flex flex-col justify-center items-center p-4 font-sans relative overflow-hidden select-none">
+      
+      {/* Efek Pendaran Neon Jagat Maya (Cyber Ambient Glow) */}
+      <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[130px] pointer-events-none animate-pulse duration-[4000ms]"></div>
+      <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[130px] pointer-events-none animate-pulse duration-[4000ms] delay-1000"></div>
+
+      {/* Kontainer Utama - Glassmorphism Card */}
+      <div className="w-full max-w-md bg-slate-900/40 backdrop-blur-3xl border border-cyan-500/20 p-8 rounded-3xl shadow-[0_0_60px_rgba(6,182,212,0.12)] relative z-10 transition-all duration-500 hover:border-cyan-500/40 group">
+        
+        {/* Sektor Logo Maskot Lingkaran */}
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-36 h-36 rounded-full p-1 bg-gradient-to-b from-cyan-400 to-blue-600 shadow-[0_0_30px_rgba(6,182,212,0.25)] mb-4 relative transition-transform duration-700 group-hover:scale-105">
+            <div className="w-full h-full rounded-full overflow-hidden bg-slate-950">
+              <img 
+                src="/logo-avatar1.png" 
+                className="w-full h-full object-cover"
+                alt="Avatar"
+              />
+            </div>
+            {/* Indikator Online Hijau Ring */}
+            <span className="absolute bottom-1 right-2 w-4 h-4 bg-emerald-500 border-2 border-slate-950 rounded-full animate-ping"></span>
+            <span className="absolute bottom-1 right-2 w-4 h-4 bg-emerald-500 border-2 border-slate-950 rounded-full"></span>
+          </div>
+
+          {/* Judul Aplikasi */}
+          <h1 className="text-3xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-cyan-400 font-mono text-center">
+            AVATAR APBD
+          </h1>
+          <div className="h-[2px] w-20 bg-gradient-to-r from-transparent via-cyan-500 to-transparent mt-2.5"></div>
+          <p className="text-[12px] text-cyan-400/60 mt-2 uppercase tracking-[0.25em] font-mono font-bold text-center">Asisten Verifikasi Tekhnis</p>
+          <p className="text-[12px] text-cyan-400/60 uppercase tracking-[0.25em] font-mono font-bold text-center">Alokasi dan Regulasi APBD</p>
+        </div>
+
+        {/* Formulir Akses Internal */}
+        <form onSubmit={handleLogin} className="space-y-5">
+          
+          {/* Identitas Email */}
+          <div className="space-y-1.5">
+            <label className="block text-[11px] font-bold text-cyan-400/70 uppercase tracking-widest font-mono pl-1">Email User</label>
+            <div className="relative">
+              <Mail size={18} className="absolute left-4 top-4 text-slate-500 transition-colors group-focus-within:text-cyan-400" />
+              <input 
+                type="email" 
+                required
+                autoComplete="new-password"
+                placeholder="email user" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-slate-950/80 border border-slate-800/80 focus:border-cyan-500/80 rounded-xl pl-12 pr-4 py-3.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:shadow-[0_0_20px_rgba(6,182,212,0.15)] transition-all font-mono"
+              />
+            </div>
+          </div>
+
+          {/* Kunci Sandi */}
+          <div className="space-y-1.5">
+            <label className="block text-[11px] font-bold text-cyan-400/70 uppercase tracking-widest font-mono pl-1">Secure Passkey</label>
+            <div className="relative">
+              <Lock size={18} className="absolute left-4 top-4 text-slate-500" />
+              <input 
+                type={showPassword ? "text" : "password"} 
+                required
+                autoComplete="new-password"
+                placeholder="••••••••" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-slate-950/80 border border-slate-800/80 focus:border-cyan-500/80 rounded-xl pl-12 pr-12 py-3.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:shadow-[0_0_20px_rgba(6,182,212,0.15)] transition-all font-mono"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-4 text-slate-500 hover:text-cyan-400 transition-colors cursor-pointer"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Tombol Akses Utama */}
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-cyan-600 via-blue-600 to-blue-700 hover:from-cyan-500 hover:via-blue-500 hover:to-blue-600 disabled:from-slate-800 disabled:to-slate-800 text-white py-4 px-4 rounded-xl font-black font-mono tracking-widest text-xs transition-all flex items-center justify-center gap-2 group shadow-[0_0_25px_rgba(6,182,212,0.2)] hover:shadow-[0_0_35px_rgba(6,182,212,0.4)] active:scale-[0.98] mt-8 cursor-pointer"
+          >
+            {loading ? 'SYNCHRONIZING SECURE...' : 'L O G I N'}
+            <ArrowRight size={16} className="transform group-hover:translate-x-1.5 transition-transform stroke-[3]" />
+          </button>
+
+        </form>
+      </div>
+      
+      {/* Footer Protokol PWA */}
+      <div className="flex flex-col items-center gap-1.5 mt-8 text-center relative z-10">
+        <p className="text-[10px] font-mono text-slate-600 tracking-[0.3em] uppercase">AVATAR CORE v1.0.0</p>
+        <div className="flex items-center gap-2 px-3 py-1 bg-cyan-950/20 border border-cyan-500/20 rounded-full text-[9px] text-cyan-400/70 font-mono tracking-wider shadow-[0_0_10px_rgba(6,182,212,0.05)]">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]"></span>
+          PWA ENCRYPTED NODE ACTIVE
+        </div>
+      </div>
+    </div>
+  );
+}

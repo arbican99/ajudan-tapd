@@ -1,0 +1,695 @@
+import React, { useState } from 'react';
+import { 
+  FileText, CheckCircle2, Landmark, Calendar, PieChart, ShieldAlert,
+  Cpu, ChevronDown, ChevronRight, Folder, Layers, ListFilter
+} from 'lucide-react';
+import * as XLSX from 'xlsx';
+
+export default function ModulVerifikasiRka({ getRowValue, formatIDR }) {
+  const [rkaFile, setRkaFile] = useState(null);
+  const [isRkaUploaded, setIsRkaUploaded] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  
+  const [extractedSkpd, setExtractedSkpd] = useState({ kode: '-', nama: '-', tahun: '-' });
+  const [groupedRkaData, setGroupedRkaData] = useState([]);
+  const [subKegiatanRows, setSubKegiatanRows] = useState([]);
+  const [expandedNodes, setExpandedNodes] = useState({});
+  const [expandedTabel1, setExpandedTabel1] = useState({});
+  const [expandedAnalisis, setExpandedAnalisis] = useState({}); 
+
+  const [rkaSummary, setRkaSummary] = useState({
+    totalAnggaran: 0,
+    mandatorySpending: 0,
+    spmProgram: 0,
+    totalUtama: 0,
+    totalPendukung: 0,
+    treeData: {} 
+  });
+
+  const [proporsionalitasData, setProporsionalitasData] = useState([]);
+
+  // =========================================================================
+  // FUNGSI UTAMA: KLASIFIKASI BELANJA UTAMA VS PENDUKUNG (ANTI-BOCOR ANGGARAN)
+  // =========================================================================
+  const klasifikasiBiaya = (kodeRekening, namaRekening, namaSubKegiatan) => {
+    if (!kodeRekening) return 'PENDUKUNG';
+    
+    const namaSub = namaSubKegiatan ? namaSubKegiatan.toLowerCase() : '';
+    const namaRek = namaRekening ? namaRekening.toLowerCase() : '';
+    const partsRek = kodeRekening.split('.');
+
+    // -------------------------------------------------------------------------
+    // 1. RUMPUN PEMBANGUNAN / PENGADAAN / REHAB (FISIK & ASET)
+    // -------------------------------------------------------------------------
+    if (
+      namaSub.includes('pembangunan') || 
+      namaSub.includes('pengadaan') || 
+      namaSub.includes('rehabilitasi') || 
+      namaSub.includes('rehab') || 
+      namaSub.includes('konstruksi') ||
+      namaSub.includes('pembuatan') ||
+      partsRek[1] === '2' // Otomatis Akun Belanja Modal (5.2)
+    ) {
+      // Utama hanya fisik/asetnya langsung atau belanja bahan konstruksi utama
+      if (partsRek[1] === '2' || namaRek.includes('bahan material') || namaRek.includes('kontrak konstruksi') || namaRek.includes('jasa konsultan perencana') || namaRek.includes('jasa konsultan pengawas')) {
+        return 'UTAMA';
+      }
+      // ATK, Perdis, Makan minum rapat panitia pengadaan wajib masuk PENDUKUNG
+      return 'PENDUKUNG';
+    }
+
+    // -------------------------------------------------------------------------
+    // 2. RUMPUN PELATIHAN / SOSIALISASI / BIMTEK / DIKLAT / WORKSHOP
+    // -------------------------------------------------------------------------
+    if (
+      namaSub.includes('pelatihan') || 
+      namaSub.includes('sosialisasi') || 
+      namaSub.includes('bimtek') || 
+      namaSub.includes('diklat') || 
+      namaSub.includes('workshop') ||
+      namaSub.includes('penyuluhan') ||
+      namaSub.includes('bimbingan teknis')
+    ) {
+      // Utama adalah hal yang bersentuhan dengan substansi acara dan hak peserta
+      if (
+        namaRek.includes('honorarium narasumber') || 
+        namaRek.includes('honor narasumber') ||
+        namaRek.includes('sewa gedung') || 
+        namaRek.includes('sewa tempat') ||
+        (namaRek.includes('makan') && !namaRek.includes('panitia') && !namaRek.includes('rapat internal')) || 
+        (namaRek.includes('minum') && !namaRek.includes('panitia') && !namaRek.includes('rapat internal')) ||
+        namaRek.includes('paket meeting') ||
+        namaRek.includes('alat tulis peserta') || 
+        namaRek.includes('blocknote') || 
+        namaRek.includes('seminar kit') ||
+        namaRek.includes('uang saku peserta') ||
+        namaRek.includes('transport peserta') ||
+        namaRek.includes('sertifikat')
+      ) {
+        return 'UTAMA';
+      }
+      // Perdis panitia, ATK kantor, banner/spanduk internal masuk PENDUKUNG
+      return 'PENDUKUNG';
+    }
+
+    // -------------------------------------------------------------------------
+    // 3. RUMPUN MONITORING / EVALUASI / PENGAWASAN / AUDIT (MONEV)
+    // -------------------------------------------------------------------------
+    if (
+      namaSub.includes('monitoring') || 
+      namaSub.includes('evaluasi') || 
+      namaSub.includes('pengawasan') || 
+      namaSub.includes('inspeksi') ||
+      namaSub.includes('audit') ||
+      namaSub.includes('review')
+    ) {
+      // Utama adalah objek perdis lapangan saat memeriksa/monev dan dokumentasi hasil
+      if (
+        namaRek.includes('perjalanan dinas paket') || 
+        namaRek.includes('perjalanan dinas dalam daerah') || 
+        namaRek.includes('transport lapangan') ||
+        namaRek.includes('honorarium tim pengawas')
+      ) {
+        return 'UTAMA';
+      }
+      // Pembelian ATK berlebih, makan rapat rutin bulanan di kantor masuk PENDUKUNG
+      return 'PENDUKUNG';
+    }
+
+    // -------------------------------------------------------------------------
+    // 4. RUMPUN PENELITIAN / KAJIAN / PENYUSUNAN REGULASI (DOKUMEN)
+    // -------------------------------------------------------------------------
+    if (
+      namaSub.includes('penyusunan dokumen') || 
+      namaSub.includes('kajian') || 
+      namaSub.includes('penelitian') || 
+      namaSub.includes('penyusunan perda') ||
+      namaSub.includes('penyusunan perkada') ||
+      namaSub.includes('perencanaan')
+    ) {
+      // Utama adalah keahlian (tenaga ahli), referensi, dan penggandaan dokumen produknya
+      if (
+        namaRek.includes('tenaga ahli') || 
+        namaRek.includes('honorarium pakar') || 
+        namaRek.includes('jasa konsultansi') ||
+        namaRek.includes('penggandaan') ||
+        namaRek.includes('penjilidan') ||
+        namaRek.includes('belanja cetak')
+      ) {
+        return 'UTAMA';
+      }
+      // Hotel mewah untuk tim penyusun, perdis luar daerah yang tidak relevan masuk PENDUKUNG
+      return 'PENDUKUNG';
+    }
+
+    // -------------------------------------------------------------------------
+    // 5. RUMPUN PEMELIHARAAN ASET / SERVICE BERKALA
+    // -------------------------------------------------------------------------
+    if (
+      namaSub.includes('pemeliharaan') || 
+      namaSub.includes('perawatan') || 
+      namaSub.includes('service')
+    ) {
+      // Utama adalah sparepart, suku cadang, pelumas, dan jasa montir/tukang
+      if (
+        namaRek.includes('suku cadang') || 
+        namaRek.includes('sparepart') || 
+        namaRek.includes('jasa service') ||
+        namaRek.includes('bahan pembersih') ||
+        namaRek.includes('penggantian komponen')
+      ) {
+        return 'UTAMA';
+      }
+      return 'PENDUKUNG';
+    }
+
+    // -------------------------------------------------------------------------
+    // 6. RUMPUN HIBAH / BANTUAN SOSIAL / BANTUAN KEUANGAN
+    // -------------------------------------------------------------------------
+    if (
+      namaSub.includes('hibah') || 
+      namaSub.includes('bantuan sosial') || 
+      namaSub.includes('bansos') ||
+      namaSub.includes('bantuan keuangan') ||
+      partsRek[2] === '05' || partsRek[2] === '06' // Kode Akun 5.1.05 / 5.1.06
+    ) {
+      // Utama adalah nominal uang atau barang yang diserahkan langsung ke masyarakat/penerima
+      if (namaRek.includes('belanja hibah uang') || namaRek.includes('hibah barang') || namaRek.includes('bantuan kepada')) {
+        return 'UTAMA';
+      }
+      // Biaya verifikasi lapangan oleh dinas, perjalanan dinas cek penerima masuk PENDUKUNG
+      return 'PENDUKUNG';
+    }
+
+    // -------------------------------------------------------------------------
+    // 7. RUMPUN OPERASIONAL KANTOR / ADMINISTRASI RUTIN PELAYANAN
+    // -------------------------------------------------------------------------
+    if (
+      namaSub.includes('penyediaan') || 
+      namaSub.includes('administrasi') || 
+      namaSub.includes('pelayanan') || 
+      namaSub.includes('rutin') ||
+      namaSub.includes('operasional') ||
+      namaSub.includes('gaji dan tunjangan')
+    ) {
+      // Utama adalah pengeluaran wajib yang jika dihentikan, kantor akan mati total
+      if (
+        namaRek.includes('listrik') || 
+        namaRek.includes('air') || 
+        namaRek.includes('internet') || 
+        namaRek.includes('telepon') ||
+        namaRek.includes('atk') || 
+        namaRek.includes('alat tulis kantor') || 
+        namaRek.includes('kertas') ||
+        namaRek.includes('makan minum tamu') ||
+        namaRek.includes('bbm') || 
+        namaRek.includes('bahan bakar minyak')
+      ) {
+        return 'UTAMA';
+      }
+      // Perdis luar daerah, koordinasi non-terjadwal, honor tim tambahan masuk PENDUKUNG
+      return 'PENDUKUNG';
+    }
+
+    // -------------------------------------------------------------------------
+    // 8. KONDISI DEFAULT (Proteksi Terakhir Akun Gaji & Perjalanan Dinas Umum)
+    // -------------------------------------------------------------------------
+    if (
+      namaRek.includes('perjalanan dinas') || 
+      namaRek.includes('perdis') || 
+      namaRek.includes('luar daerah') ||
+      kodeRekening.startsWith('5.1.01') // Kode Akun Gaji dan Tunjangan ASN
+    ) {
+      return 'PENDUKUNG';
+    }
+
+    return 'UTAMA'; // Sisa akun tak terdefinisi default dimasukkan ke Utama
+  };
+
+  // =========================================================================
+  // AKSI SINKRONISASI DAN PARSING EXCEL RKA
+  // =========================================================================
+  const handleRkaFileChange = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setRkaFile(e.target.files[0]);
+    }
+  };
+
+  const handleUploadRkaSubmit = (e) => {
+    e.preventDefault();
+    if (!rkaFile) return alert("Silakan pilih file Excel RKA terlebih dahulu.");
+    setUploading(true);
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const bstr = evt.target.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rawData = XLSX.utils.sheet_to_json(ws, { defval: "" });
+        
+        if (rawData.length === 0) throw new Error("Berkas Excel terbaca kosong.");
+
+        const sampleRow = rawData[0];
+        setExtractedSkpd({
+          kode: getRowValue(sampleRow, 'Kode SKPD') || getRowValue(sampleRow, 'kd_skpd') || '-',
+          nama: getRowValue(sampleRow, 'Nama SKPD') || getRowValue(sampleRow, 'nm_skpd') || '-',
+          tahun: getRowValue(sampleRow, 'Tahun Anggaran') || '2026'
+        });
+
+        let subKegiatanGrupMap = {};
+        let totalAnggaran = 0;
+        let mandatorySpending = 0;
+        let spmProgram = 0;
+        let totalUtamaGlobal = 0;
+        let totalPendukungGlobal = 0;
+        let treeStructure = {};
+        let initialTabel1Toggle = {};
+        let initialExpandedNodes = {};
+        let analisisGrupMap = {};
+
+        const jenisBelanjaDict = {
+          "5.1.01": "Belanja Pegawai", "5.1.02": "Belanja Barang dan Jasa",
+          "5.1.05": "Belanja Hibah", "5.1.06": "Belanja Bantuan Sosial",
+          "5.2.01": "Belanja Modal Tanah", "5.2.02": "Belanja Modal Peralatan dan Mesin",
+          "5.2.03": "Belanja Modal Gedung dan Bangunan", "5.2.04": "Belanja Modal Jalan, Irigasi, dan Jaringan",
+          "5.2.05": "Belanja Modal Aset Tetap Lainnya", "5.3.01": "Belanja Tidak Terduga",
+          "5.4.01": "Belanja Bagi Hasil", "5.4.02": "Belanja Bantuan Keuangan"
+        };
+
+        rawData.forEach((row) => {
+          const kodeSubKeg = getRowValue(row, 'Kode Sub Kegiatan') || getRowValue(row, 'kode_sub_kegiata');
+          const namaSubKeg = getRowValue(row, 'Nama Sub Kegiatan') || getRowValue(row, 'nama_sub_kegiatan') || 'Sub Kegiatan Terkait';
+          const kodeRekening = getRowValue(row, 'Kode Rekening') || getRowValue(row, 'kode_rekening');
+          const namaRekening = getRowValue(row, 'Nama Rekening') || getRowValue(row, 'uraian_belanja');
+          
+          const anggaranRaw = (getRowValue(row, 'Total Anggaran') || getRowValue(row, 'total_anggaran') || getRowValue(row, 'Anggaran') || "0").toString().replace(/[^0-9.-]+/g, "");
+          const nilaiAnggaran = parseFloat(anggaranRaw) || 0;
+
+          if (!kodeRekening && !kodeSubKeg) return;
+
+          // Hitung Makro Kebijakan
+          if (namaSubKeg.toLowerCase().includes('spm') || namaRekening.toLowerCase().includes('spm')) {
+            spmProgram += nilaiAnggaran;
+          } else if (namaSubKeg.toLowerCase().includes('pendidikan') || namaSubKeg.toLowerCase().includes('kesehatan') || namaSubKeg.toLowerCase().includes('wajib')) {
+            mandatorySpending += nilaiAnggaran;
+          }
+
+          const groupKey = kodeSubKeg || "NON-SUB-KEG";
+          
+          if (!subKegiatanGrupMap[groupKey]) {
+            subKegiatanGrupMap[groupKey] = { kodeSub: groupKey, namaSub: namaSubKeg, paguSubTotal: 0, rincianRekening: [] };
+            initialTabel1Toggle[groupKey] = false; 
+          }
+
+          if (kodeRekening) {
+            subKegiatanGrupMap[groupKey].rincianRekening.push({ kode: kodeRekening, uraian: namaRekening || "(Tanpa Nama)", pagu: nilaiAnggaran });
+            subKegiatanGrupMap[groupKey].paguSubTotal += nilaiAnggaran;
+          }
+
+          if (!analisisGrupMap[groupKey]) {
+            analisisGrupMap[groupKey] = {
+              kodeSub: groupKey,
+              namaSub: namaSubKeg,
+              paguTotal: 0,
+              utamaTotal: 0,
+              pendukungTotal: 0,
+              rincianUtama: [],
+              rincianPendukung: []
+            };
+          }
+
+          if (kodeRekening && nilaiAnggaran > 0) {
+            // MEMANGGIL LOGIKA BARU DENGAN 3 PARAMETER UNTUK AKURASI RUMPUN
+            const tipe = klasifikasiBiaya(kodeRekening, namaRekening, namaSubKeg);
+            const itemRincian = { kode: kodeRekening, nama: namaRekening, nominal: nilaiAnggaran };
+            
+            analisisGrupMap[groupKey].paguTotal += nilaiAnggaran;
+            
+            if (tipe === 'UTAMA') {
+              analisisGrupMap[groupKey].utamaTotal += nilaiAnggaran;
+              analisisGrupMap[groupKey].rincianUtama.push(itemRincian);
+              totalUtamaGlobal += nilaiAnggaran;
+            } else {
+              analisisGrupMap[groupKey].pendukungTotal += nilaiAnggaran;
+              analisisGrupMap[groupKey].rincianPendukung.push(itemRincian);
+              totalPendukungGlobal += nilaiAnggaran;
+            }
+          }
+
+          // Konstruksi Pohon Akun Rekening Belanja
+          if (kodeRekening) {
+            const parts = kodeRekening.split('.');
+            if (parts.length >= 2) {
+              const kelompokId = parts.slice(0, 2).join('.');
+              let kelompokLabel = "Belanja Operasi";
+              if (kelompokId === "5.2") kelompokLabel = "Belanja Modal";
+              if (kelompokId === "5.3") kelompokLabel = "Belanja Tidak Terduga";
+              if (kelompokId === "5.4") kelompokLabel = "Belanja Transfer";
+
+              if (!treeStructure[kelompokId]) {
+                treeStructure[kelompokId] = { id: kelompokId, nama: `${kelompokLabel} (${kelompokId})`, total: 0, jenis: {} };
+                initialExpandedNodes[kelompokId] = true;
+              }
+
+              const jenisId = parts.slice(0, 3).join('.');
+              let jenisLabel = jenisBelanjaDict[jenisId] || `Jenis Belanja K- ${jenisId}`;
+
+              if (!treeStructure[kelompokId].jenis[jenisId]) {
+                treeStructure[kelompokId].jenis[jenisId] = { id: jenisId, nama: jenisLabel, totalSub: 0 };
+              }
+
+              if (parts.length > 3 && nilaiAnggaran > 0) {
+                treeStructure[kelompokId].total += nilaiAnggaran;
+                treeStructure[kelompokId].jenis[jenisId].totalSub += nilaiAnggaran;
+                totalAnggaran += nilaiAnggaran;
+              }
+            }
+          }
+        });
+
+        const finalGroupedArray = Object.values(subKegiatanGrupMap);
+        const finalTabel2List = finalGroupedArray.map((item, index) => {
+          let kategoriSub = "Kategori Lainnya";
+          if (item.namaSub.toLowerCase().includes('spm')) kategoriSub = "SPM (Standar Pelayanan Minimal)";
+          else if (item.namaSub.toLowerCase().includes('pendidikan') || item.namaSub.toLowerCase().includes('kesehatan')) kategoriSub = "Mandatory Spending";
+          return { id: `sub2-${index}`, namaSub: item.namaSub, kategori: kategoriSub, pagu: item.paguSubTotal };
+        }).filter(item => item.namaSub !== "RINCIAN REKENING LAIN");
+
+        const kalkulasiProporsionalitas = Object.values(analisisGrupMap).map(item => {
+          const persenUtama = item.paguTotal > 0 ? (item.utamaTotal / item.paguTotal) * 100 : 0;
+          const persenPendukung = item.paguTotal > 0 ? (item.pendukungTotal / item.paguTotal) * 100 : 0;
+          return {
+            ...item,
+            persenUtama: persenUtama.toFixed(1),
+            persenPendukung: persenPendukung.toFixed(1)
+          };
+        }).filter(item => item.paguTotal > 0);
+
+        setGroupedRkaData(finalGroupedArray);
+        setSubKegiatanRows(finalTabel2List);
+        setProporsionalitasData(kalkulasiProporsionalitas);
+        setExpandedTabel1(initialTabel1Toggle);
+        setExpandedNodes(initialExpandedNodes);
+        
+        setRkaSummary({ 
+          totalAnggaran, 
+          mandatorySpending, 
+          spmProgram, 
+          totalUtama: totalUtamaGlobal,
+          totalPendukung: totalPendukungGlobal,
+          treeData: treeStructure 
+        });
+        
+        setIsRkaUploaded(true);
+        alert(`Sukses melakukan penguncian, verifikasi rumpun, dan perhitungan proporsionalitas RKA!`);
+      } catch (err) {
+        alert(`Gagal memparsing file RKA: ${err.message}`);
+      } finally {
+        setUploading(false);
+      }
+    };
+    reader.readAsBinaryString(rkaFile);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* SEGMEN UPLOAD FILE */}
+      <div className="bg-slate-950/40 backdrop-blur-md border border-blue-500/20 p-4 rounded-2xl">
+        {!isRkaUploaded ? (
+          <form onSubmit={handleUploadRkaSubmit} className="w-full flex flex-col sm:flex-row gap-3 items-center justify-center py-2">
+            <div className="flex items-center gap-3 font-mono text-[11px] text-slate-400">
+              <FileText size={20} className="text-blue-500" />
+              <span>{rkaFile ? rkaFile.name : 'Belum ada file RKA terunggah'}</span>
+            </div>
+            <div className="flex gap-2">
+              <label className="px-3 py-1.5 bg-slate-900 border border-blue-950 text-blue-400 text-[11px] font-mono font-bold rounded-xl cursor-pointer hover:bg-slate-800">
+                PILIH FILE RKA
+                <input type="file" accept=".csv,.xlsx,.xls" onChange={handleRkaFileChange} className="hidden" />
+              </label>
+              <button type="submit" disabled={uploading} className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 font-mono font-bold text-white text-[11px] rounded-xl cursor-pointer">
+                {uploading ? 'MEMETAKAN RUMPUN...' : 'SINKRONKAN STRUKTUR'}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="w-full flex items-center justify-between font-mono text-[11px]">
+            <div className="flex items-center gap-2 text-emerald-400">
+              <CheckCircle2 size={15} />
+              <span>Struktur Rumpun Terkunci: <b className="text-slate-200">{rkaFile?.name}</b></span>
+            </div>
+            <button onClick={() => { setIsRkaUploaded(false); setRkaFile(null); setProporsionalitasData([]); }} className="px-3 py-1 bg-red-950/60 border border-red-500/30 text-red-400 text-[10px] font-bold rounded-lg hover:bg-red-900 transition-colors">
+              BERSIHKAN DATA
+            </button>
+          </div>
+        )}
+      </div>
+
+      {isRkaUploaded && (
+        <>
+          {/* IDENTITAS SKPD */}
+          <div className="bg-slate-950/80 border border-blue-950 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 font-mono">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-900 flex items-center justify-center text-blue-300 border border-blue-500/20"><Landmark size={20} /></div>
+              <div>
+                <span className="block text-[9px] font-black text-blue-500 uppercase">SATUAN KERJA SKPD TERPETAKAN //</span>
+                <h3 className="text-xs font-bold text-slate-100 uppercase tracking-wide">{extractedSkpd.nama}</h3>
+                <p className="text-[10px] text-slate-400 font-bold">KODE: <span className="text-cyan-400">{extractedSkpd.kode}</span></p>
+              </div>
+            </div>
+            <div className="bg-slate-900 px-3 py-1.5 rounded-lg border border-blue-950/80 flex items-center gap-2">
+              <Calendar size={14} className="text-amber-400" />
+              <span className="text-[10px] font-bold text-slate-300">TA. {extractedSkpd.tahun}</span>
+            </div>
+          </div>
+
+          {/* DASHBOARD RINGKASAN */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-slate-950/50 border border-blue-950 p-4 rounded-xl flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-400"><PieChart size={18} /></div>
+              <div className="font-mono">
+                <span className="block text-[9px] font-bold text-slate-500 uppercase">MANDATORY SPENDING</span>
+                <h3 className="text-xs font-bold text-slate-200 mt-1">{formatIDR(rkaSummary.mandatorySpending)}</h3>
+              </div>
+            </div>
+            <div className="bg-slate-950/50 border border-cyan-950 p-4 rounded-xl flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl bg-cyan-600/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400"><ShieldAlert size={18} /></div>
+              <div className="font-mono">
+                <span className="block text-[9px] font-bold text-slate-500 uppercase">URUSAN PROGRAM SPM</span>
+                <h3 className="text-xs font-bold text-cyan-400 mt-1">{formatIDR(rkaSummary.spmProgram)}</h3>
+              </div>
+            </div>
+            <div className="bg-slate-950/50 border border-emerald-950 p-4 rounded-xl flex items-start gap-3 bg-gradient-to-br from-emerald-950/10 to-transparent">
+              <div className="w-9 h-9 rounded-xl bg-emerald-600/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400"><Layers size={18} /></div>
+              <div className="font-mono">
+                <span className="block text-[9px] font-bold text-emerald-500/80 uppercase">TOTAL BELANJA UTAMA</span>
+                <h3 className="text-xs font-bold text-emerald-400 mt-1">
+                  {formatIDR(rkaSummary.totalUtama)} 
+                  <span className="text-[10px] text-slate-400 ml-1">
+                    ({rkaSummary.totalAnggaran > 0 ? ((rkaSummary.totalUtama / rkaSummary.totalAnggaran) * 100).toFixed(1) : 0}%)
+                  </span>
+                </h3>
+              </div>
+            </div>
+            <div className="bg-slate-950/50 border border-blue-950 p-4 rounded-xl flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400"><FileText size={18} /></div>
+              <div className="font-mono">
+                <span className="block text-[9px] font-bold text-slate-500 uppercase">TOTAL PAGU DINAS</span>
+                <h3 className="text-xs font-bold text-indigo-400 mt-1">{formatIDR(rkaSummary.totalAnggaran)}</h3>
+              </div>
+            </div>
+          </div>
+
+          {/* MATRIKS KOEFISIEN RATIO ANALISIS INTERAKTIF */}
+          <div className="bg-slate-950/40 border border-blue-900/40 rounded-xl overflow-hidden font-mono shadow-md">
+            <div className="px-4 py-3 bg-slate-950/80 border-b border-blue-950 flex items-center gap-2">
+              <ListFilter size={14} className="text-emerald-400" />
+              <h4 className="text-xs font-bold text-slate-200 uppercase">TABEL PROPORSIONALITAS RATIO BERDASARKAN RUMPUN OUTPUT</h4>
+            </div>
+            <div className="p-3 space-y-2 max-h-[450px] overflow-y-auto">
+              {proporsionalitasData.map((item, idx) => {
+                const isAnalisisOpen = expandedAnalisis[item.kodeSub];
+                // Penilaian visual kebocoran anggaran jika pendukung di atas 40%
+                const isWarning = parseFloat(item.persenPendukung) > 40.0;
+                
+                return (
+                  <div key={idx} className={`border rounded-xl bg-slate-900/20 overflow-hidden text-[11px] ${isWarning ? 'border-amber-500/30' : 'border-blue-950/60'}`}>
+                    <div 
+                      onClick={() => setExpandedAnalisis(prev => ({ ...prev, [item.kodeSub]: !prev[item.kodeSub] }))}
+                      className="p-3 bg-slate-900/60 hover:bg-slate-900 flex flex-col md:flex-row justify-between md:items-center gap-3 cursor-pointer border-b border-blue-950/40"
+                    >
+                      <div className="flex items-start gap-2 min-w-0 flex-1">
+                        {isAnalisisOpen ? <ChevronDown size={14} className="text-amber-400 mt-0.5 shrink-0" /> : <ChevronRight size={14} className="text-amber-400 mt-0.5 shrink-0" />}
+                        <div className="min-w-0">
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold border mr-2 ${isWarning ? 'bg-amber-950 text-amber-400 border-amber-500/40' : 'bg-slate-950 text-cyan-400 border-blue-900/50'}`}>{item.kodeSub}</span>
+                          <span className="font-bold text-slate-200 text-[11px] font-sans uppercase break-words">{item.namaSub}</span>
+                          {isWarning && <span className="ml-2 px-1.5 py-0.2 bg-red-950 text-red-400 rounded text-[8px] font-bold border border-red-900/40">RISIKO PENUNJANG GEMBUNG</span>}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-4 shrink-0 font-mono">
+                        <div className="w-32 h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800 flex">
+                          <div className="bg-emerald-500 h-full" style={{ width: `${item.persenUtama}%` }} />
+                          <div className={`${isWarning ? 'bg-red-500' : 'bg-amber-500'} h-full`} style={{ width: `${item.persenPendukung}%` }} />
+                        </div>
+                        <div className="text-right text-[10px]">
+                          <span className="text-emerald-400 font-bold">Utama: {item.persenUtama}%</span>
+                          <span className="text-slate-500 mx-1">|</span>
+                          <span className={`font-bold ${isWarning ? 'text-red-400' : 'text-amber-400'}`}>Pendukung: {item.persenPendukung}%</span>
+                        </div>
+                        <div className="text-right font-black text-slate-100 min-w-[90px]">
+                          {formatIDR(item.paguTotal)}
+                        </div>
+                      </div>
+                    </div>
+
+                    {isAnalisisOpen && (
+                      <div className="p-3 bg-slate-950/70 grid grid-cols-1 lg:grid-cols-2 gap-4 divide-y lg:divide-y-0 lg:divide-x divide-blue-950/60">
+                        {/* SUBSTANSI UTAMA */}
+                        <div className="space-y-1.5 pb-3 lg:pb-0">
+                          <div className="text-[10px] text-emerald-400 font-bold uppercase mb-2 flex justify-between">
+                            <span>✦ RINCIAN OUTPUT UTAMA RUMPUN ({item.persenUtama}%)</span>
+                            <span>{formatIDR(item.utamaTotal)}</span>
+                          </div>
+                          {item.rincianUtama.length === 0 ? (
+                            <p className="text-slate-600 text-[10px] italic font-sans">// Tidak ada komponen substansi utama terdeteksi</p>
+                          ) : (
+                            item.rincianUtama.map((it, rIdx) => (
+                              <div key={rIdx} className="flex justify-between items-start gap-2 bg-slate-900/40 border border-emerald-950/30 p-1.5 rounded text-[10px]">
+                                <span className="text-slate-400 font-sans flex-1"><b className="text-[9px] font-mono text-emerald-600 mr-1">[{it.kode}]</b>{it.nama}</span>
+                                <span className="text-slate-300 font-bold shrink-0">{formatIDR(it.nominal)}</span>
+                              </div>
+                            ))
+                          )}
+                        </div>
+
+                        {/* AKSESORIS PENUNJANG */}
+                        <div className="space-y-1.5 pt-3 lg:pt-0 lg:pl-4">
+                          <div className={`text-[10px] font-bold uppercase mb-2 flex justify-between ${isWarning ? 'text-red-400' : 'text-amber-500'}`}>
+                            <span>✦ RINCIAN PENUNJANG / OPERASIONAL PENDUKUNG ({item.persenPendukung}%)</span>
+                            <span>{formatIDR(item.pendukungTotal)}</span>
+                          </div>
+                          {item.rincianPendukung.length === 0 ? (
+                            <p className="text-slate-600 text-[10px] italic font-sans">// Bersih dari belanja penunjang tambahan</p>
+                          ) : (
+                            item.rincianPendukung.map((it, rIdx) => (
+                              <div key={rIdx} className={`flex justify-between items-start gap-2 bg-slate-900/40 p-1.5 rounded text-[10px] border ${isWarning ? 'border-red-950/50' : 'border-amber-950/30'}`}>
+                                <span className="text-slate-400 font-sans flex-1"><b className="text-[9px] font-mono text-amber-600 mr-1">[{it.kode}]</b>{it.nama}</span>
+                                <span className="text-slate-300 font-bold shrink-0">{formatIDR(it.nominal)}</span>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* STRUKTUR AKUN & TABEL MATRIKS STANDAR */}
+          <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 items-start">
+            {/* TREEVIEW */}
+            <div className="bg-slate-900/60 border border-blue-400/20 p-4 rounded-xl font-mono shadow-xl">
+              <h3 className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-3 flex items-center gap-1.5 border-b border-blue-950 pb-2"><Cpu size={13} /> Pagu per Kelompok Akun</h3>
+              <div className="text-[11px] space-y-2 max-h-[400px] overflow-y-auto pr-1">
+                {Object.keys(rkaSummary.treeData).map((key) => {
+                  const node = rkaSummary.treeData[key];
+                  const isOpen = expandedNodes[key];
+                  return (
+                    <div key={key} className="space-y-1">
+                      <div onClick={() => setExpandedNodes(prev => ({ ...prev, [key]: !prev[key] }))} className="flex items-center justify-between py-1.5 px-2 rounded bg-slate-950 border border-blue-950/80 hover:border-blue-500/40 cursor-pointer">
+                        <div className="flex items-center gap-1.5 overflow-hidden">
+                          {isOpen ? <ChevronDown size={12} className="text-amber-400" /> : <ChevronRight size={12} className="text-amber-400" />}
+                          <Folder size={13} className="text-amber-500 shrink-0" />
+                          <span className="text-slate-100 font-bold text-[10.5px] truncate">{node.nama}</span>
+                        </div>
+                        <span className="font-mono text-[9.5px] text-slate-300 pl-1 shrink-0">{formatIDR(node.total)}</span>
+                      </div>
+                      {isOpen && (
+                        <div className="pl-3 border-l border-amber-500/30 space-y-1.5 py-1">
+                          {Object.keys(node.jenis).map((jKey) => (
+                            <div key={jKey} className="flex flex-col p-2 rounded bg-slate-950/40 border border-blue-950/40 text-[10.5px]">
+                              <span className="text-[8.5px] text-cyan-500 font-bold font-mono">{jKey}</span>
+                              <div className="flex justify-between items-start gap-2 mt-0.5">
+                                <span className="text-slate-300 font-sans leading-relaxed flex-1">{node.jenis[jKey].nama}</span>
+                                <span className="text-emerald-400 font-bold text-[10px] shrink-0">{formatIDR(node.jenis[jKey].totalSub)}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* INTEGRASI MATRIKS TABEL BAWAAN */}
+            <div className="xl:col-span-3 space-y-4">
+              <div className="bg-slate-950/40 border border-blue-950/60 rounded-xl overflow-hidden shadow-sm">
+                <div className="px-4 py-2.5 bg-slate-950/80 border-b border-blue-950 flex items-center gap-2"><h4 className="text-xs font-bold text-slate-200 uppercase font-mono">TABEL I: Rekayasa Komponen Objek per Sub-Kegiatan</h4></div>
+                <div className="overflow-y-auto max-h-[220px] p-2 space-y-1 font-mono text-[11px]">
+                  {groupedRkaData.map((sub, gIdx) => {
+                    const isOpen = expandedTabel1[sub.kodeSub];
+                    return (
+                      <div key={gIdx} className="border border-blue-950/40 rounded bg-slate-900/20 overflow-hidden">
+                        <div onClick={() => setExpandedTabel1(prev => ({ ...prev, [sub.kodeSub]: !prev[sub.kodeSub] }))} className="p-2 bg-slate-900/80 hover:bg-slate-900 flex justify-between items-center cursor-pointer border-b border-blue-950/30">
+                          <div className="flex items-center gap-2 min-w-0 pr-2">
+                            {isOpen ? <ChevronDown size={13} className="text-cyan-400 shrink-0" /> : <ChevronRight size={13} className="text-cyan-400 shrink-0" />}
+                            <span className="text-[9px] bg-blue-950 text-blue-400 px-1 rounded font-bold">{sub.kodeSub}</span>
+                            <span className="font-bold text-slate-100 text-[10px] truncate font-sans uppercase">{sub.namaSub}</span>
+                          </div>
+                          <span className="font-black text-[10px] text-emerald-400 shrink-0">{formatIDR(sub.paguSubTotal)}</span>
+                        </div>
+                        {isOpen && (
+                          <div className="bg-slate-950/40 divide-y divide-blue-950/10">
+                            {sub.rincianRekening.map((rinci, rIdx) => (
+                              <div key={rIdx} className="p-2 pl-6 flex justify-between items-center gap-4 text-[10px] hover:bg-slate-900/40">
+                                <span className="text-slate-500 text-[9px] shrink-0">{rinci.kode}</span>
+                                <span className="text-slate-300 font-sans truncate text-left w-full pl-2">{rinci.uraian}</span>
+                                <span className="text-slate-300 font-medium shrink-0">{formatIDR(rinci.pagu)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="bg-slate-950/40 border border-blue-950/60 rounded-xl overflow-hidden shadow-sm">
+                <div className="px-4 py-2.5 bg-slate-950/80 border-b border-blue-950 flex items-center gap-2"><h4 className="text-xs font-bold text-cyan-400 uppercase font-mono">TABEL II: Indikator Makro & Urusan Pelayanan Strategis</h4></div>
+                <div className="overflow-x-auto max-h-[220px]">
+                  <table className="w-full border-collapse font-mono text-[11px]">
+                    <thead className="sticky top-0 bg-slate-950 border-b border-blue-950 text-cyan-400/80 uppercase text-[10px]">
+                      <tr>
+                        <th className="p-2.5 text-left">Nama Sub-Kegiatan</th>
+                        <th className="p-2.5 text-left">Kategori</th>
+                        <th className="p-2.5 text-right">Pagu Terpetak</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-blue-950/30">
+                      {subKegiatanRows.map((row) => (
+                        <tr key={row.id} className="hover:bg-slate-900/30 text-slate-300">
+                          <td className="p-2.5 font-sans truncate max-w-xs text-left">{row.namaSub}</td>
+                          <td className="p-2.5 text-left">
+                            <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${row.kategori.includes('SPM') ? 'bg-cyan-950 text-cyan-400 border border-cyan-800/30' : 'bg-indigo-950 text-indigo-400'}`}>{row.kategori}</span>
+                          </td>
+                          <td className="p-2.5 text-right font-bold text-slate-200">{formatIDR(row.pagu)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+      {!isRkaUploaded && <div className="border border-dashed border-blue-950/60 rounded-2xl p-12 text-center text-slate-500 font-mono text-xs">// SERVER STANDBY: SILAKAN UNGGAH FILE EXCEL APBD / RKA TERBARU</div>}
+    </div>
+  );
+}

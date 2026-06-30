@@ -1,0 +1,603 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  ArrowRight, Lock, Mail, Eye, EyeOff, 
+  LayoutDashboard, FileSpreadsheet, ShieldAlert, 
+  History, Settings, LogOut, Radio, Activity, CheckCircle, Users, Plus, Trash2, Upload, User, Edit2, X
+} from 'lucide-react';
+import { supabase } from './supabaseClient';
+
+export default function App() {
+  // State Otentikasi Utama
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // State Navigasi setelah Login
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
+
+  // State Manajemen User SKPD
+  const [activeMenu, setActiveMenu] = useState('dashboard'); 
+  const [usersList, setUsersList] = useState([]);
+  const [newUser, setNewUser] = useState({ name: '', email: '', password: '', skpd: '', role: '' });
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+
+  // STATE BARU: Untuk melacak apakah sedang dalam mode edit dan menyimpan ID user yang diedit
+  const [isEditing, setIsEditing] = useState(false);
+  const [editUserId, setEditUserId] = useState(null);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchUsers();
+    }
+  }, [isLoggedIn]);
+
+  // Fungsi Login Utama
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      alert(`Akses Ditolak: ${error.message}`);
+    } else {
+      setUserEmail(data.user.email);
+      setIsLoggedIn(true);
+    }
+    setLoading(false);
+  };
+
+  // Fungsi Logout
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setIsLoggedIn(false);
+    setActiveMenu('dashboard');
+    setEmail('');
+    setPassword('');
+  };
+
+  // 1. Mengambil Daftar User SKPD dari Tabel 'profiles'
+  const fetchUsers = async () => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*');
+
+    if (error) {
+      console.error('Gagal mengambil data user:', error.message);
+    } else {
+      setUsersList(data || []);
+    }
+  };
+
+  // 2. Menangani Pemilihan Berkas Foto Profil
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
+  // FUNGSI BARU: Menangani ketika user di tabel diklik untuk di-edit
+  const handleSelectEditUser = (usr) => {
+    setIsEditing(true);
+    setEditUserId(usr.id); // Simpan ID asli untuk referensi database nanti
+    
+    // Masukkan data dari tabel langsung ke state form
+    setNewUser({
+      name: usr.nama_lengkap || '',
+      email: usr.email || '',
+      password: '******', // Password disamarkan karena tidak bisa ditarik dari auth demi keamanan
+      skpd: usr.instansi_skpd || '',
+      role: usr.role || ''
+    });
+    
+    // Reset file preview karena kita akan pakai yang sudah ada kecuali diunggah baru
+    setSelectedFile(null); 
+  };
+
+  // FUNGSI BARU: Untuk membatalkan mode edit dan membersihkan form kembali
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditUserId(null);
+    setNewUser({ name: '', email: '', password: '', skpd: '', role: '' });
+    setSelectedFile(null);
+    if (document.getElementById('avatar-input')) {
+      document.getElementById('avatar-input').value = '';
+    }
+  };
+
+  // 3. Menambah / Memperbarui Profil SKPD (Logika Sekuensial yang Aman)
+  const handleAddUser = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    let avatarUrl = '';
+
+    try {
+      let userId = editUserId; // Gunakan ID yang sedang diedit jika dalam mode edit
+
+      // Ambil profil lama jika ada untuk mempertahankan foto lama jika tidak diganti
+      let existingAvatar = '';
+      if (userId) {
+        const { data: currentProfile } = await supabase
+          .from('profiles')
+          .select('avatar_url')
+          .eq('id', userId)
+          .maybeSingle();
+        existingAvatar = currentProfile?.avatar_url || '';
+      }
+
+      // A. PROSES UNGGAH FOTO PROFIL (Jika ada berkas baru)
+      if (selectedFile) {
+        setUploading(true);
+        const fileExt = selectedFile.name.split('.').pop();
+        const fileName = `${Date.now()}.${fileExt}`;
+        const filePath = `user-profiles/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(filePath, selectedFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: publicUrlData } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(filePath);
+        
+        avatarUrl = publicUrlData.publicUrl;
+      } else {
+        avatarUrl = existingAvatar; // Pakai foto lama jika tidak upload foto baru
+      }
+
+      // B. ALUR LOGIKA PENDAFTARAN USER BARU (Hanya jika tidak sedang mode edit)
+      if (!isEditing && !userId) {
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: newUser.email,
+          password: newUser.password,
+        });
+
+        if (authError) throw authError;
+        if (!authData.user) throw new Error("Gagal mendaftarkan akun otentikasi.");
+        
+        userId = authData.user.id;
+      }
+
+      // C. EKSEKUSI DATA KE TABEL PROFILES (Pasti Lolos)
+      const { error: upsertError } = await supabase
+        .from('profiles')
+        .upsert([
+          { 
+            id: userId, 
+            nama_lengkap: newUser.name, 
+            email: newUser.email, // Catatan: Email di profiles terupdate, namun di Auth tetap email lama
+            instansi_skpd: newUser.skpd, 
+            role: newUser.role,
+            avatar_url: avatarUrl
+          }
+        ]);
+
+      if (upsertError) throw upsertError;
+
+      alert(isEditing ? 'Sistem Berhasil! Data Operator Berhasil Diperbarui.' : 'Sistem Berhasil! Data Operator Berhasil Disinkronisasi.');
+      
+      // Kembalikan form ke kondisi bersih/kosong
+      handleCancelEdit();
+      fetchUsers();
+
+    } catch (error) {
+      alert(`Gagal memproses data user: ${error.message}`);
+    } finally {
+      setLoading(false);
+      setUploading(false);
+    }
+  };
+
+  // 4. Menghapus Profil Operator dari Database
+  const handleDeleteUser = async (id) => {
+    if (window.confirm('Apakah Anda yakin ingin menghapus operator ini dari sistem?')) {
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        alert(`Gagal menghapus: ${error.message}`);
+      } else {
+        // Jika user yang dihapus kebetulan sedang dibuka di form, reset formnya
+        if (editUserId === id) {
+          handleCancelEdit();
+        }
+        fetchUsers();
+      }
+    }
+  };
+
+  // =========================================================
+  // TAMPILAN DASHBOARD UTAMA (SETELAH LOG IN)
+  // =========================================================
+  if (isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-[#090d16] text-white font-sans relative overflow-hidden select-none">
+        
+        {/* Cyber Ambient Glow Effects */}
+        <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-cyan-400/15 rounded-full blur-[140px] pointer-events-none animate-pulse duration-[6000ms]"></div>
+        <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-blue-500/15 rounded-full blur-[140px] pointer-events-none animate-pulse duration-[6000ms] delay-1000"></div>
+
+        {/* HEADER BAR */}
+        <header className="w-full border-b-2 border-cyan-400/40 bg-slate-950 px-6 py-4 flex justify-between items-center relative z-20 shadow-[0_4px_30px_rgba(6,182,212,0.15)]">
+          <div className="flex items-center gap-3.5 cursor-pointer" onClick={() => { setActiveMenu('dashboard'); handleCancelEdit(); }}>
+            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.5)] bg-slate-950 flex items-center justify-center">
+              <img src="/logo-avatar1.png" alt="Logo" className="w-full h-full object-cover" />
+            </div>
+            <div>
+              <h1 className="text-xl font-black tracking-widest text-cyan-300 font-mono drop-shadow-[0_0_10px_rgba(34,211,238,0.6)]">AVATAR APBD</h1>
+              <p className="text-[10px] font-mono tracking-[0.15em] text-cyan-400 font-bold uppercase">CORE COMMAND PANEL</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="hidden md:flex flex-col text-right font-mono">
+              <span className="text-[10px] font-bold text-slate-400 tracking-wider">OPERATOR ONLINE</span>
+              <span className="text-xs font-bold text-cyan-300">{userEmail}</span>
+            </div>
+            <button 
+              onClick={handleLogout}
+              className="px-4 py-2.5 bg-red-600 border-2 border-red-400 rounded-xl text-white hover:bg-red-500 transition-all duration-300 flex items-center gap-2 text-xs font-mono font-black tracking-wider cursor-pointer shadow-[0_0_20px_rgba(239,68,68,0.4)] active:scale-95"
+            >
+              <LogOut size={14} className="stroke-[3]" />
+              <span className="hidden sm:inline">TERMINATE ACCESS</span>
+            </button>
+          </div>
+        </header>
+
+        {/* AREA PANEL KONTEN */}
+        <main className="max-w-7xl mx-auto px-6 py-8 relative z-10">
+          
+          {/* Tombol Navigasi Mundur */}
+          {activeMenu !== 'dashboard' && (
+            <button 
+              onClick={() => { setActiveMenu('dashboard'); handleCancelEdit(); }}
+              className="mb-6 px-4 py-2 bg-slate-900 border border-cyan-400/40 rounded-xl text-cyan-300 font-mono text-xs font-bold hover:bg-cyan-500 hover:text-slate-950 transition-all shadow-[0_0_15px_rgba(6,182,212,0.1)] cursor-pointer"
+            >
+              ← KEMBALI KE PANEL UTAMA
+            </button>
+          )}
+
+          {/* SUB-MENU A: HALAMAN GRIDS UTAMA */}
+          {activeMenu === 'dashboard' && (
+            <>
+              {/* STATUS KONEKSI */}
+              <div className="w-full bg-slate-950 border-2 border-cyan-500/30 rounded-2xl p-4 mb-8 flex flex-wrap items-center justify-between gap-4 shadow-[0_0_25px_rgba(6,182,212,0.08)]">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-cyan-500 text-slate-950 rounded-xl shadow-[0_0_15px_rgba(6,182,212,0.5)]">
+                    <Radio size={20} className="stroke-[2.5]" />
+                  </div>
+                  <div className="font-mono">
+                    <h2 className="text-xs font-black text-cyan-300 tracking-wider">STATUS KONEKSI NODE KENDALI</h2>
+                    <p className="text-xs text-emerald-400 font-bold flex items-center gap-2 mt-0.5 animate-pulse">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block shadow-[0_0_10px_rgba(52,211,153,1)]"></span> 
+                      SECURE LINK ACTIVE (MAIN ENCRYPTION)
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-6 font-mono text-xs font-bold text-slate-300 pr-2">
+                  <div className="flex items-center gap-2"><Activity size={15} className="text-cyan-400 animate-bounce" /> LATENCY: <span className="text-cyan-300">14 MS</span></div>
+                  <div className="flex items-center gap-2"><CheckCircle size={15} className="text-emerald-400" /> DATABASE: <span className="text-emerald-400">READY</span></div>
+                </div>
+              </div>
+
+              {/* GRID MENU UTAMA */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="bg-slate-950 border-2 border-slate-800 hover:border-cyan-400 p-6 rounded-2xl shadow-lg transition-all duration-300 group cursor-pointer flex flex-col justify-between min-h-[190px]">
+                  <div className="flex justify-between items-start">
+                    <div className="p-3 bg-cyan-500/10 border-2 border-cyan-400 text-cyan-400 rounded-xl">
+                      <FileSpreadsheet size={26} />
+                    </div>
+                    <span className="text-[10px] font-mono text-cyan-400 bg-cyan-950 border border-cyan-400 px-2 py-0.5 rounded-md font-black">UTAMA</span>
+                  </div>
+                  <div className="mt-4">
+                    <h3 className="text-lg font-black font-mono text-slate-100 group-hover:text-cyan-300">Verifikasi Dokumen RKA</h3>
+                    <p className="text-xs text-slate-300 mt-2">Sistem cerdas pembacaan dan validasi otomatis berkas RKA SKPD Pemda.</p>
+                  </div>
+                </div>
+
+                <div className="bg-slate-950 border-2 border-slate-800 hover:border-blue-400 p-6 rounded-2xl shadow-lg transition-all duration-300 group cursor-pointer flex flex-col justify-between min-h-[190px]">
+                  <div className="flex justify-between items-start">
+                    <div className="p-3 bg-blue-500/10 border-2 border-blue-400 text-blue-400 rounded-xl">
+                      <ShieldAlert size={26} />
+                    </div>
+                    <span className="text-[10px] font-mono text-blue-400 bg-blue-950 border border-blue-400 px-2 py-0.5 rounded-md font-black">VALIDASI</span>
+                  </div>
+                  <div className="mt-4">
+                    <h3 className="text-lg font-black font-mono text-slate-100 group-hover:text-blue-300">Aturan & Batasan APBD</h3>
+                    <p className="text-xs text-slate-300 mt-2">Konfigurasi regulasi, pagu indikatif, dan batas atas anggaran belanja daerah.</p>
+                  </div>
+                </div>
+
+                <div className="bg-slate-950 border-2 border-slate-800 hover:border-purple-400 p-6 rounded-2xl shadow-lg transition-all duration-300 group cursor-pointer flex flex-col justify-between min-h-[190px]">
+                  <div className="flex justify-between items-start">
+                    <div className="p-3 bg-purple-500/10 border-2 border-purple-400 text-purple-400 rounded-xl">
+                      <History size={26} />
+                    </div>
+                    <span className="text-[10px] font-mono text-purple-400 bg-purple-950 border border-purple-400 px-2 py-0.5 rounded-md font-black">ARSIP</span>
+                  </div>
+                  <div className="mt-4">
+                    <h3 className="text-lg font-black font-mono text-slate-100 group-hover:text-purple-300">Riwayat Verifikasi</h3>
+                    <p className="text-xs text-slate-300 mt-2">Pusat data pelacakan audit transaksi berkas yang telah dikerjakan sebelumnya.</p>
+                  </div>
+                </div>
+
+                {/* MENU AKTIF MANAJEMEN USER */}
+                <div 
+                  onClick={() => setActiveMenu('skpd')}
+                  className="bg-slate-950 border-2 border-slate-800 hover:border-emerald-400 p-6 rounded-2xl shadow-lg hover:shadow-[0_0_35px_rgba(16,185,129,0.25)] transition-all duration-300 group cursor-pointer flex flex-col justify-between min-h-[190px]"
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="p-3 bg-emerald-500/10 border-2 border-emerald-400 text-emerald-400 rounded-xl group-hover:bg-emerald-400 group-hover:text-slate-950 group-hover:shadow-[0_0_20px_rgba(16,185,129,0.6)] transition-all">
+                      <Users size={26} />
+                    </div>
+                    <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950 border border-emerald-400 px-2 py-0.5 rounded-md font-black uppercase">SKPD</span>
+                  </div>
+                  <div className="mt-4">
+                    <h3 className="text-lg font-black font-mono text-slate-100 group-hover:text-emerald-300 transition-colors">Manajemen Akun SKPD</h3>
+                    <p className="text-xs text-slate-300 mt-2">Kelola hak login akun, seting secure passkey, dinas instansi, dan unggah foto profil.</p>
+                  </div>
+                </div>
+
+                <div className="bg-slate-950 border-2 border-slate-800 hover:border-amber-400 p-6 rounded-2xl shadow-lg transition-all duration-300 group cursor-pointer flex flex-col justify-between min-h-[190px]">
+                  <div className="flex justify-between items-start">
+                    <div className="p-3 bg-amber-500/10 border-2 border-amber-400 text-amber-400 rounded-xl">
+                      <LayoutDashboard size={26} />
+                    </div>
+                    <span className="text-[10px] font-mono text-amber-400 bg-amber-950 border border-slate-400 px-2 py-0.5 rounded-md font-black">GRAFIK</span>
+                  </div>
+                  <div className="mt-4">
+                    <h3 className="text-lg font-black font-mono text-slate-100 group-hover:text-amber-300">Analitik Grafik APBD</h3>
+                    <p className="text-xs text-slate-300 mt-2">Visualisasi real-time persentase kelayakan usulan anggaran secara makro.</p>
+                  </div>
+                </div>
+
+                <div className="bg-slate-950 border-2 border-slate-800 hover:border-slate-300 p-6 rounded-2xl shadow-lg transition-all duration-300 group cursor-pointer flex flex-col justify-between min-h-[190px]">
+                  <div className="flex justify-between items-start">
+                    <div className="p-3 bg-slate-500/10 border-2 border-slate-400 text-slate-300 rounded-xl">
+                      <Settings size={26} />
+                    </div>
+                    <span className="text-[10px] font-mono text-slate-400 bg-slate-900 border border-slate-400 px-2 py-0.5 rounded-md font-black">MANAJEMEN</span>
+                  </div>
+                  <div className="mt-4">
+                    <h3 className="text-lg font-black font-mono text-slate-100 group-hover:text-white">Konfigurasi Enkripsi</h3>
+                    <p className="text-xs text-slate-300 mt-2">Pengaturan profil internal, kunci API Supabase, dan pembatasan sesi login.</p>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* SUB-MENU B: INTERFACE MODUL MANAJEMEN AKUN SKPD (USER) */}
+          {activeMenu === 'skpd' && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+              
+              {/* FORM DI-COMPACT DENGAN RECOGNITION MODE EDIT */}
+              <div className={`bg-slate-950 border-2 ${isEditing ? 'border-cyan-400/50 shadow-[0_0_20px_rgba(34,211,238,0.1)]' : 'border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.05)]'} p-4 rounded-xl h-fit transition-all`}>
+                <div className="flex justify-between items-center mb-2">
+                  <h2 className={`text-sm font-black font-mono ${isEditing ? 'text-cyan-300' : 'text-emerald-400'} uppercase tracking-wider flex items-center gap-2`}>
+                    {isEditing ? <Edit2 size={16} /> : <Plus size={16} />} 
+                    {isEditing ? 'Update Node Operator' : 'Registrasi Node Operator'}
+                  </h2>
+                  {isEditing && (
+                    <button 
+                      onClick={handleCancelEdit}
+                      className="px-2 py-1 bg-slate-900 border border-slate-800 text-[10px] text-red-400 hover:bg-red-950/30 rounded flex items-center gap-1 cursor-pointer font-mono font-bold"
+                    >
+                      <X size={10} /> BATAL
+                    </button>
+                  )}
+                </div>
+                <div className={`h-[1px] ${isEditing ? 'bg-cyan-400/20' : 'bg-emerald-500/20'} mb-4`}></div>
+                
+                <form onSubmit={handleAddUser} className="space-y-3 font-mono text-[11px]">
+                  {/* Bagian Input Foto */}
+                  <div className="space-y-1">
+                    <label className="block text-slate-400 font-bold uppercase tracking-wider text-[10px]">Foto Profil</label>
+                    <div className="flex items-center gap-2 bg-slate-900/60 p-2 rounded-xl border border-slate-800">
+                      <div className="w-10 h-10 bg-slate-950 rounded-full border border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
+                        {selectedFile ? (
+                          <img src={URL.createObjectURL(selectedFile)} alt="Preview" className="w-full h-full object-cover" />
+                        ) : (
+                          <User size={16} className="text-slate-600" />
+                        )}
+                      </div>
+                      <label className={`flex items-center gap-1.5 px-2.5 py-1.5 ${isEditing ? 'bg-cyan-600 hover:bg-cyan-500' : 'bg-emerald-600 hover:bg-emerald-500'} text-white font-bold rounded-lg cursor-pointer transition-all text-[10px]`}>
+                        <Upload size={12} />
+                        <span>UPLOAD BARU</span>
+                        <input id="avatar-input" type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
+                    <div className="space-y-1">
+                      <label className="block text-slate-400 font-bold uppercase tracking-wider text-[10px]">Nama Lengkap</label>
+                      <input 
+                        type="text" required placeholder="Budi Setiawan"
+                        value={newUser.name} onChange={(e) => setNewUser({...newUser, name: e.target.value})}
+                        className="w-full bg-slate-900 border border-slate-800 focus:border-cyan-400 rounded-lg p-2 text-white font-bold focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="block text-slate-400 font-bold uppercase tracking-wider text-[10px]">Email Login</label>
+                      <input 
+                        type="email" required placeholder="operator@dinas.go.id"
+                        value={newUser.email} onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                        className="w-full bg-slate-900 border border-slate-800 focus:border-cyan-400 rounded-lg p-2 text-white font-bold focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={isEditing} // Email dikunci saat edit demi menjaga integritas sistem Auth Supabase
+                        title={isEditing ? "Email login utama tidak bisa diedit langsung" : ""}
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="block text-slate-400 font-bold uppercase tracking-wider text-[10px]">Password Login</label>
+                      <input 
+                        type="password" required placeholder="Min 6 karakter"
+                        value={newUser.password} onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                        className="w-full bg-slate-900 border border-slate-800 focus:border-cyan-400 rounded-lg p-2 text-white font-bold focus:outline-none disabled:opacity-40"
+                        disabled={isEditing}
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="block text-slate-400 font-bold uppercase tracking-wider text-[10px]">Instansi SKPD</label>
+                      <input 
+                        type="text" required placeholder="BPKAD / Dinas Kesehatan"
+                        value={newUser.skpd} onChange={(e) => setNewUser({...newUser, skpd: e.target.value})}
+                        className="w-full bg-slate-900 border border-slate-800 focus:border-cyan-400 rounded-lg p-2 text-white font-bold focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-slate-400 font-bold uppercase tracking-wider text-[10px]">Otoritas Akses (Jabatan)</label>
+                    <input 
+                      type="text" required placeholder="Verifikator Anggaran"
+                      value={newUser.role} onChange={(e) => setNewUser({...newUser, role: e.target.value})}
+                      className="w-full bg-slate-900 border border-slate-800 focus:border-cyan-400 rounded-lg p-2 text-white font-bold focus:outline-none"
+                    />
+                  </div>
+
+                  <button 
+                    type="submit" disabled={loading || uploading}
+                    className={`w-full bg-gradient-to-r ${isEditing ? 'from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 shadow-[0_4px_12px_rgba(6,182,212,0.2)]' : 'from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-[0_4px_12px_rgba(16,185,129,0.2)]'} py-2.5 rounded-lg font-black tracking-widest text-white cursor-pointer active:scale-95 transition-all mt-2 text-[11px]`}
+                  >
+                    {uploading ? 'UPLOADING IMAGE...' : loading ? 'SINKRONISASI DATA...' : isEditing ? 'UPDATE DATA OPERATOR' : 'SIMPAN OPERATOR'}
+                  </button>
+                </form>
+              </div>
+
+              {/* TABEL SEKTOR KANAN: DATABASE USER VIEW */}
+              <div className="lg:col-span-2 bg-slate-950 border border-slate-800 p-5 rounded-xl shadow-lg">
+                <h2 className="text-sm font-black font-mono text-slate-200 uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <Users size={18} className="text-emerald-400" /> Database Terdaftar ({usersList.length})
+                </h2>
+                <div className="h-[1px] bg-slate-800 mb-4"></div>
+
+                {usersList.length === 0 ? (
+                  <div className="text-center py-10 font-mono text-[11px] text-slate-500 border-2 border-dashed border-slate-800 rounded-xl">
+                    Belum ada data node operator. Masukkan parameter di form kiri untuk mendaftarkan user baru.
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
+                    {usersList.map((usr) => (
+                      <div key={usr.id} className={`bg-slate-900/80 border ${editUserId === usr.id ? 'border-cyan-400 bg-slate-900 shadow-[0_0_15px_rgba(6,182,212,0.1)]' : 'border-slate-800 hover:border-emerald-500/30'} rounded-xl p-3 flex items-center justify-between gap-3 transition-all group`}>
+                        <div className="flex items-center gap-3">
+                          <div className="w-11 h-11 rounded-full overflow-hidden border border-slate-700 bg-slate-950 flex items-center justify-center shrink-0">
+                            {usr.avatar_url ? (
+                              <img src={usr.avatar_url} alt={usr.nama_lengkap} className="w-full h-full object-cover" />
+                            ) : (
+                              <User size={18} className="text-slate-600" />
+                            )}
+                          </div>
+                          
+                          <div className="font-mono">
+                            <h4 className="text-xs font-black text-slate-200 group-hover:text-emerald-400 transition-colors">{usr.nama_lengkap}</h4>
+                            <p className="text-[10px] text-slate-400">{usr.email}</p>
+                            <div className="flex flex-wrap gap-1.5 mt-1">
+                              <span className="text-[8px] font-bold px-1.5 py-0.5 bg-emerald-950 text-emerald-400 border border-emerald-500/20 rounded uppercase">{usr.instansi_skpd}</span>
+                              <span className="text-[8px] font-bold px-1.5 py-0.5 bg-slate-800 text-slate-300 rounded uppercase">{usr.role}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* SEKTOR ACTION BUTTON (KINI ADA TOMBOL EDIT) */}
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => handleSelectEditUser(usr)}
+                            className={`p-2 ${editUserId === usr.id ? 'bg-cyan-500 text-slate-950 border border-cyan-400' : 'bg-slate-950 border border-slate-800 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/30'} rounded-lg transition-all cursor-pointer`}
+                            title="Edit / Pilih Data Operator"
+                          >
+                            <Edit2 size={13} />
+                          </button>
+                          
+                          <button 
+                            onClick={() => handleDeleteUser(usr.id)}
+                            className="p-2 bg-red-950/30 border border-red-500/20 text-red-400 rounded-lg hover:bg-red-600 hover:text-white hover:border-red-500 transition-all cursor-pointer"
+                            title="Hapus Operator"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+            </div>
+          )}
+
+        </main>
+      </div>
+    );
+  }
+
+  // LOCK SCREEN UTAMA JIKA BELUM LOGIN
+  return (
+    <div className="min-h-screen bg-[#020617] text-slate-100 flex flex-col justify-center items-center p-4 font-sans relative overflow-hidden select-none">
+      <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[130px] pointer-events-none animate-pulse duration-[4000ms]"></div>
+      <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[130px] pointer-events-none animate-pulse duration-[4000ms] delay-1000"></div>
+
+      <div className="w-full max-w-md bg-slate-900/40 backdrop-blur-3xl border border-cyan-500/20 p-8 rounded-3xl shadow-[0_0_60px_rgba(6,182,212,0.12)] relative z-10 transition-all duration-500 hover:border-cyan-500/40 group">
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-36 h-36 rounded-full p-1 bg-gradient-to-b from-cyan-400 to-blue-600 shadow-[0_0_30px_rgba(6,182,212,0.25)] mb-4 relative transition-transform duration-700 group-hover:scale-105">
+            <div className="w-full h-full rounded-full overflow-hidden bg-slate-950">
+              <img src="/logo-avatar1.png" className="w-full h-full object-cover" alt="Avatar" />
+            </div>
+            <span className="absolute bottom-1 right-2 w-4 h-4 bg-emerald-500 border-2 border-slate-950 rounded-full animate-ping"></span>
+            <span className="absolute bottom-1 right-2 w-4 h-4 bg-emerald-500 border-2 border-slate-950 rounded-full"></span>
+          </div>
+
+          <h1 className="text-3xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-cyan-400 font-mono text-center">AVATAR APBD</h1>
+          <div className="h-[2px] w-20 bg-gradient-to-r from-transparent via-cyan-500 to-transparent mt-2.5"></div>
+          <p className="text-[12px] text-cyan-400/60 mt-2 uppercase tracking-[0.25em] font-mono font-bold text-center">Asisten Verifikasi Tekhnis</p>
+          <p className="text-[12px] text-cyan-400/60 uppercase tracking-[0.25em] font-mono font-bold text-center">Alokasi dan Regulasi APBD</p>
+        </div>
+
+        <form onSubmit={handleLogin} className="space-y-5">
+          <div className="space-y-1.5">
+            <label className="block text-[11px] font-bold text-cyan-400/70 uppercase tracking-widest font-mono pl-1">Email User</label>
+            <div className="relative">
+              <Mail size={18} className="absolute left-4 top-4 text-slate-500 transition-colors group-focus-within:text-cyan-400" />
+              <input 
+                type="email" required autoComplete="new-password" placeholder="email user" 
+                value={email} onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-slate-950/80 border border-slate-800/80 focus:border-cyan-500/80 rounded-xl pl-12 pr-4 py-3.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:shadow-[0_0_20px_rgba(6,182,212,0.15)] transition-all font-mono"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-[11px] font-bold text-cyan-400/70 uppercase tracking-widest font-mono pl-1">Secure Passkey</label>
+            <div className="relative">
+              <Lock size={18} className="absolute left-4 top-4 text-slate-500" />
+              <input 
+                type={showPassword ? "text" : "password"} required autoComplete="new-password" placeholder="••••••••" 
+                value={password} onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-slate-950/80 border border-slate-800/80 focus:border-cyan-500/80 rounded-xl pl-12 pr-12 py-3.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:shadow-[0_0_20px_rgba(6,182,212,0.15)] transition-all font-mono"
+              />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-4 text-slate-500 hover:text-cyan-400 transition-colors cursor-pointer">
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+
+          <button 
+            type="submit" disabled={loading}
+            className="w-full bg-gradient-to-r from-cyan-600 via-blue-600 to-blue-700 hover:from-cyan-500 hover:via-blue-500 hover:to-blue-600 disabled:from-slate-800 disabled:to-slate-800 text-white py-4 px-4 rounded-xl font-black font-mono tracking-widest text-xs transition-all flex items-center justify-center gap-2 group shadow-[0_0_25px_rgba(6,182,212,0.2)] hover:shadow-[0_0_35px_rgba(6,182,212,0.4)] active:scale-[0.98] mt-8 cursor-pointer"
+          >
+            {loading ? 'SYNCHRONIZING SECURE...' : 'L O G I N'}
+            <ArrowRight size={16} className="transform group-hover:translate-x-1.5 transition-transform stroke-[3]" />
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}

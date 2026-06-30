@@ -1,0 +1,480 @@
+import React, { useState } from 'react';
+import { 
+  ArrowRight, Lock, Mail, Eye, EyeOff, 
+  FileSpreadsheet, LogOut, Radio, Activity, CheckCircle, Users, 
+  Layers, ChevronDown, ChevronRight, Folder, ShieldCheck, ToggleLeft,
+  Menu, ChevronLeft, HelpCircle, LayoutGrid, Sliders, Database, BookOpen
+} from 'lucide-react';
+import { supabase } from './supabaseClient';
+
+// --- IMPOR MODUL DARI FOLDER COMPONENTS ---
+import ModulMasterSkpd from './components/ModulMasterSkpd';
+import ModulVerifikasiRka from './components/ModulVerifikasiRka';
+import ModulVerifikasiRealisasi from './components/ModulVerifikasiRealisasi';
+import ModulCekRealisasi from './components/ModulCekRealisasi';
+import ModulTahapanApbd from './components/ModulTahapanApbd'; 
+import ModulTematik from './components/ModulTematik'; 
+import ModulRka from './components/ModulRka'; // Terimpor dengan benar
+
+export default function App() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // State navigasi halaman utama
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
+  
+  // State tab aktif
+  const [activeTab, setActiveTab] = useState('master-skpd');
+  
+  // ⚡ ACCORDION STATE
+  const [openAccordion, setOpenAccordion] = useState('master');
+
+  // State kontrol kempis/lebar sidebar
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true); 
+    
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    
+    if (error) {
+      alert(`Akses Ditolak: ${error.message}`);
+    } else {
+      setUserEmail(data.user.email);
+      setIsLoggedIn(true);
+    }
+    setLoading(false);
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setIsLoggedIn(false);
+    setEmail('');
+    setPassword('');
+    setActiveTab('master-skpd');
+  };
+
+  const dapatkanLabelTab = () => {
+    switch (activeTab) {
+      case 'master-skpd': return 'Master Perangkat Daerah (SKPD)';
+      case 'tahapan-apbd': return 'Konfigurasi Tahapan APBD';
+      case 'master-rka': return 'Master Arsip Dokumen RKA SKPD';
+      case 'data-realisasi': return 'Repository Data Realisasi';
+      case 'tematik': return 'Master Kelompok Laporan Tematik APBD';
+      case 'verifikasi-rka': return 'Sistem Validasi RKA';
+      case 'verifikasi-realisasi': return 'Audit Komparatif Realisasi';
+      default: return 'Console Workspace';
+    }
+  };
+
+  if (isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-[#060913] text-white font-sans flex flex-col relative overflow-hidden select-none">
+        
+        {/* Pendaran Cahaya Latar Belakang */}
+        <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-cyan-400/10 rounded-full blur-[140px] pointer-events-none animate-pulse duration-[6000ms]"></div>
+        <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-[140px] pointer-events-none animate-pulse duration-[6000ms] delay-1000"></div>
+
+        {/* HEADER / TOP BAR */}
+        <header className="w-full border-b border-cyan-500/30 bg-slate-950/90 backdrop-blur-md px-6 py-3.5 flex justify-between items-center relative z-30 shadow-[0_4px_30px_rgba(6,182,212,0.15)] shrink-0">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className="p-1.5 rounded-lg bg-slate-900 border border-cyan-500/30 text-cyan-400 transition-all hover:bg-cyan-950/50 cursor-pointer shadow-[0_0_10px_rgba(6,182,212,0.1)]"
+            >
+              <Menu size={16} />
+            </button>
+
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg border border-cyan-400/50 shadow-[0_0_15px_rgba(34,211,238,0.3)] bg-slate-950 flex items-center justify-center shrink-0">
+                <img 
+                  src="/logo-avatar1.png" 
+                  alt="Logo" 
+                  className="w-full h-full object-cover object-top rounded-lg"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=150";
+                  }}
+                />
+              </div>
+              <div className="flex flex-col">
+                <h1 className="text-sm font-black tracking-widest text-cyan-300 font-mono leading-none">AJUDAN TAPD</h1>
+                <span className="text-[8px] font-mono tracking-[0.15em] text-slate-500 uppercase mt-0.5">Audit Management System</span>
+              </div>
+            </div>
+
+            <div className="hidden md:flex items-center gap-2 border-l border-slate-800 pl-4 font-mono text-[10px]">
+              <span className="text-slate-500 font-bold">Services</span>
+              <span className="text-slate-600">/</span>
+              <span className="text-slate-500 font-bold">AJUDAN TAPD Console</span>
+              <span className="text-slate-600">/</span>
+              <span className="text-cyan-400 font-bold bg-cyan-950/30 px-2 py-0.5 border border-cyan-500/20 rounded-md">
+                {dapatkanLabelTab()}
+              </span>
+            </div>
+          </div>
+
+          <div className="hidden lg:flex items-center gap-5 border border-cyan-500/20 bg-slate-900/40 backdrop-blur px-3 py-1.5 rounded-lg font-mono text-[10px] font-bold">
+            <div className="flex items-center gap-1.5 text-slate-400">
+              <Radio size={12} className="text-cyan-400 animate-pulse" />
+              <span>SECURE NODE</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-slate-400">
+              <Radio size={12} className="text-cyan-400 animate-pulse" />
+              <Activity size={12} className="text-cyan-400 animate-bounce" />
+              <span>14 MS</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-emerald-400">
+              <CheckCircle size={12} />
+              <span>CONNECTED</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="hidden sm:flex flex-col text-right font-mono">
+              <span className="text-[9px] font-bold text-slate-500 tracking-wider">TAPD DIRECTORY</span>
+              <span className="text-xs font-bold text-cyan-300">{userEmail}</span>
+            </div>
+            <button 
+              onClick={handleLogout}
+              className="px-3 py-1.5 bg-red-950/40 border border-red-500/30 rounded-lg text-red-400 hover:bg-red-900/30 transition-all duration-200 flex items-center gap-1.5 text-[10px] font-mono font-bold tracking-wider cursor-pointer active:scale-95"
+            >
+              <LogOut size={12} />
+              <span className="hidden md:inline">Sign Out</span>
+            </button>
+          </div>
+        </header>
+
+        {/* SIDEBAR NAVIGATION BLOCK */}
+        <div className="flex-1 flex overflow-hidden relative z-10">
+          
+          <aside 
+            className={`bg-slate-950/95 border-r-2 border-cyan-500/40 backdrop-blur-xl p-3 flex flex-col justify-between font-mono shrink-0 transition-all duration-300 ease-in-out relative z-20 shadow-[15px_0_50px_rgba(6,182,212,0.18)] ${
+              sidebarCollapsed ? 'w-[76px]' : 'w-68'
+            }`}
+          >
+            <div className="flex flex-col gap-4">
+              {!sidebarCollapsed && (
+                <span className="text-[9px] text-cyan-400/40 font-bold tracking-[0.25em] px-2 mb-1 uppercase border-b border-slate-900 pb-2">
+                  // CORE_SYSTEM_ACCORDION
+                </span>
+              )}
+              
+              {/* ⚡ ACCORDION GROUP 1: DATA CONTEXT MANAGEMENT */}
+              <div className="flex flex-col gap-1 bg-slate-900/30 p-1 rounded-xl border border-slate-900">
+                <button 
+                  onClick={() => {
+                    if(sidebarCollapsed) setSidebarCollapsed(false);
+                    setOpenAccordion(openAccordion === 'master' ? '' : 'master');
+                  }}
+                  className={`w-full flex items-center justify-between px-3 py-3 rounded-lg text-left text-xs font-black tracking-wider transition-all border relative group active:scale-98 cursor-pointer ${
+                    openAccordion === 'master'
+                      ? 'bg-gradient-to-r from-slate-900 to-slate-950 border-cyan-400 text-cyan-300 shadow-[0_4px_15px_rgba(6,182,212,0.2)]' 
+                      : 'border-slate-800 text-white/90 bg-slate-950/60 hover:border-slate-700 hover:text-slate-200'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Folder size={15} className={openAccordion === 'master' ? 'text-cyan-400 drop-shadow-[0_0_5px_rgba(6,182,212,0.8)]' : 'text-slate-400'} />
+                    {!sidebarCollapsed && <span>01. DATA MASTER</span>}
+                  </div>
+                  {!sidebarCollapsed && (
+                    <ChevronDown size={14} className={`text-cyan-400 transition-transform duration-300 ${openAccordion === 'master' ? 'transform rotate-180' : ''}`} />
+                  )}
+
+                  {sidebarCollapsed && (
+                    <div className="absolute left-16 bg-slate-950 border border-cyan-500/40 text-cyan-300 text-[10px] font-bold py-1.5 px-3 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-opacity z-30 font-sans">
+                      [01] ACCORDION MASTER DATA
+                    </div>
+                  )}
+                </button>
+
+                {/* ACCORDION CONTENT: SLOT MASTER SUBMENU */}
+                {openAccordion === 'master' && !sidebarCollapsed && (
+                  <div className="mt-1.5 p-1.5 bg-slate-950/80 border border-slate-800/60 rounded-lg flex flex-col gap-1 animate-fadeIn">
+                    
+                    {/* SUBMENU 1: MASTER SKPD */}
+                    <button 
+                      onClick={() => setActiveTab('master-skpd')}
+                      className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-md text-left text-[11px] font-bold tracking-wide transition-all border active:scale-98 cursor-pointer ${
+                        activeTab === 'master-skpd' 
+                          ? 'bg-emerald-950/30 border-emerald-500/50 text-emerald-300 shadow-[inset_0_0_8px_rgba(16,185,129,0.15)]' 
+                          : 'border-transparent text-white/90 hover:bg-slate-900/60 hover:text-slate-300'
+                      }`}
+                    >
+                      <Users size={13} className={activeTab === 'master-skpd' ? 'text-emerald-400 animate-pulse' : 'text-slate-400'} />
+                      <span className="truncate">Master SKPD</span>
+                    </button>
+
+                    {/* SUBMENU 2: TAHAPAN APBD */}
+                    <button 
+                      onClick={() => setActiveTab('tahapan-apbd')}
+                      className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-md text-left text-[11px] font-bold tracking-wide transition-all border active:scale-98 cursor-pointer ${
+                        activeTab === 'tahapan-apbd' 
+                          ? 'bg-fuchsia-950/30 border-fuchsia-500/50 text-fuchsia-300 shadow-[inset_0_0_8px_rgba(217,70,239,0.15)]' 
+                          : 'border-transparent text-white/90 hover:bg-slate-900/60 hover:text-slate-300'
+                      }`}
+                    >
+                      <ToggleLeft size={13} className={activeTab === 'tahapan-apbd' ? 'text-fuchsia-400' : 'text-slate-400'} />
+                      <span className="truncate">Tahapan APBD</span>
+                    </button>
+
+                    {/* 🌟 SUBMENU BARU: MASTER RKA (Terletak Tepat di Atas Data Realisasi) */}
+                    <button 
+                      onClick={() => setActiveTab('master-rka')}
+                      className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-md text-left text-[11px] font-bold tracking-wide transition-all border active:scale-98 cursor-pointer ${
+                        activeTab === 'master-rka' 
+                          ? 'bg-cyan-950/40 border-cyan-500/50 text-cyan-300 shadow-[inset_0_0_8px_rgba(6,182,212,0.2)]' 
+                          : 'border-transparent text-white/90 hover:bg-slate-900/60 hover:text-slate-300'
+                      }`}
+                    >
+                      <Database size={13} className={activeTab === 'master-rka' ? 'text-cyan-400 animate-pulse' : 'text-slate-400'} />
+                      <span className="truncate">Master RKA</span>
+                    </button>
+
+                    {/* SUBMENU 3: DATA REALISASI */}
+                    <button 
+                      onClick={() => setActiveTab('data-realisasi')}
+                      className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-md text-left text-[11px] font-bold tracking-wide transition-all border active:scale-98 cursor-pointer ${
+                        activeTab === 'data-realisasi' 
+                          ? 'bg-amber-950/30 border-amber-500/50 text-amber-300 shadow-[inset_0_0_8px_rgba(245,158,11,0.15)]' 
+                          : 'border-transparent text-white/90 hover:bg-slate-900/60 hover:text-slate-300'
+                      }`}
+                    >
+                      <Layers size={13} className={activeTab === 'data-realisasi' ? 'text-amber-400' : 'text-slate-400'} />
+                      <span className="truncate">Data Realisasi</span>
+                    </button>
+
+                    {/* 🌟 SUBMENU: TEMATIK */}
+                    <button 
+                      onClick={() => setActiveTab('tematik')}
+                      className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-md text-left text-[11px] font-bold tracking-wide transition-all border active:scale-98 cursor-pointer ${
+                        activeTab === 'tematik' 
+                          ? 'bg-cyan-950/40 border-cyan-500/50 text-cyan-300 shadow-[inset_0_0_8px_rgba(6,182,212,0.2)]' 
+                          : 'border-transparent text-white/90 hover:bg-slate-900/60 hover:text-slate-300'
+                      }`}
+                    >
+                      <BookOpen size={13} className={activeTab === 'tematik' ? 'text-cyan-400 animate-pulse' : 'text-slate-400'} />
+                      <span className="truncate">Kode Laporan Tematik</span>
+                    </button>
+
+                  </div>
+                )}
+              </div>
+
+              {/* ⚡ ACCORDION GROUP 2: VALIDATION & AUDIT CONSOLE */}
+              <div className="flex flex-col gap-1 bg-slate-900/30 p-1 rounded-xl border border-slate-900">
+                <button 
+                  onClick={() => {
+                    if(sidebarCollapsed) setSidebarCollapsed(false);
+                    setOpenAccordion(openAccordion === 'verifikasi' ? '' : 'verifikasi');
+                  }}
+                  className={`w-full flex items-center justify-between px-3 py-3 rounded-lg text-left text-xs font-black tracking-wider transition-all border relative group active:scale-98 cursor-pointer ${
+                    openAccordion === 'verifikasi'
+                      ? 'bg-gradient-to-r from-slate-900 to-slate-950 border-cyan-400 text-cyan-300 shadow-[0_4px_15px_rgba(6,182,212,0.2)]' 
+                      : 'border-slate-800 text-white/90 bg-slate-950/60 hover:border-slate-700 hover:text-slate-200'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Sliders size={15} className={openAccordion === 'verifikasi' ? 'text-cyan-400 drop-shadow-[0_0_5px_rgba(6,182,212,0.8)]' : 'text-slate-400'} />
+                    {!sidebarCollapsed && <span>02. PROSES VERIFIKASI</span>}
+                  </div>
+                  {!sidebarCollapsed && (
+                    <ChevronDown size={14} className={`text-cyan-400 transition-transform duration-300 ${openAccordion === 'verifikasi' ? 'transform rotate-180' : ''}`} />
+                  )}
+
+                  {sidebarCollapsed && (
+                    <div className="absolute left-16 bg-slate-950 border border-cyan-500/40 text-cyan-300 text-[10px] font-bold py-1.5 px-3 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-opacity z-30 font-sans">
+                      [02] ACCORDION AUDIT INSTRUMENT
+                    </div>
+                  )}
+                </button>
+
+                {/* ACCORDION CONTENT: SLOT VERIFIKASI SUBMENU */}
+                {openAccordion === 'verifikasi' && !sidebarCollapsed && (
+                  <div className="mt-1.5 p-1.5 bg-slate-950/80 border border-slate-800/60 rounded-lg flex flex-col gap-1 animate-fadeIn">
+                    
+                    {/* SUBMENU 1: VERIFIKASI RKA */}
+                    <button 
+                      onClick={() => setActiveTab('verifikasi-rka')}
+                      className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-md text-left text-[11px] font-bold tracking-wide transition-all border active:scale-98 cursor-pointer ${
+                        activeTab === 'verifikasi-rka' 
+                          ? 'bg-cyan-950/40 border-cyan-500/50 text-cyan-300 shadow-[inset_0_0_8px_rgba(6,182,212,0.2)]' 
+                          : 'border-transparent text-white/90 hover:bg-slate-900/60 hover:text-slate-300'
+                      }`}
+                    >
+                      <FileSpreadsheet size={13} className={activeTab === 'verifikasi-rka' ? 'text-cyan-400' : 'text-slate-600'} />
+                      <span className="truncate">Verifikasi Struktur RKA</span>
+                    </button>
+
+                    
+
+
+
+                  </div>
+                )}
+              </div>
+
+            </div>
+
+            <div className="pt-3 border-t border-slate-900 flex flex-col gap-1">
+              <div className={`flex items-center gap-2 px-2 text-slate-500 ${sidebarCollapsed ? 'justify-center' : ''}`}>
+                <HelpCircle size={14} className="text-cyan-500/50" />
+                {!sidebarCollapsed && <span className="text-[9px] font-sans text-slate-600 tracking-widest font-bold">AJUDAN TAPD</span>}
+              </div>
+            </div>
+          </aside>
+
+          {/* AREA LIVE WORKSPACE MODUL */}
+          <main className="flex-1 overflow-y-auto px-6 py-6 bg-[#080d1a]/40 relative z-10">
+            <div className="max-w-7xl mx-auto">
+              
+              {activeTab === 'master-skpd' && (
+                <div className="bg-slate-950/60 border-2 border-emerald-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(16,185,129,0.04)] animate-fadeIn">
+                  <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-emerald-400/80 font-bold uppercase tracking-wider">
+                    <ShieldCheck size={12} /> CORE INTEGRATION // MODUL MASTER SKPD
+                  </div>
+                  <ModulMasterSkpd />
+                </div>
+              )}
+
+              {activeTab === 'tahapan-apbd' && (
+                <div className="bg-slate-950/60 border-2 border-fuchsia-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(217,70,239,0.04)] animate-fadeIn">
+                  <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-fuchsia-400/80 font-bold uppercase tracking-wider">
+                    <ShieldCheck size={12} /> CORE INTEGRATION // MODUL TAHAPAN APBD
+                  </div>
+                  <ModulTahapanApbd />
+                </div>
+              )}
+
+              {/* ROUTE VIEW BARU: MERENDER MODUL MASTER RKA */}
+              {activeTab === 'master-rka' && (
+                <div className="bg-slate-950/60 border-2 border-cyan-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(6,182,212,0.04)] animate-fadeIn">
+                  <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
+                    <ShieldCheck size={12} /> CORE INTEGRATION // MODUL MASTER RKA SINKRONISASI
+                  </div>
+                  <ModulRka />
+                </div>
+              )}
+
+              {activeTab === 'data-realisasi' && (
+                <div className="bg-slate-950/60 border-2 border-amber-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(245,158,11,0.04)] animate-fadeIn">
+                  <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-amber-400/80 font-bold uppercase tracking-wider">
+                    <ShieldCheck size={12} /> CORE INTEGRATION // MODUL CONFIG DATA REALISASI
+                  </div>
+                  <ModulVerifikasiRealisasi />
+                </div>
+              )}
+
+              {/* RENDERING ROUTE UNTUK TAB TEMATIK */}
+              {activeTab === 'tematik' && (
+                <div className="bg-slate-950/60 border-2 border-cyan-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(6,182,212,0.04)] animate-fadeIn">
+                  <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
+                    <ShieldCheck size={12} /> CORE INTEGRATION // MODUL KELOMPOK LAPORAN TEMATIK 
+                  </div>
+                  <ModulTematik />
+                </div>
+              )}
+
+              {activeTab === 'verifikasi-rka' && (
+                <div className="bg-slate-950/60 border-2 border-cyan-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(6,182,212,0.04)] animate-fadeIn">
+                  <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
+                    <ShieldCheck size={12} /> CORE INTEGRATION // MODUL VERIFIKASI RKA
+                  </div>
+                  <ModulVerifikasiRka />
+                </div>
+              )}
+
+              {activeTab === 'verifikasi-realisasi' && (
+                <div className="bg-slate-950/60 border-2 border-emerald-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(16,185,129,0.04)] animate-fadeIn">
+                  <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-emerald-400/80 font-bold uppercase tracking-wider">
+                    <ShieldCheck size={12} /> CORE INTEGRATION // MODUL COMPONENT VERIFIKASI REALISASI
+                  </div>
+                  <ModulCekRealisasi />
+                </div>
+              )}
+
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================
+  // 2. TAMPILAN LOCK SCREEN / MODUL LOGIN (Dipertahankan Utuh)
+  // =========================================================
+  return (
+    <div className="min-h-screen bg-[#020617] text-slate-100 flex flex-col justify-center items-center p-4 font-sans relative overflow-hidden select-none">
+      <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[130px] pointer-events-none animate-pulse duration-[4000ms]"></div>
+      <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[130px] pointer-events-none animate-pulse duration-[4000ms] delay-1000"></div>
+
+      <div className="w-full max-w-md bg-slate-900/40 backdrop-blur-3xl border border-cyan-500/20 p-8 rounded-3xl shadow-[0_0_60px_rgba(6,182,212,0.12)] relative z-10 transition-all duration-500 hover:border-cyan-500/40 group">
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-36 h-36 rounded-full p-1 bg-gradient-to-b from-cyan-400 to-blue-600 shadow-[0_0_30px_rgba(6,182,212,0.25)] mb-4 relative transition-transform duration-700 group-hover:scale-105">
+            <div className="w-full h-full rounded-full overflow-hidden bg-slate-950 flex items-center justify-center">
+              <img 
+                src="/logo-avatar1.png" 
+                className="w-full h-full object-cover object-top"
+                alt="Avatar"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=300";
+                }}
+              />
+            </div>
+            <span className="absolute bottom-1 right-2 w-4 h-4 bg-emerald-500 border-2 border-slate-950 rounded-full animate-ping"></span>
+            <span className="absolute bottom-1 right-2 w-4 h-4 bg-emerald-500 border-2 border-slate-950 rounded-full"></span>
+          </div>
+          <h1 className="text-3xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-cyan-400 font-mono text-center">AJUDAN TAPD</h1>
+          <div className="h-[2px] w-20 bg-gradient-to-r from-transparent via-cyan-500 to-transparent mt-2.5"></div>
+          <p className="text-[12px] text-cyan-400/60 mt-2 uppercase tracking-[0.25em] font-mono font-bold text-center">Asisten Verifikasi Tekhnis</p>
+          <p className="text-[12px] text-cyan-400/60 uppercase tracking-[0.25em] font-mono font-bold text-center">Alokasi dan Regulasi APBD</p>
+        </div>
+
+        <form onSubmit={handleLogin} className="space-y-5">
+          <div className="space-y-1.5">
+            <label className="block text-[11px] font-bold text-cyan-400/70 uppercase tracking-widest font-mono pl-1">Email User</label>
+            <div className="relative">
+              <Mail size={18} className="absolute left-4 top-4 text-slate-500" />
+              <input 
+                type="email" required placeholder="email user" value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-slate-950/80 border border-slate-800/80 focus:border-cyan-500/80 rounded-xl pl-12 pr-4 py-3.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:shadow-[0_0_20px_rgba(6,182,212,0.15)] transition-all font-mono"
+              />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <label className="block text-[11px] font-bold text-cyan-400/70 uppercase tracking-widest font-mono pl-1">Secure Passkey</label>
+            <div className="relative">
+              <Lock size={18} className="absolute left-4 top-4 text-slate-500" />
+              <input 
+                type={showPassword ? "text" : "password"} required placeholder="••••••••" value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-slate-950/80 border border-slate-800/80 focus:border-cyan-500/80 rounded-xl pl-12 pr-12 py-3.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:shadow-[0_0_20px_rgba(6,182,212,0.15)] transition-all font-mono"
+              />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-4 text-slate-500 hover:text-cyan-400 transition-colors cursor-pointer">
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+          <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-cyan-600 via-blue-600 to-blue-700 hover:from-cyan-500 hover:via-blue-500 hover:to-blue-600 disabled:from-slate-800 disabled:to-slate-800 text-white py-4 px-4 rounded-xl font-black font-mono tracking-widest text-xs transition-all flex items-center justify-center gap-2 group shadow-[0_0_25px_rgba(6,182,212,0.2)] hover:shadow-[0_0_35px_rgba(6,182,212,0.4)] active:scale-[0.98] mt-8 cursor-pointer">
+            {loading ? 'SYNCHRONIZING SECURE...' : 'L O G I N'}
+            <ArrowRight size={16} className="transform group-hover:translate-x-1.5 transition-transform stroke-[3]" />
+          </button>
+        </form>
+      </div>
+      
+      <div className="flex flex-col items-center gap-1.5 mt-8 text-center relative z-10">
+        <p className="text-[10px] font-mono text-slate-600 tracking-[0.3em] uppercase">AJUDAN TAPD v1.0.0</p>
+        <div className="flex items-center gap-2 px-3 py-1 bg-cyan-950/20 border border-cyan-500/20 rounded-full text-[9px] text-cyan-400/70 font-mono tracking-wider shadow-[0_0_10px_rgba(6,182,212,0.05)]">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]"></span>
+          PWA ENCRYPTED NODE ACTIVE
+        </div>
+      </div>
+    </div>
+  );
+}

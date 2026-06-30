@@ -1,0 +1,747 @@
+kdrek;nmrek;level;nmlevel;cek
+4;PENDAPATAN DAERAH;1;AKUN;1
+4.1;PENDAPATAN ASLI DAERAH (PAD);2;KELOMPOK;3
+4.1.01;Pajak Daerah;3;JENIS;6
+4.1.01.09;Pajak Reklame;4;OBJEK;9
+4.1.01.09.001;Pajak Reklame Papan/Billboard/Videotron/ Megatron;6;RINCIAN OBJEK;13
+4.1.01.09.001.00001;Pajak Reklame Papan/Billboard/Videotron/ Megatron;8;SUB RINCIAN OBJEK;19
+4.1.01.09.002;Pajak Reklame Kain;6;RINCIAN OBJEK;13
+4.1.01.09.002.00001;Pajak Reklame Kain;8;SUB RINCIAN OBJEK;19
+4.1.01.09.003;Pajak Reklame Melekat/Stiker;6;RINCIAN OBJEK;13
+4.1.01.09.003.00001;Pajak Reklame Melekat/Stiker;8;SUB RINCIAN OBJEK;19
+4.1.01.09.005;Pajak Reklame Berjalan;6;RINCIAN OBJEK;13
+4.1.01.09.005.00001;Pajak Reklame Berjalan;8;SUB RINCIAN OBJEK;19
+4.1.01.13;Pajak Sarang Burung Walet;4;OBJEK;9
+4.1.01.13.001;Pajak Sarang Burung Walet;6;RINCIAN OBJEK;13
+4.1.01.13.001.00001;Pajak Sarang Burung Walet;8;SUB RINCIAN OBJEK;19
+4.1.01.14;Pajak Mineral Bukan Logam dan Batuan;4;OBJEK;9
+4.1.01.14.008;Pajak Dolomit;6;RINCIAN OBJEK;13
+4.1.01.14.008.00001;Pajak Dolomit;8;SUB RINCIAN OBJEK;19
+4.1.01.14.037;Pajak Mineral bukan Logam dan Batuan Lainnya;6;RINCIAN OBJEK;13
+4.1.01.14.037.00001;Pajak Mineral bukan Logam dan Batuan Lainnya;8;SUB RINCIAN OBJEK;19
+4.1.01.15;Pajak Bumi dan Bangunan Perdesaan dan Perkotaan (PBBP2);4;OBJEK;9
+4.1.01.15.001;PBBP2;6;RINCIAN OBJEK;13
+4.1.01.15.001.00001;PBBP2;8;SUB RINCIAN OBJEK;19
+4.1.01.16;Bea Perolehan Hak Atas Tanah dan Bangunan (BPHTB);4;OBJEK;9
+4.1.01.16.001;BPHTB-Pemindahan Hak;6;RINCIAN OBJEK;13
+4.1.01.16.001.00001;BPHTB-Pemindahan Hak;8;SUB RINCIAN OBJEK;19
+4.1.01.16.002;BPHTB-Pemberian Hak Baru;6;RINCIAN OBJEK;13
+4.1.01.16.002.00001;BPHTB-Pemberian Hak Baru;8;SUB RINCIAN OBJEK;19
+4.1.01.19;Pajak Barang dan Jasa Tertentu (PBJT);4;OBJEK;9
+4.1.01.19.001;PBJT-Makanan dan/atau Minuman;6;RINCIAN OBJEK;13
+4.1.01.19.001.00001;PBJT-Restoran;8;SUB RINCIAN OBJEK;19
+4.1.01.19.002;PBJT-Tenaga Listrik;6;RINCIAN OBJEK;13
+4.1.01.19.002.00001;PBJT-Konsumsi Tenaga Listrik dari Sumber Lain;8;SUB RINCIAN OBJEK;19
+4.1.01.19.002.00002;PBJT-Konsumsi Tenaga Listrik yang Dihasilkan Sendiri;8;SUB RINCIAN OBJEK;19
+4.1.01.19.003;PBJT-Jasa Perhotelan;6;RINCIAN OBJEK;13
+4.1.01.19.003.00001;PBJT-Hotel;8;SUB RINCIAN OBJEK;19
+4.1.01.19.003.00009;PBJT-Rumah Penginapan/Guesthouse/Bungalo/Resort/Cottage;8;SUB RINCIAN OBJEK;19
+4.1.01.19.004;PBJT-Jasa Parkir;6;RINCIAN OBJEK;13
+4.1.01.19.004.00001;PBJT-Penyediaan atau Penyelenggaraan Tempat Parkir;8;SUB RINCIAN OBJEK;19
+4.1.01.19.005;PBJT-Jasa Kesenian dan Hiburan;6;RINCIAN OBJEK;13
+4.1.01.19.005.00001;PBJT-Tontonan Film atau Bentuk Tontonan Audio Visual Lainnya yang Dipertontonkan secara Langsung di Suatu Lokasi Tertentu;8;SUB RINCIAN OBJEK;19
+4.1.01.19.005.00002;PBJT-Pergelaran Kesenian, Musik, Tari, dan/atau Busana;8;SUB RINCIAN OBJEK;19
+4.1.01.19.005.00003;PBJT-Kontes Kecantikan;8;SUB RINCIAN OBJEK;19
+4.1.01.19.005.00008;PBJT-Permainan Ketangkasan;8;SUB RINCIAN OBJEK;19
+4.1.01.20;Opsen Pajak Kendaraan Bermotor (PKB);4;OBJEK;9
+4.1.01.20.001;Opsen PKB;6;RINCIAN OBJEK;13
+4.1.01.20.001.00001;Opsen PKB;8;SUB RINCIAN OBJEK;19
+4.1.01.21;Opsen Bea Balik Nama Kendaraan Bermotor (BBNKB);4;OBJEK;9
+4.1.01.21.001;Opsen BBNKB;6;RINCIAN OBJEK;13
+4.1.01.21.001.00001;Opsen BBNKB;8;SUB RINCIAN OBJEK;19
+4.1.02;Retribusi Daerah;3;JENIS;6
+4.1.02.01;Retribusi Jasa Umum;4;OBJEK;9
+4.1.02.01.001;Retribusi Pelayanan Kesehatan;6;RINCIAN OBJEK;13
+4.1.02.01.001.00001;Retribusi Pelayanan Kesehatan di Puskesmas;8;SUB RINCIAN OBJEK;19
+4.1.02.01.001.00005;Retribusi Pelayanan Kesehatan di Rumah Sakit Umum Daerah;8;SUB RINCIAN OBJEK;19
+4.1.02.01.001.00006;Retribusi Pelayanan Kesehatan di Tempat Pelayanan Kesehatan Lainnya yang Sejenis;8;SUB RINCIAN OBJEK;19
+4.1.02.01.004;Retribusi Pelayanan Parkir di Tepi Jalan Umum;6;RINCIAN OBJEK;13
+4.1.02.01.004.00001;Retribusi Penyediaan Pelayanan Parkir di Tepi Jalan Umum;8;SUB RINCIAN OBJEK;19
+4.1.02.01.005;Retribusi Pelayanan Pasar;6;RINCIAN OBJEK;13
+4.1.02.01.005.00001;Retribusi Pelataran;8;SUB RINCIAN OBJEK;19
+4.1.02.01.005.00002;Retribusi Los;8;SUB RINCIAN OBJEK;19
+4.1.02.01.005.00003;Retribusi Kios;8;SUB RINCIAN OBJEK;19
+4.1.02.01.014;Retribusi Pelayanan Kebersihan;6;RINCIAN OBJEK;13
+4.1.02.01.014.00001;Retribusi Pelayanan Persampahan;8;SUB RINCIAN OBJEK;19
+4.1.02.01.014.00002;Retribusi Penyediaan dan/atau Penyedotan Kakus;8;SUB RINCIAN OBJEK;19
+4.1.02.02;Retribusi Jasa Usaha;4;OBJEK;9
+4.1.02.02.006;Retribusi Tempat Penginapan/ Pesanggrahan/Vila;6;RINCIAN OBJEK;13
+4.1.02.02.006.00001;Retribusi Pelayanan Tempat Penginapan/ Pesanggrahan/Vila;8;SUB RINCIAN OBJEK;19
+4.1.02.02.012;Retribusi Penyediaan Tempat Kegiatan Usaha berupa Pasar, Grosir, Pertokoan, dan Tempat Kegiatan Usaha Lainnya;6;RINCIAN OBJEK;13
+4.1.02.02.012.00001;Retribusi Penyediaan Tempat Kegiatan Usaha berupa Pasar, Grosir, Pertokoan, dan Tempat Kegiatan Usaha Lainnya;8;SUB RINCIAN OBJEK;19
+4.1.02.02.014;Retribusi Penyediaan Tempat Khusus Parkir Diluar Badan Jalan;6;RINCIAN OBJEK;13
+4.1.02.02.014.00001;Retribusi Penyediaan Tempat Khusus Parkir Diluar Badan Jalan;8;SUB RINCIAN OBJEK;19
+4.1.02.02.015;Retribusi Pelayanan Rumah Pemotongan Hewan Ternak;6;RINCIAN OBJEK;13
+4.1.02.02.015.00001;Retribusi Pelayanan Rumah Pemotongan Hewan Ternak;8;SUB RINCIAN OBJEK;19
+4.1.02.02.017;Retribusi Pelayanan Tempat Rekreasi, Pariwisata, dan Olahraga;6;RINCIAN OBJEK;13
+4.1.02.02.017.00001;Retribusi Pelayanan Tempat Rekreasi, Pariwisata, dan Olahraga;8;SUB RINCIAN OBJEK;19
+4.1.02.02.019;Retribusi Penjualan Hasil Produksi Usaha Pemerintah Daerah;6;RINCIAN OBJEK;13
+4.1.02.02.019.00001;Retribusi Penjualan Hasil Produksi Usaha Pemerintah Daerah;8;SUB RINCIAN OBJEK;19
+4.1.02.02.020;Retribusi Pemanfaatan Aset Daerah ;6;RINCIAN OBJEK;13
+4.1.02.02.020.00001;Retribusi Pemanfaatan Aset Daerah ;8;SUB RINCIAN OBJEK;19
+4.1.02.03;Retribusi Perizinan Tertentu;4;OBJEK;9
+4.1.02.03.007;Retribusi Persetujuan Bangunan Gedung;6;RINCIAN OBJEK;13
+4.1.02.03.007.00001;Retribusi Persetujuan Bangunan Gedung;8;SUB RINCIAN OBJEK;19
+4.1.03;Hasil Pengelolaan Kekayaan Daerah yang Dipisahkan;3;JENIS;6
+4.1.03.02;Bagian Laba yang Dibagikan kepada Pemerintah Daerah (Dividen) atas Penyertaan Modal pada BUMD;4;OBJEK;9
+4.1.03.02.001;Bagian Laba yang Dibagikan kepada Pemerintah Daerah (Dividen) atas Penyertaan Modal pada BUMD (Lembaga Keuangan);6;RINCIAN OBJEK;13
+4.1.03.02.001.00001;Bagian Laba yang Dibagikan kepada Pemerintah Daerah (Dividen) atas Penyertaan Modal pada BUMD (Lembaga Keuangan);8;SUB RINCIAN OBJEK;19
+4.1.03.02.002;Bagian Laba yang Dibagikan kepada Pemerintah Daerah (Dividen) atas Penyertaan Modal pada BUMD (Aneka Usaha);6;RINCIAN OBJEK;13
+4.1.03.02.002.00001;Bagian Laba yang Dibagikan kepada Pemerintah Daerah (Dividen) atas Penyertaan Modal pada BUMD (Aneka Usaha);8;SUB RINCIAN OBJEK;19
+4.1.03.03;Bagian Laba yang dibagikan kepada Pemerintah Daerah (Dividen) atas Penyertaan Modal pada Perusahaan Milik Swasta;4;OBJEK;9
+4.1.03.03.001;Bagian Laba yang Dibagikan kepada Pemerintah Daerah (Dividen) atas Penyertaan Modal pada Perusahaan Milik Swasta;6;RINCIAN OBJEK;13
+4.1.03.03.001.00001;Bagian Laba yang Dibagikan kepada Pemerintah Daerah (Dividen) atas Penyertaan Modal pada Perusahaan Milik Swasta;8;SUB RINCIAN OBJEK;19
+4.1.04;Lain-lain PAD yang Sah;3;JENIS;6
+4.1.04.01;Hasil Penjualan BMD yang Tidak Dipisahkan;4;OBJEK;9
+4.1.04.01.002;Hasil Penjualan Peralatan dan Mesin;6;RINCIAN OBJEK;13
+4.1.04.01.002.00054;Hasil Penjualan Alat Angkutan-Alat Angkutan Darat Bermotor-Kendaraan Dinas Bermotor Perorangan;8;SUB RINCIAN OBJEK;19
+4.1.04.01.003;Hasil Penjualan Gedung dan Bangunan;6;RINCIAN OBJEK;13
+4.1.04.01.003.00005;Hasil Penjualan Bangunan Gedung-Bangunan Gedung Tempat Kerja-Bangunan Gedung Kantor;8;SUB RINCIAN OBJEK;19
+4.1.04.01.003.00014;Hasil Penjualan Bangunan Gedung-Bangunan Gedung Tempat Kerja-Bangunan Gedung Tempat Pendidikan;8;SUB RINCIAN OBJEK;19
+4.1.04.01.005;Hasil Penjualan Aset Tetap Lainnya;6;RINCIAN OBJEK;13
+4.1.04.01.005.00064;Hasil Penjualan Tanaman-Tanaman-Tanaman;8;SUB RINCIAN OBJEK;19
+4.1.04.01.008;Hasil Penjualan Aset Lain-Lain;6;RINCIAN OBJEK;13
+4.1.04.01.008.00001;Hasil Penjualan Aset Lain-Lain-Aset Lain-Lain-Aset Rusak Berat/Usang;8;SUB RINCIAN OBJEK;19
+4.1.04.05;Jasa Giro;4;OBJEK;9
+4.1.04.05.001;Jasa Giro pada Kas Daerah;6;RINCIAN OBJEK;13
+4.1.04.05.001.00001;Jasa Giro pada Kas Daerah;8;SUB RINCIAN OBJEK;19
+4.1.04.05.002;Jasa Giro pada Kas di Bendahara;6;RINCIAN OBJEK;13
+4.1.04.05.002.00001;Jasa Giro pada Kas di Bendahara;8;SUB RINCIAN OBJEK;19
+4.1.04.07;Pendapatan Bunga;4;OBJEK;9
+4.1.04.07.001;Pendapatan Bunga atas Penempatan Uang Pemerintah Daerah;6;RINCIAN OBJEK;13
+4.1.04.07.001.00001;Pendapatan Bunga atas Penempatan Uang Pemerintah Daerah;8;SUB RINCIAN OBJEK;19
+4.1.04.08;Penerimaan atas Tuntutan Ganti Kerugian Keuangan Daerah;4;OBJEK;9
+4.1.04.08.002;Tuntutan Ganti Kerugian Daerah terhadap Pegawai Negeri Bukan Bendahara atau Pejabat Lain;6;RINCIAN OBJEK;13
+4.1.04.08.002.00001;Tuntutan Ganti Kerugian Daerah terhadap Pegawai Negeri Bukan Bendahara atau Pejabat Lain;8;SUB RINCIAN OBJEK;19
+4.1.04.11;Pendapatan Denda atas Keterlambatan Pelaksanaan Pekerjaan;4;OBJEK;9
+4.1.04.11.001;Pendapatan Denda atas Keterlambatan Pelaksanaan Pekerjaan;6;RINCIAN OBJEK;13
+4.1.04.11.001.00001;Pendapatan Denda atas Keterlambatan Pelaksanaan Pekerjaan;8;SUB RINCIAN OBJEK;19
+4.1.04.14;Pendapatan Hasil Eksekusi atas Jaminan;4;OBJEK;9
+4.1.04.14.001;Hasil Eksekusi atas Jaminan atas Pengadaan Barang/Jasa;6;RINCIAN OBJEK;13
+4.1.04.14.001.00001;Hasil Eksekusi atas Jaminan atas Pengadaan Barang/Jasa;8;SUB RINCIAN OBJEK;19
+4.1.04.15;Pendapatan dari Pengembalian;4;OBJEK;9
+4.1.04.15.008;Pendapatan dari Pengembalian Kelebihan Pembayaran Belanja Gaji dan Tunjangan ASN;6;RINCIAN OBJEK;13
+4.1.04.15.008.00003;Pendapatan dari Pengembalian Kelebihan Pembayaran Belanja Tunjangan Keluarga ASN-Tunjangan Keluarga PNS;8;SUB RINCIAN OBJEK;19
+4.1.04.16;Pendapatan BLUD;4;OBJEK;9
+4.1.04.16.002;Pendapatan BLUD dari Jasa Layanan;6;RINCIAN OBJEK;13
+4.1.04.16.002.00001;Pendapatan BLUD dari Jasa Layanan;8;SUB RINCIAN OBJEK;19
+4.1.04.16.004;Pendapatan BLUD dari Hasil Kerja Sama dengan Pihak Lain;6;RINCIAN OBJEK;13
+4.1.04.16.004.00001;Pendapatan BLUD dari Hasil Kerja Sama dengan Pihak Lain;8;SUB RINCIAN OBJEK;19
+4.1.04.16.006;Pendapatan BLUD dari Lain-Lain Pendapatan BLUD yang Sah;6;RINCIAN OBJEK;13
+4.1.04.16.006.00001;Pendapatan BLUD dari Jasa Giro;8;SUB RINCIAN OBJEK;19
+4.1.04.19;Pendapatan Hasil Pengelolaan Dana Bergulir;4;OBJEK;9
+4.1.04.19.001;Pendapatan Hasil Pengelolaan Dana Bergulir;6;RINCIAN OBJEK;13
+4.1.04.19.001.00001;Pendapatan Hasil Pengelolaan Dana Bergulir;8;SUB RINCIAN OBJEK;19
+4.1.04.21;Pendapatan Denda atas Pelanggaran Peraturan Daerah;4;OBJEK;9
+4.1.04.21.001;Pendapatan Denda atas Pelanggaran Peraturan Daerah;6;RINCIAN OBJEK;13
+4.1.04.21.001.00001;Pendapatan Denda atas Pelanggaran Peraturan Daerah;8;SUB RINCIAN OBJEK;19
+4.1.04.27;Pendapatan atas Sanksi Administrasi Pajak Daerah;4;OBJEK;9
+4.1.04.27.001;Pendapatan Denda Pajak Daerah;6;RINCIAN OBJEK;13
+4.1.04.27.001.00090;Pendapatan Denda Pajak Dolomit;8;SUB RINCIAN OBJEK;19
+4.1.04.27.001.00122;Pendapatan Denda PBBP2;8;SUB RINCIAN OBJEK;19
+4.1.04.27.001.00123;Pendapatan Denda BPHTB-Pemindahan Hak ;8;SUB RINCIAN OBJEK;19
+4.1.04.27.001.00124;Pendapatan Denda BPHTB-Pemberian Hak Baru ;8;SUB RINCIAN OBJEK;19
+4.1.04.27.001.00156;Pendapatan Denda Opsen PKB;8;SUB RINCIAN OBJEK;19
+4.1.04.28;Pendapatan atas Sanksi Administrasi Retribusi Daerah;4;OBJEK;9
+4.1.04.28.001;Pendapatan Denda Retribusi Daerah;6;RINCIAN OBJEK;13
+4.1.04.28.001.00071;Pendapatan Denda Retribusi Jasa Usaha-Pemanfaatan Aset Daerah ;8;SUB RINCIAN OBJEK;19
+4.2;PENDAPATAN TRANSFER;2;KELOMPOK;3
+4.2.01;Pendapatan Transfer Pemerintah Pusat;3;JENIS;6
+4.2.01.05;Dana Desa;4;OBJEK;9
+4.2.01.05.001;Dana Desa;6;RINCIAN OBJEK;13
+4.2.01.05.001.00001;Dana Desa;8;SUB RINCIAN OBJEK;19
+4.2.01.07;Dana Bagi Hasil (DBH);4;OBJEK;9
+4.2.01.07.001;DBH Pajak;6;RINCIAN OBJEK;13
+4.2.01.07.001.00001;DBH PBB;8;SUB RINCIAN OBJEK;19
+4.2.01.07.001.00002;DBH PPh Pasal 21;8;SUB RINCIAN OBJEK;19
+4.2.01.07.001.00003;DBH PPh Pasal 25 dan Pasal 29/WPOPDN;8;SUB RINCIAN OBJEK;19
+4.2.01.07.001.00004;DBH Cukai Hasil Tembakau (CHT);8;SUB RINCIAN OBJEK;19
+4.2.01.07.002;DBH Sumber Daya Alam (SDA);6;RINCIAN OBJEK;13
+4.2.01.07.002.00001;DBH SDA Minyak Bumi;8;SUB RINCIAN OBJEK;19
+4.2.01.07.002.00002;DBH SDA Gas Bumi;8;SUB RINCIAN OBJEK;19
+4.2.01.07.002.00003;DBH SDA Pengusahaan Panas Bumi;8;SUB RINCIAN OBJEK;19
+4.2.01.07.002.00004;DBH SDA Mineral dan Batubara-Landrent;8;SUB RINCIAN OBJEK;19
+4.2.01.07.002.00005;DBH SDA Mineral dan Batubara-Royalty;8;SUB RINCIAN OBJEK;19
+4.2.01.07.002.00006;DBH SDA Kehutanan-Provisi Sumber Daya Hutan (PSDH);8;SUB RINCIAN OBJEK;19
+4.2.01.07.002.00009;DBH SDA Perikanan;8;SUB RINCIAN OBJEK;19
+4.2.01.07.003;DBH Lainnya;6;RINCIAN OBJEK;13
+4.2.01.07.003.00001;DBH Sawit;8;SUB RINCIAN OBJEK;19
+4.2.01.08;Dana Alokasi Umum (DAU);4;OBJEK;9
+4.2.01.08.001;DAU yang Tidak Ditentukan Penggunaannya;6;RINCIAN OBJEK;13
+4.2.01.08.001.00001;DAU;8;SUB RINCIAN OBJEK;19
+4.2.01.08.002;DAU yang Ditentukan Penggunaannya;6;RINCIAN OBJEK;13
+4.2.01.08.002.00004;DAU yang Ditentukan Penggunaannya Bidang Pendidikan;8;SUB RINCIAN OBJEK;19
+4.2.01.08.002.00005;DAU yang Ditentukan Penggunaannya Bidang Kesehatan;8;SUB RINCIAN OBJEK;19
+4.2.01.09;Dana Alokasi Khusus (DAK);4;OBJEK;9
+4.2.01.09.001;DAK Fisik;6;RINCIAN OBJEK;13
+4.2.01.09.001.00101;DAK Fisik-Bidang Kesehatan-Penguatan Sistem dan Kapasitas Pelayanan Kesehatan;8;SUB RINCIAN OBJEK;19
+4.2.01.09.002;DAK Non Fisik;6;RINCIAN OBJEK;13
+4.2.01.09.002.00001;DAK Non Fisik-BOS Reguler;8;SUB RINCIAN OBJEK;19
+4.2.01.09.002.00003;DAK Non Fisik-BOS Kinerja;8;SUB RINCIAN OBJEK;19
+4.2.01.09.002.00004;DAK Non Fisik-TPG PNSD;8;SUB RINCIAN OBJEK;19
+4.2.01.09.002.00005;DAK Non Fisik-Tamsil Guru PNSD;8;SUB RINCIAN OBJEK;19
+4.2.01.09.002.00007;DAK Non Fisik-BOP PAUD;8;SUB RINCIAN OBJEK;19
+4.2.01.09.002.00008;DAK Non Fisik-BOP Pendidikan Kesetaraan;8;SUB RINCIAN OBJEK;19
+4.2.01.09.002.00012;DAK Non Fisik-BOKKB-Pengawasan Obat dan Makanan;8;SUB RINCIAN OBJEK;19
+4.2.01.09.002.00013;DAK Non Fisik-BOKKB-Akreditasi Puskesmas;8;SUB RINCIAN OBJEK;19
+4.2.01.09.002.00022;DAK Non Fisik-Dana Pelayanan Perlindungan Perempuan dan Anak;8;SUB RINCIAN OBJEK;19
+4.2.01.09.002.00033;DAK Non Fisik-Dana BOK-BOK Dinas-BOK Kabupaten/Kota;8;SUB RINCIAN OBJEK;19
+4.2.01.09.002.00035;DAK Non Fisik-Dana BOK-BOK Puskesmas;8;SUB RINCIAN OBJEK;19
+4.2.01.09.002.00036;DAK Non Fisik-Tunjangan Guru ASN Daerah-Tunjangan Profesi Guru;8;SUB RINCIAN OBJEK;19
+4.2.01.09.002.00037;DAK Non Fisik-Tunjangan Guru ASN Daerah-Tambahan Penghasilan Guru;8;SUB RINCIAN OBJEK;19
+4.2.01.09.002.00039;DAK Non Fisik-Bantuan Operasional Keluarga Berencana;8;SUB RINCIAN OBJEK;19
+4.2.01.09.002.00041;DAK Non Fisik-Dana Bantuan Pengembangan Program Perpustakaan Daerah;8;SUB RINCIAN OBJEK;19
+4.2.02;Pendapatan Transfer Antar Daerah;3;JENIS;6
+4.2.02.01;Pendapatan Bagi Hasil;4;OBJEK;9
+4.2.02.01.001;Pendapatan Bagi Hasil Pajak;6;RINCIAN OBJEK;13
+4.2.02.01.001.00001;Pendapatan Bagi Hasil Pajak Kendaraan Bermotor;8;SUB RINCIAN OBJEK;19
+4.2.02.01.001.00002;Pendapatan Bagi Hasil Bea Balik Nama Kendaraan Bermotor;8;SUB RINCIAN OBJEK;19
+4.2.02.01.001.00003;Pendapatan Bagi Hasil Pajak Bahan Bakar Kendaraan Bermotor;8;SUB RINCIAN OBJEK;19
+4.2.02.01.001.00004;Pendapatan Bagi Hasil Pajak Air Permukaan;8;SUB RINCIAN OBJEK;19
+4.2.02.01.001.00005;Pendapatan Bagi Hasil Pajak Rokok;8;SUB RINCIAN OBJEK;19
+5;BELANJA DAERAH;1;AKUN;1
+5.1;BELANJA OPERASI;2;KELOMPOK;3
+5.1.01;Belanja Pegawai;3;JENIS;6
+5.1.01.01;Belanja Gaji dan Tunjangan ASN;4;OBJEK;9
+5.1.01.01.001;Belanja Gaji Pokok ASN;6;RINCIAN OBJEK;13
+5.1.01.01.001.00001;Belanja Gaji Pokok PNS;8;SUB RINCIAN OBJEK;19
+5.1.01.01.001.00002;Belanja Gaji Pokok PPPK;8;SUB RINCIAN OBJEK;19
+5.1.01.01.002;Belanja Tunjangan Keluarga ASN;6;RINCIAN OBJEK;13
+5.1.01.01.002.00001;Belanja Tunjangan Keluarga PNS;8;SUB RINCIAN OBJEK;19
+5.1.01.01.002.00002;Belanja Tunjangan Keluarga PPPK;8;SUB RINCIAN OBJEK;19
+5.1.01.01.003;Belanja Tunjangan Jabatan ASN;6;RINCIAN OBJEK;13
+5.1.01.01.003.00001;Belanja Tunjangan Jabatan PNS;8;SUB RINCIAN OBJEK;19
+5.1.01.01.004;Belanja Tunjangan Fungsional ASN;6;RINCIAN OBJEK;13
+5.1.01.01.004.00001;Belanja Tunjangan Fungsional PNS;8;SUB RINCIAN OBJEK;19
+5.1.01.01.004.00002;Belanja Tunjangan Fungsional PPPK;8;SUB RINCIAN OBJEK;19
+5.1.01.01.005;Belanja Tunjangan Fungsional Umum ASN;6;RINCIAN OBJEK;13
+5.1.01.01.005.00001;Belanja Tunjangan Fungsional Umum PNS;8;SUB RINCIAN OBJEK;19
+5.1.01.01.005.00002;Belanja Tunjangan Fungsional Umum PPPK;8;SUB RINCIAN OBJEK;19
+5.1.01.01.006;Belanja Tunjangan Beras ASN;6;RINCIAN OBJEK;13
+5.1.01.01.006.00001;Belanja Tunjangan Beras PNS;8;SUB RINCIAN OBJEK;19
+5.1.01.01.006.00002;Belanja Tunjangan Beras PPPK;8;SUB RINCIAN OBJEK;19
+5.1.01.01.007;Belanja Tunjangan PPh/Tunjangan Khusus ASN;6;RINCIAN OBJEK;13
+5.1.01.01.007.00001;Belanja Tunjangan PPh/Tunjangan Khusus PNS;8;SUB RINCIAN OBJEK;19
+5.1.01.01.007.00002;Belanja Tunjangan PPh/Tunjangan Khusus PPPK;8;SUB RINCIAN OBJEK;19
+5.1.01.01.008;Belanja Pembulatan Gaji ASN;6;RINCIAN OBJEK;13
+5.1.01.01.008.00001;Belanja Pembulatan Gaji PNS;8;SUB RINCIAN OBJEK;19
+5.1.01.01.008.00002;Belanja Pembulatan Gaji PPPK;8;SUB RINCIAN OBJEK;19
+5.1.01.01.009;Belanja Iuran Jaminan Kesehatan ASN;6;RINCIAN OBJEK;13
+5.1.01.01.009.00001;Belanja Iuran Jaminan Kesehatan PNS;8;SUB RINCIAN OBJEK;19
+5.1.01.01.009.00002;Belanja Iuran Jaminan Kesehatan PPPK;8;SUB RINCIAN OBJEK;19
+5.1.01.01.010;Belanja Iuran Jaminan Kecelakaan Kerja ASN;6;RINCIAN OBJEK;13
+5.1.01.01.010.00001;Belanja Iuran Jaminan Kecelakaan Kerja PNS;8;SUB RINCIAN OBJEK;19
+5.1.01.01.010.00002;Belanja Iuran Jaminan Kecelakaan Kerja PPPK;8;SUB RINCIAN OBJEK;19
+5.1.01.01.011;Belanja Iuran Jaminan Kematian ASN;6;RINCIAN OBJEK;13
+5.1.01.01.011.00001;Belanja Iuran Jaminan Kematian PNS;8;SUB RINCIAN OBJEK;19
+5.1.01.01.011.00002;Belanja Iuran Jaminan Kematian PPPK;8;SUB RINCIAN OBJEK;19
+5.1.01.01.012;Belanja Iuran Simpanan Peserta Tabungan Perumahan Rakyat ASN;6;RINCIAN OBJEK;13
+5.1.01.01.012.00001;Belanja Iuran Simpanan Peserta Tabungan Perumahan Rakyat PNS;8;SUB RINCIAN OBJEK;19
+5.1.01.01.012.00002;Belanja Iuran Simpanan Peserta Tabungan Perumahan Rakyat PPPK;8;SUB RINCIAN OBJEK;19
+5.1.01.02;Belanja Tambahan Penghasilan ASN;4;OBJEK;9
+5.1.01.02.001;Tambahan Penghasilan berdasarkan Beban Kerja ASN;6;RINCIAN OBJEK;13
+5.1.01.02.001.00001;Tambahan Penghasilan berdasarkan Beban Kerja PNS;8;SUB RINCIAN OBJEK;19
+5.1.01.02.001.00002;Tambahan Penghasilan berdasarkan Beban Kerja PPPK;8;SUB RINCIAN OBJEK;19
+5.1.01.02.003;Tambahan Penghasilan berdasarkan Kondisi Kerja ASN;6;RINCIAN OBJEK;13
+5.1.01.02.003.00001;Tambahan Penghasilan berdasarkan Kondisi Kerja PNS;8;SUB RINCIAN OBJEK;19
+5.1.01.02.004;Tambahan Penghasilan berdasarkan Kelangkaan Profesi ASN;6;RINCIAN OBJEK;13
+5.1.01.02.004.00001;Tambahan Penghasilan berdasarkan Kelangkaan Profesi PNS;8;SUB RINCIAN OBJEK;19
+5.1.01.02.006;Tambahan Penghasilan berdasarkan Pertimbangan Objektif Lainnya ASN;6;RINCIAN OBJEK;13
+5.1.01.02.006.00009;Belanja Insentif bagi ASN atas Pemungutan Pajak Daerah-Pajak Reklame ;8;SUB RINCIAN OBJEK;19
+5.1.01.02.006.00013;Belanja Insentif bagi ASN atas Pemungutan Pajak Daerah-Pajak Sarang Burung Walet ;8;SUB RINCIAN OBJEK;19
+5.1.01.02.006.00014;Belanja Insentif bagi ASN atas Pemungutan Pajak Daerah-Pajak Mineral Bukan Logam dan Batuan;8;SUB RINCIAN OBJEK;19
+5.1.01.02.006.00015;Belanja Insentif bagi ASN atas Pemungutan Pajak Daerah-Pajak Bumi Dan Bangunan Pedesaan dan Perkotaan ;8;SUB RINCIAN OBJEK;19
+5.1.01.02.006.00016;Belanja Insentif bagi ASN atas Pemungutan Pajak Daerah-Bea Perolehan Hak atas Tanah dan Bangunan;8;SUB RINCIAN OBJEK;19
+5.1.01.02.006.00019;Belanja Insentif bagi ASN atas Pemungutan Pajak Daerah-Pajak Barang dan Jasa Tertentu (PBJT);8;SUB RINCIAN OBJEK;19
+5.1.01.02.006.00020;Belanja Insentif bagi ASN atas Pemungutan Pajak Daerah-Opsen Pajak Kendaraan Bermotor (PKB);8;SUB RINCIAN OBJEK;19
+5.1.01.02.006.00021;Belanja Insentif bagi ASN atas Pemungutan Pajak Daerah-Opsen Bea Balik Nama Kendaraan Bermotor (BBNKB);8;SUB RINCIAN OBJEK;19
+5.1.01.02.006.00023;Belanja Insentif bagi ASN atas Pemungutan Retribusi Daerah-Retribusi Jasa Umum-Pelayanan Persampahan/Kebersihan ;8;SUB RINCIAN OBJEK;19
+5.1.01.02.006.00025;Belanja Insentif bagi ASN atas Pemungutan Retribusi Daerah-Retribusi Jasa Umum-Pelayanan Parkir di Tepi Jalan Umum ;8;SUB RINCIAN OBJEK;19
+5.1.01.02.006.00026;Belanja Insentif bagi ASN atas Pemungutan Retribusi Daerah-Retribusi Jasa Umum-Pelayanan Pasar ;8;SUB RINCIAN OBJEK;19
+5.1.01.02.006.00035;Belanja Insentif bagi ASN atas Pemungutan Retribusi Daerah-Retribusi Jasa Usaha-Pemakaian Kekayaan Daerah ;8;SUB RINCIAN OBJEK;19
+5.1.01.02.006.00036;Belanja Insentif bagi ASN atas Pemungutan Retribusi Daerah-Retribusi Jasa Usaha-Pasar Grosir dan/atau Pertokoan ;8;SUB RINCIAN OBJEK;19
+5.1.01.02.006.00039;Belanja Insentif bagi ASN atas Pemungutan Retribusi Daerah-Retribusi Jasa Usaha-Tempat Khusus Parkir ;8;SUB RINCIAN OBJEK;19
+5.1.01.02.006.00040;Belanja Insentif bagi ASN atas Pemungutan Retribusi Daerah-Retribusi Jasa Usaha-Tempat Penginapan/Pesanggrahan/Vila ;8;SUB RINCIAN OBJEK;19
+5.1.01.02.006.00041;Belanja Insentif bagi ASN atas Pemungutan Retribusi Daerah-Retribusi Jasa Usaha-Rumah Potong Hewan ;8;SUB RINCIAN OBJEK;19
+5.1.01.02.006.00043;Belanja Insentif bagi ASN atas Pemungutan Retribusi Daerah-Retribusi Jasa Usaha-Tempat Rekreasi dan Olahraga ;8;SUB RINCIAN OBJEK;19
+5.1.01.02.006.00045;Belanja Insentif bagi ASN atas Pemungutan Retribusi Daerah-Retribusi Jasa Usaha-Penjualan Produksi Usaha Daerah ;8;SUB RINCIAN OBJEK;19
+5.1.01.02.006.00050;Belanja Insentif bagi ASN atas Pemungutan Retribusi Daerah-Retribusi Perizinan Tertentu-Persetujuan Bangunan Gedung;8;SUB RINCIAN OBJEK;19
+5.1.01.02.006.00064;Belanja Tunjangan Profesi Guru (TPG) PNSD;8;SUB RINCIAN OBJEK;19
+5.1.01.02.006.00066;Belanja Tambahan Penghasilan (Tamsil) Guru PNSD;8;SUB RINCIAN OBJEK;19
+5.1.01.02.06;Tambahan Penghasilan berdasarkan Pertimbangan Objektif Lainnya ASN;5;RINCIAN OBJEK;12
+5.1.01.02.06.0066;Belanja Tambahan Penghasilan (Tamsil) Guru PNSD;7;SUB RINCIAN OBJEK;17
+5.1.01.04;Belanja Gaji dan Tunjangan DPRD;4;OBJEK;9
+5.1.01.04.001;Belanja Uang Representasi DPRD;6;RINCIAN OBJEK;13
+5.1.01.04.001.00001;Belanja Uang Representasi DPRD;8;SUB RINCIAN OBJEK;19
+5.1.01.04.002;Belanja Tunjangan Keluarga DPRD;6;RINCIAN OBJEK;13
+5.1.01.04.002.00001;Belanja Tunjangan Keluarga DPRD;8;SUB RINCIAN OBJEK;19
+5.1.01.04.003;Belanja Tunjangan Beras DPRD;6;RINCIAN OBJEK;13
+5.1.01.04.003.00001;Belanja Tunjangan Beras DPRD;8;SUB RINCIAN OBJEK;19
+5.1.01.04.004;Belanja Uang Paket DPRD;6;RINCIAN OBJEK;13
+5.1.01.04.004.00001;Belanja Uang Paket DPRD;8;SUB RINCIAN OBJEK;19
+5.1.01.04.005;Belanja Tunjangan Jabatan DPRD;6;RINCIAN OBJEK;13
+5.1.01.04.005.00001;Belanja Tunjangan Jabatan DPRD;8;SUB RINCIAN OBJEK;19
+5.1.01.04.006;Belanja Tunjangan Alat Kelengkapan DPRD;6;RINCIAN OBJEK;13
+5.1.01.04.006.00001;Belanja Tunjangan Alat Kelengkapan DPRD;8;SUB RINCIAN OBJEK;19
+5.1.01.04.007;Belanja Tunjangan Alat Kelengkapan Lainnya DPRD;6;RINCIAN OBJEK;13
+5.1.01.04.007.00001;Belanja Tunjangan Alat Kelengkapan Lainnya DPRD;8;SUB RINCIAN OBJEK;19
+5.1.01.04.008;Belanja Tunjangan Komunikasi Intensif Pimpinan dan Anggota DPRD;6;RINCIAN OBJEK;13
+5.1.01.04.008.00001;Belanja Tunjangan Komunikasi Intensif Pimpinan dan Anggota DPRD;8;SUB RINCIAN OBJEK;19
+5.1.01.04.009;Belanja Tunjangan Reses DPRD;6;RINCIAN OBJEK;13
+5.1.01.04.009.00001;Belanja Tunjangan Reses DPRD;8;SUB RINCIAN OBJEK;19
+5.1.01.04.010;Belanja Pembebanan PPh kepada Pimpinan dan Anggota DPRD;6;RINCIAN OBJEK;13
+5.1.01.04.010.00001;Belanja Pembebanan PPh kepada Pimpinan dan Anggota DPRD;8;SUB RINCIAN OBJEK;19
+5.1.01.04.012;Belanja Tunjangan Kesejahteraan Pimpinan dan Anggota DPRD;6;RINCIAN OBJEK;13
+5.1.01.04.012.00001;Belanja Iuran Jaminan Kesehatan bagi DPRD;8;SUB RINCIAN OBJEK;19
+5.1.01.04.012.00002;Belanja Jaminan Kecelakaan Kerja DPRD;8;SUB RINCIAN OBJEK;19
+5.1.01.04.012.00003;Belanja Jaminan Kematian DPRD;8;SUB RINCIAN OBJEK;19
+5.1.01.04.012.00004;Belanja Tunjangan Perumahan DPRD;8;SUB RINCIAN OBJEK;19
+5.1.01.04.013;Belanja Tunjangan Transportasi DPRD;6;RINCIAN OBJEK;13
+5.1.01.04.013.00001;Belanja Tunjangan Transportasi DPRD;8;SUB RINCIAN OBJEK;19
+5.1.01.04.014;Belanja Uang Jasa Pengabdian DPRD;6;RINCIAN OBJEK;13
+5.1.01.04.014.00001;Belanja Uang Jasa Pengabdian DPRD;8;SUB RINCIAN OBJEK;19
+5.1.01.05;Belanja Gaji dan Tunjangan KDH/WKDH;4;OBJEK;9
+5.1.01.05.001;Belanja Gaji Pokok KDH/WKDH;6;RINCIAN OBJEK;13
+5.1.01.05.001.00001;Belanja Gaji Pokok KDH/WKDH;8;SUB RINCIAN OBJEK;19
+5.1.01.05.002;Belanja Tunjangan Keluarga KDH/WKDH;6;RINCIAN OBJEK;13
+5.1.01.05.002.00001;Belanja Tunjangan Keluarga KDH/WKDH;8;SUB RINCIAN OBJEK;19
+5.1.01.05.003;Belanja Tunjangan Jabatan KDH/WKDH;6;RINCIAN OBJEK;13
+5.1.01.05.003.00001;Belanja Tunjangan Jabatan KDH/WKDH;8;SUB RINCIAN OBJEK;19
+5.1.01.05.004;Belanja Tunjangan Beras KDH/WKDH;6;RINCIAN OBJEK;13
+5.1.01.05.004.00001;Belanja Tunjangan Beras KDH/WKDH;8;SUB RINCIAN OBJEK;19
+5.1.01.05.005;Belanja Tunjangan PPh/Tunjangan Khusus KDH/WKDH;6;RINCIAN OBJEK;13
+5.1.01.05.005.00001;Belanja Tunjangan PPh/Tunjangan Khusus KDH/WKDH;8;SUB RINCIAN OBJEK;19
+5.1.01.05.006;Belanja Pembulatan Gaji KDH/WKDH;6;RINCIAN OBJEK;13
+5.1.01.05.006.00001;Belanja Pembulatan Gaji KDH/WKDH;8;SUB RINCIAN OBJEK;19
+5.1.01.05.007;Belanja Iuran Jaminan Kesehatan bagi KDH/WKDH;6;RINCIAN OBJEK;13
+5.1.01.05.007.00001;Belanja Iuran Jaminan Kesehatan bagi KDH/WKDH;8;SUB RINCIAN OBJEK;19
+5.1.01.05.008;Belanja Iuran Jaminan Kecelakaan Kerja KDH/WKDH;6;RINCIAN OBJEK;13
+5.1.01.05.008.00001;Belanja Iuran Jaminan Kecelakaan Kerja KDH/WKDH;8;SUB RINCIAN OBJEK;19
+5.1.01.05.009;Belanja Iuran Jaminan Kematian KDH/WKDH;6;RINCIAN OBJEK;13
+5.1.01.05.009.00001;Belanja Iuran Jaminan Kematian KDH/WKDH;8;SUB RINCIAN OBJEK;19
+5.1.01.05.010;Belanja Insentif bagi KDH/WKDH atas Pemungutan Pajak Daerah;6;RINCIAN OBJEK;13
+5.1.01.05.010.00009;Belanja Insentif bagi KDH/WKDH atas Pemungutan Pajak Reklame;8;SUB RINCIAN OBJEK;19
+5.1.01.05.010.00013;Belanja Insentif bagi KDH/WKDH atas Pemungutan Pajak Sarang Burung Walet;8;SUB RINCIAN OBJEK;19
+5.1.01.05.010.00014;Belanja Insentif bagi KDH/WKDH atas Pemungutan Pajak Mineral Bukan Logam dan Batuan;8;SUB RINCIAN OBJEK;19
+5.1.01.05.010.00015;Belanja Insentif bagi KDH/WKDH atas Pemungutan Pajak Bumi dan Bangunan Perdesaan dan Perkotaan;8;SUB RINCIAN OBJEK;19
+5.1.01.05.010.00016;Belanja Insentif bagi KDH/WKDH atas Pemungutan Bea Perolehan Hak atas Tanah dan Bangunan;8;SUB RINCIAN OBJEK;19
+5.1.01.05.010.00019;Belanja Insentif bagi KDH/WKDH atas Pemungutan Pajak Barang dan Jasa Tertentu (PBJT);8;SUB RINCIAN OBJEK;19
+5.1.01.05.010.00020;Belanja Insentif bagi KDH/WKDH atas Pemungutan Opsen Pajak Kendaraan Bermotor (PKB);8;SUB RINCIAN OBJEK;19
+5.1.01.05.010.00021;Belanja Insentif bagi KDH/WKDH atas Pemungutan Opsen Bea Balik Nama Kendaraan Bermotor (BBNKB);8;SUB RINCIAN OBJEK;19
+5.1.01.05.011;Belanja Insentif bagi KDH/WKDH atas Pemungutan Retribusi Daerah bagi KDH/WKDH;6;RINCIAN OBJEK;13
+5.1.01.05.011.00002;Belanja Insentif bagi KDH/WKDH atas Pemungutan Retribusi Jasa Umum-Pelayanan Persampahan/Kebersihan;8;SUB RINCIAN OBJEK;19
+5.1.01.05.011.00004;Belanja Insentif bagi KDH/WKDH atas Pemungutan Retribusi Jasa Umum-Pelayanan Parkir di Tepi Jalan Umum;8;SUB RINCIAN OBJEK;19
+5.1.01.05.011.00005;Belanja Insentif bagi KDH/WKDH atas Pemungutan Retribusi Jasa Umum-Pelayanan Pasar;8;SUB RINCIAN OBJEK;19
+5.1.01.05.011.00014;Belanja Insentif bagi KDH/WKDH atas Pemungutan Retribusi Jasa Usaha-Pemakaian Kekayaan Daerah;8;SUB RINCIAN OBJEK;19
+5.1.01.05.011.00015;Belanja Insentif bagi KDH/WKDH atas Pemungutan Retribusi Jasa Usaha-Pasar Grosir dan/atau Pertokoan;8;SUB RINCIAN OBJEK;19
+5.1.01.05.011.00018;Belanja Insentif bagi KDH/WKDH atas Pemungutan Retribusi Jasa Usaha-Tempat Khusus Parkir;8;SUB RINCIAN OBJEK;19
+5.1.01.05.011.00019;Belanja Insentif bagi KDH/WKDH atas Pemungutan Retribusi Jasa Usaha-Tempat Penginapan/ Pesanggrahan/Vila;8;SUB RINCIAN OBJEK;19
+5.1.01.05.011.00020;Belanja Insentif bagi KDH/WKDH atas Pemungutan Retribusi Jasa Usaha-Rumah Potong Hewan;8;SUB RINCIAN OBJEK;19
+5.1.01.05.011.00022;Belanja Insentif bagi KDH/WKDH atas Pemungutan Retribusi Jasa Usaha-Tempat Rekreasi dan Olahraga;8;SUB RINCIAN OBJEK;19
+5.1.01.05.011.00024;Belanja Insentif bagi KDH/WKDH atas Pemungutan Retribusi Jasa Usaha-Penjualan Produksi Usaha Daerah;8;SUB RINCIAN OBJEK;19
+5.1.01.05.011.00031;Belanja Insentif bagi KDH/WKDH atas Pemungutan Retribusi Perizinan Tertentu-Persetujuan Bangunan Gedung;8;SUB RINCIAN OBJEK;19
+5.1.01.06;Belanja Penerimaan Lainnya Pimpinan DPRD serta KDH/WKDH;4;OBJEK;9
+5.1.01.06.001;Belanja Dana Operasional Pimpinan DPRD;6;RINCIAN OBJEK;13
+5.1.01.06.001.00001;Belanja Dana Operasional Pimpinan DPRD;8;SUB RINCIAN OBJEK;19
+5.1.01.06.002;Belanja Dana Operasional KDH/WKDH;6;RINCIAN OBJEK;13
+5.1.01.06.002.00001;Belanja Dana Operasional KDH/WKDH;8;SUB RINCIAN OBJEK;19
+5.1.01.99;Belanja Pegawai BLUD;4;OBJEK;9
+5.1.01.99.099;Belanja Pegawai BLUD;6;RINCIAN OBJEK;13
+5.1.01.99.099.09999;Belanja Pegawai BLUD;8;SUB RINCIAN OBJEK;19
+5.1.02;Belanja Barang dan Jasa;3;JENIS;6
+5.1.02.01;Belanja Barang;4;OBJEK;9
+5.1.02.01.001;Belanja Barang Pakai Habis;6;RINCIAN OBJEK;13
+5.1.02.01.001.00001;Belanja Bahan-Bahan Bangunan dan Konstruksi;8;SUB RINCIAN OBJEK;19
+5.1.02.01.001.00002;Belanja Bahan-Bahan Kimia;8;SUB RINCIAN OBJEK;19
+5.1.02.01.001.00004;Belanja Bahan-Bahan Bakar dan Pelumas;8;SUB RINCIAN OBJEK;19
+5.1.02.01.001.00008;Belanja Bahan-Bahan/Bibit Tanaman;8;SUB RINCIAN OBJEK;19
+5.1.02.01.001.00009;Belanja Bahan-Isi Tabung Pemadam Kebakaran;8;SUB RINCIAN OBJEK;19
+5.1.02.01.001.00010;Belanja Bahan-Isi Tabung Gas;8;SUB RINCIAN OBJEK;19
+5.1.02.01.001.00011;Belanja Bahan-Bahan/Bibit Ternak/Bibit Ikan;8;SUB RINCIAN OBJEK;19
+5.1.02.01.001.00012;Belanja Bahan-Bahan Lainnya;8;SUB RINCIAN OBJEK;19
+5.1.02.01.001.00013;Belanja Suku Cadang-Suku Cadang Alat Angkutan;8;SUB RINCIAN OBJEK;19
+5.1.02.01.001.00024;Belanja Alat/Bahan untuk Kegiatan Kantor-Alat Tulis Kantor;8;SUB RINCIAN OBJEK;19
+5.1.02.01.001.00025;Belanja Alat/Bahan untuk Kegiatan Kantor- Kertas dan Cover;8;SUB RINCIAN OBJEK;19
+5.1.02.01.001.00027;Belanja Alat/Bahan untuk Kegiatan Kantor-Benda Pos;8;SUB RINCIAN OBJEK;19
+5.1.02.01.001.00029;Belanja Alat/Bahan untuk Kegiatan Kantor-Bahan Komputer;8;SUB RINCIAN OBJEK;19
+5.1.02.01.001.00030;Belanja Alat/Bahan untuk Kegiatan Kantor-Perabot Kantor;8;SUB RINCIAN OBJEK;19
+5.1.02.01.001.00031;Belanja Alat/Bahan untuk Kegiatan Kantor-Alat Listrik;8;SUB RINCIAN OBJEK;19
+5.1.02.01.001.00032;Belanja Alat/Bahan untuk Kegiatan Kantor-Perlengkapan Dinas;8;SUB RINCIAN OBJEK;19
+5.1.02.01.001.00034;Belanja Alat/Bahan untuk Kegiatan Kantor- Perlengkapan Pendukung Olahraga;8;SUB RINCIAN OBJEK;19
+5.1.02.01.001.00035;Belanja Alat/Bahan untuk Kegiatan Kantor- Suvenir/Cendera Mata;8;SUB RINCIAN OBJEK;19
+5.1.02.01.001.00036;Belanja Alat/Bahan untuk Kegiatan Kantor-Alat/Bahan untuk Kegiatan Kantor Lainnya;8;SUB RINCIAN OBJEK;19
+5.1.02.01.001.00037;Belanja Obat-Obatan-Obat;8;SUB RINCIAN OBJEK;19
+5.1.02.01.001.00038;Belanja Obat-Obatan-Obat-Obatan Lainnya;8;SUB RINCIAN OBJEK;19
+5.1.02.01.001.00039;Belanja Barang untuk Dijual/Diserahkan kepada Masyarakat;8;SUB RINCIAN OBJEK;19
+5.1.02.01.001.00043;Belanja Natura dan Pakan-Natura;8;SUB RINCIAN OBJEK;19
+5.1.02.01.001.00044;Belanja Natura dan Pakan-Pakan;8;SUB RINCIAN OBJEK;19
+5.1.02.01.001.00052;Belanja Makanan dan Minuman Rapat;8;SUB RINCIAN OBJEK;19
+5.1.02.01.001.00053;Belanja Makanan dan Minuman Jamuan Tamu;8;SUB RINCIAN OBJEK;19
+5.1.02.01.001.00054;Belanja Penambah Daya Tahan Tubuh;8;SUB RINCIAN OBJEK;19
+5.1.02.01.001.00055;Belanja Makanan dan Minuman pada Fasilitas Pelayanan Urusan Pendidikan;8;SUB RINCIAN OBJEK;19
+5.1.02.01.001.00058;Belanja Makanan dan Minuman Aktivitas Lapangan;8;SUB RINCIAN OBJEK;19
+5.1.02.01.001.00059;Belanja Pakaian Dinas KDH dan WKDH;8;SUB RINCIAN OBJEK;19
+5.1.02.01.001.00074;Belanja Pakaian Adat Daerah;8;SUB RINCIAN OBJEK;19
+5.1.02.01.001.00079;Belanja Barang Sampel Pangan;8;SUB RINCIAN OBJEK;19
+5.1.02.01.002;Belanja Barang Tak Habis Pakai;6;RINCIAN OBJEK;13
+5.1.02.01.002.00005;Belanja Komponen-Attachment;8;SUB RINCIAN OBJEK;19
+5.1.02.01.004;Belanja Aset Tetap yang Tidak Memenuhi Kriteria Kapitalisasi;6;RINCIAN OBJEK;13
+5.1.02.01.004.00035;Belanja Peralatan dan Mesin-Alat Angkutan-Alat Angkutan Darat Bermotor-Kendaraan Dinas Bermotor Perorangan;8;SUB RINCIAN OBJEK;19
+5.1.02.01.004.00038;Belanja Peralatan dan Mesin-Alat Angkutan-Alat Angkutan Darat Bermotor-Kendaraan Bermotor Beroda Dua;8;SUB RINCIAN OBJEK;19
+5.1.02.01.004.00043;Belanja Peralatan dan Mesin-Alat Angkutan-Alat Angkutan Darat Bermotor-Alat Angkutan Darat Bermotor Lainnya;8;SUB RINCIAN OBJEK;19
+5.1.02.01.004.00118;Belanja Peralatan dan Mesin-Alat Kantor dan Rumah Tangga-Alat Rumah Tangga-Mebel;8;SUB RINCIAN OBJEK;19
+5.1.02.01.004.00119;Belanja Peralatan dan Mesin-Alat Kantor dan Rumah Tangga-Alat Rumah Tangga-Alat Pengukur Waktu;8;SUB RINCIAN OBJEK;19
+5.1.02.01.004.00133;Belanja Peralatan dan Mesin-Alat Studio, Komunikasi, dan Pemancar-Alat Studio-Peralatan Studio Video dan Film;8;SUB RINCIAN OBJEK;19
+5.1.02.01.004.00137;Belanja Peralatan dan Mesin-Alat Studio, Komunikasi, dan Pemancar-Alat Studio-Alat Studio Lainnya;8;SUB RINCIAN OBJEK;19
+5.1.02.01.004.00410;Belanja Peralatan dan Mesin-Komputer-Peralatan Komputer-Peralatan Jaringan;8;SUB RINCIAN OBJEK;19
+5.1.02.01.004.00411;Belanja Peralatan dan Mesin-Komputer-Peralatan Komputer-Peralatan Komputer Lainnya;8;SUB RINCIAN OBJEK;19
+5.1.02.01.004.00505;Belanja Peralatan dan Mesin-Peralatan Olahraga-Peralatan Olahraga-Peralatan Permainan;8;SUB RINCIAN OBJEK;19
+5.1.02.02;Belanja Jasa;4;OBJEK;9
+5.1.02.02.001;Belanja Jasa Kantor;6;RINCIAN OBJEK;13
+5.1.02.02.001.00003;Honorarium Narasumber atau Pembahas, Moderator, Pembawa Acara, dan Panitia;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00004;Honorarium Tim Pelaksana Kegiatan dan Sekretariat Tim Pelaksana Kegiatan;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00005;Honorarium Pemberi Keterangan Ahli, Saksi Ahli, dan Beracara;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00010;Honorarium Penulisan Butir Soal Tingkat Provinsi, Kabupaten atau Kota;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00011;Honorarium Penyelenggaraan Kegiatan Pendidikan dan Pelatihan;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00012;Honorarium Tim Anggaran Pemerintah Daerah;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00014;Belanja Jasa Tenaga Kesehatan;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00015;Belanja Jasa Tenaga Laboratorium;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00016;Belanja Jasa Tenaga Penanganan Prasarana dan Sarana Umum;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00020;Belanja Jasa Tenaga Penanganan Sosial;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00025;Belanja Jasa Tenaga Kesenian dan Kebudayaan;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00028;Belanja Jasa Tenaga Pelayanan Umum;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00029;Belanja Jasa Tenaga Ahli;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00030;Belanja Jasa Tenaga Kebersihan;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00031;Belanja Jasa Tenaga Keamanan;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00033;Belanja Jasa Tenaga Supir;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00037;Belanja Jasa Juri Perlombaan/Pertandingan;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00043;Belanja Jasa Penulisan dan Penerjemahan;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00046;Belanja Jasa Konversi Aplikasi/Sistem Informasi;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00048;Belanja Jasa Kontribusi Asosiasi;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00049;Belanja Jasa Pencucian Pakaian, Alat Kesenian dan Kebudayaan, serta Alat Rumah Tangga;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00050;Belanja Jasa Kalibrasi;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00051;Belanja Jasa Pengolahan Sampah;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00055;Belanja Jasa Iklan/Reklame, Film, dan Pemotretan;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00059;Belanja Tagihan Telepon;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00060;Belanja Tagihan Air;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00061;Belanja Tagihan Listrik;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00062;Belanja Langganan Jurnal/Surat Kabar/Majalah;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00063;Belanja Kawat/Faksimili/Internet/TV Berlangganan;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00064;Belanja Paket/Pengiriman;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00073;Belanja Medical Check Up;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00079;Belanja Jasa Pengujian Sampel Pangan;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00080;Belanja Honorarium Penanggungjawaban Pengelola Keuangan;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00081;Belanja Honorarium Pengadaan Barang/Jasa;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00082;Belanja Honorarium Perangkat Unit Kerja Pengadaan Barang dan Jasa (UKPBJ);8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00083;Belanja jasa Pegawai Pemerintah dengan Perjanjian Kerja (PPPK) Paruh Waktu pada jabatan guru;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00084;Belanja jasa Pegawai Pemerintah dengan Perjanjian Kerja (PPPK) Paruh Waktu pada jabatan tenaga kependidikan;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00085;Belanja jasa Pegawai Pemerintah dengan Perjanjian Kerja (PPPK) Paruh Waktu pada jabatan tenaga kesehatan;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00086;Belanja jasa Pegawai Pemerintah dengan Perjanjian Kerja (PPPK) Paruh Waktu pada jabatan tenaga teknis;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00087;Belanja Jasa Pegawai Pemerintah dengan Perjanjian Kerja (PPPK) Paruh Waktu pada Jabatan Pengelola Umum Operasional;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00088;Belanja jasa Pegawai Pemerintah dengan Perjanjian Kerja (PPPK) Paruh Waktu pada jabatan operator layanan operasional;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00089;Belanja jasa Pegawai Pemerintah dengan Perjanjian Kerja (PPPK) Paruh Waktu pada jabatan pengelola layanan operasional;8;SUB RINCIAN OBJEK;19
+5.1.02.02.001.00090;Belanja jasa Pegawai Pemerintah dengan Perjanjian Kerja (PPPK) Paruh Waktu pada jabatan penata layanan operasional;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002;Belanja Iuran Jaminan/Asuransi;6;RINCIAN OBJEK;13
+5.1.02.02.002.00001;Belanja Iuran Jaminan Kesehatan bagi Kepala Desa dan Perangkat Desa;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002.00003;Belanja Iuran Jaminan Kesehatan bagi Peserta PBPU dan BP Kelas 3;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002.00004;Belanja Bantuan Iuran Jaminan Kesehatan bagi Peserta PBPU dan BP Kelas 3;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002.00006;Belanja Iuran Jaminan Kecelakaan Kerja bagi Non ASN;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002.00007;Belanja Iuran Jaminan Kematian bagi Non ASN;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002.00008;Belanja Asuransi Barang Milik Daerah;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002.00012;Belanja Iuran Jaminan Kecelakaan Kerja bagi Pekerja Rentan;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002.00013;Belanja Iuran Jaminan Kematian bagi Pekerja Rentan;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002.00014;Belanja Iuran Jaminan Kesehatan bagi PPPK Paruh Waktu pada Jabatan Guru;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002.00015;Belanja Iuran Jaminan Kesehatan bagi PPPK Paruh Waktu pada Jabatan Tenaga Kependidikan;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002.00016;Belanja Iuran Jaminan Kesehatan bagi PPPK Paruh Waktu pada Jabatan Tenaga Kesehatan;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002.00017;Belanja Iuran Jaminan Kesehatan bagi PPPK Paruh Waktu pada Jabatan Tenaga Teknis;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002.00018;Belanja Iuran Jaminan Kesehatan bagi PPPK Paruh Waktu pada Jabatan Pengelola Umum Operasional;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002.00019;Belanja Iuran Jaminan Kesehatan bagi PPPK Paruh Waktu pada Jabatan Operator Layanan Operasional;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002.00020;Belanja Iuran Jaminan Kesehatan bagi PPPK Paruh Waktu pada Jabatan Pengelola Layanan Operasional;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002.00021;Belanja Iuran Jaminan Kesehatan bagi PPPK Paruh Waktu pada Jabatan Penata Layanan Operasional;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002.00022;Belanja Iuran Jaminan Kecelakaan Kerja bagi PPPK Paruh Waktu pada Jabatan Guru;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002.00023;Belanja Iuran Jaminan Kecelakaan Kerja bagi PPPK Paruh Waktu pada Jabatan Tenaga Kependidikan;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002.00024;Belanja Iuran Jaminan Kecelakaan Kerja bagi PPPK Paruh Waktu pada Jabatan Tenaga Kesehatan;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002.00025;Belanja Iuran Jaminan Kecelakaan Kerja bagi PPPK Paruh Waktu pada Jabatan Tenaga Teknis;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002.00026;Belanja Iuran Jaminan Kecelakaan Kerja bagi PPPK Paruh Waktu pada Jabatan Pengelola Umum Operasional;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002.00027;Belanja Iuran Jaminan Kecelakaan Kerja bagi PPPK Paruh Waktu pada Jabatan Operator Layanan Operasional;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002.00028;Belanja Iuran Jaminan Kecelakaan Kerja bagi PPPK Paruh Waktu pada Jabatan Pengelola Layanan Operasional;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002.00029;Belanja Iuran Jaminan Kecelakaan Kerja bagi PPPK Paruh Waktu pada Jabatan Penata Layanan Operasional;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002.00030;Belanja Iuran Jaminan Kematian bagi PPPK Paruh Waktu pada Jabatan Guru;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002.00031;Belanja Iuran Jaminan Kematian bagi PPPK Paruh Waktu pada Jabatan Tenaga Kependidikan;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002.00032;Belanja Iuran Jaminan Kematian bagi PPPK Paruh Waktu pada Jabatan Tenaga Kesehatan;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002.00033;Belanja Iuran Jaminan Kematian bagi PPPK Paruh Waktu pada Jabatan Tenaga Teknis;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002.00034;Belanja Iuran Jaminan Kematian bagi PPPK Paruh Waktu pada Jabatan Pengelola Umum Operasional;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002.00035;Belanja Iuran Jaminan Kematian bagi PPPK Paruh Waktu pada Jabatan Operator Layanan Operasional;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002.00036;Belanja Iuran Jaminan Kematian bagi PPPK Paruh Waktu pada Jabatan Pengelola Layanan Operasional;8;SUB RINCIAN OBJEK;19
+5.1.02.02.002.00037;Belanja Iuran Jaminan Kematian bagi PPPK Paruh Waktu pada Jabatan Penata Layanan Operasional;8;SUB RINCIAN OBJEK;19
+5.1.02.02.004;Belanja Sewa Peralatan dan Mesin;6;RINCIAN OBJEK;13
+5.1.02.02.004.00003;Belanja Sewa Excavator;8;SUB RINCIAN OBJEK;19
+5.1.02.02.004.00009;Belanja Sewa Loader;8;SUB RINCIAN OBJEK;19
+5.1.02.02.004.00035;Belanja Sewa Kendaraan Dinas Bermotor Perorangan;8;SUB RINCIAN OBJEK;19
+5.1.02.02.004.00036;Belanja Sewa Kendaraan Bermotor Penumpang;8;SUB RINCIAN OBJEK;19
+5.1.02.02.004.00042;Belanja Sewa Alat Angkutan Kereta Rel;8;SUB RINCIAN OBJEK;19
+5.1.02.02.004.00043;Belanja Sewa Alat Angkutan Darat Bermotor Lainnya;8;SUB RINCIAN OBJEK;19
+5.1.02.02.004.00117;Belanja Sewa Alat Kantor Lainnya;8;SUB RINCIAN OBJEK;19
+5.1.02.02.004.00123;Belanja Sewa Alat Rumah Tangga Lainnya (Home Use);8;SUB RINCIAN OBJEK;19
+5.1.02.02.004.00132;Belanja Sewa Peralatan Studio Audio;8;SUB RINCIAN OBJEK;19
+5.1.02.02.005;Belanja Sewa Gedung dan Bangunan;6;RINCIAN OBJEK;13
+5.1.02.02.005.00009;Belanja Sewa Bangunan Gedung Tempat Pertemuan;8;SUB RINCIAN OBJEK;19
+5.1.02.02.005.00036;Belanja Sewa Taman;8;SUB RINCIAN OBJEK;19
+5.1.02.02.007;Belanja Sewa Aset Tetap Lainnya;6;RINCIAN OBJEK;13
+5.1.02.02.007.00028;Belanja Sewa Alat Musik;8;SUB RINCIAN OBJEK;19
+5.1.02.02.008;Belanja Jasa Konsultansi Konstruksi;6;RINCIAN OBJEK;13
+5.1.02.02.008.00002;Belanja Jasa Konsultansi Perencanaan Arsitektur-Jasa Desain Arsitektural;8;SUB RINCIAN OBJEK;19
+5.1.02.02.008.00008;Belanja Jasa Konsultansi Perencanaan Rekayasa-Jasa Desain Rekayasa untuk Pekerjaan Teknik Sipil Air;8;SUB RINCIAN OBJEK;19
+5.1.02.02.008.00009;Belanja Jasa Konsultansi Perencanaan Rekayasa-Jasa Desain Rekayasa untuk Pekerjaan Teknik Sipil Transportasi;8;SUB RINCIAN OBJEK;19
+5.1.02.02.008.00013;Belanja Jasa Konsultansi Perencanaan Rekayasa-Jasa Desain Rekayasa Lainnya;8;SUB RINCIAN OBJEK;19
+5.1.02.02.008.00018;Belanja Jasa Konsultansi Pengawasan Arsitektur;8;SUB RINCIAN OBJEK;19
+5.1.02.02.008.00019;Belanja Jasa Konsultansi Pengawasan Rekayasa-Jasa Pengawas Pekerjaan Konstruksi Bangunan Gedung;8;SUB RINCIAN OBJEK;19
+5.1.02.02.008.00020;Belanja Jasa Konsultansi Pengawasan Rekayasa-Jasa Pengawas Pekerjaan Konstruksi Teknik Sipil Transportasi;8;SUB RINCIAN OBJEK;19
+5.1.02.02.008.00027;Belanja Jasa Konsultansi Spesialis-Jasa Pembuatan Peta;8;SUB RINCIAN OBJEK;19
+5.1.02.02.008.00032;Belanja Jasa Konsultansi Lainnya-Jasa Konsultansi Lingkungan;8;SUB RINCIAN OBJEK;19
+5.1.02.02.009;Belanja Jasa Konsultansi Non Konstruksi;6;RINCIAN OBJEK;13
+5.1.02.02.009.00014;Belanja Jasa Konsultansi Berorientasi Layanan-Jasa Khusus;8;SUB RINCIAN OBJEK;19
+5.1.02.03;Belanja Pemeliharaan;4;OBJEK;9
+5.1.02.03.002;Belanja Pemeliharaan Peralatan dan Mesin;6;RINCIAN OBJEK;13
+5.1.02.03.002.00022;Belanja Pemeliharaan Alat Besar-Alat Bantu-Electric Generating Set;8;SUB RINCIAN OBJEK;19
+5.1.02.03.002.00023;Belanja Pemeliharaan Alat Besar-Alat Bantu-Pompa;8;SUB RINCIAN OBJEK;19
+5.1.02.03.002.00035;Belanja Pemeliharaan Alat Angkutan-Alat Angkutan Darat Bermotor-Kendaraan Dinas Bermotor Perorangan;8;SUB RINCIAN OBJEK;19
+5.1.02.03.002.00038;Belanja Pemeliharaan Alat Angkutan-Alat Angkutan Darat Bermotor-Kendaraan Bermotor Beroda Dua;8;SUB RINCIAN OBJEK;19
+5.1.02.03.002.00039;Belanja Pemeliharaan Alat Angkutan-Alat Angkutan Darat Bermotor-Kendaraan Bermotor Beroda Tiga;8;SUB RINCIAN OBJEK;19
+5.1.02.03.002.00040;Belanja Pemeliharaan Alat Angkutan-Alat Angkutan Darat Bermotor-Kendaraan Bermotor Khusus;8;SUB RINCIAN OBJEK;19
+5.1.02.03.002.00043;Belanja Pemeliharaan Alat Angkutan-Alat Angkutan Darat Bermotor-Alat Angkutan Darat Bermotor Lainnya;8;SUB RINCIAN OBJEK;19
+5.1.02.03.002.00047;Belanja Pemeliharaan Alat Angkutan-Alat Angkutan Darat Tak Bermotor-Alat Angkutan Darat Tak Bemotor Lainnya;8;SUB RINCIAN OBJEK;19
+5.1.02.03.002.00056;Belanja Pemeliharaan Alat Angkutan-Alat Angkutan Apung Tak Bermotor-Alat Angkutan Apung Tak Bermotor Lainnya;8;SUB RINCIAN OBJEK;19
+5.1.02.03.002.00064;Belanja Pemeliharaan Alat Bengkel dan Alat Ukur-Alat Bengkel Bermesin-Perkakas Bengkel Kayu;8;SUB RINCIAN OBJEK;19
+5.1.02.03.002.00068;Belanja Pemeliharaan Alat Bengkel dan Alat Ukur-Alat Bengkel Bermesin-Alat Bengkel Bermesin Lainnya;8;SUB RINCIAN OBJEK;19
+5.1.02.03.002.00112;Belanja Pemeliharaan Alat Pertanian-Alat Pengolahan-Alat Pengolahan Lainnya;8;SUB RINCIAN OBJEK;19
+5.1.02.03.002.00117;Belanja Pemeliharaan Alat Kantor dan Rumah Tangga-Alat Kantor-Alat Kantor Lainnya;8;SUB RINCIAN OBJEK;19
+5.1.02.03.002.00121;Belanja Pemeliharaan Alat Kantor dan Rumah Tangga-Alat Rumah Tangga-Alat Pendingin;8;SUB RINCIAN OBJEK;19
+5.1.02.03.002.00137;Belanja Pemeliharaan Alat Studio, Komunikasi, dan Pemancar-Alat Studio-Alat Studio Lainnya;8;SUB RINCIAN OBJEK;19
+5.1.02.03.002.00411;Belanja Pemeliharaan Komputer-Peralatan Komputer-Peralatan Komputer Lainnya;8;SUB RINCIAN OBJEK;19
+5.1.02.03.003;Belanja Pemeliharaan Gedung dan Bangunan;6;RINCIAN OBJEK;13
+5.1.02.03.003.00001;Belanja Pemeliharaan Bangunan Gedung-Bangunan Gedung Tempat Kerja-Bangunan Gedung Kantor;8;SUB RINCIAN OBJEK;19
+5.1.02.03.003.00039;Belanja Pemeliharaan Bangunan Gedung-Bangunan Gedung Tempat Tinggal-Rumah Negara Golongan II;8;SUB RINCIAN OBJEK;19
+5.1.02.03.004;Belanja Pemeliharaan Jalan, Jaringan, dan Irigasi;6;RINCIAN OBJEK;13
+5.1.02.03.004.00003;Belanja Pemeliharaan Jalan dan Jembatan-Jalan-Jalan Kabupaten;8;SUB RINCIAN OBJEK;19
+5.1.02.04;Belanja Perjalanan Dinas;4;OBJEK;9
+5.1.02.04.001;Belanja Perjalanan Dinas Dalam Negeri;6;RINCIAN OBJEK;13
+5.1.02.04.001.00001;Belanja Perjalanan Dinas Biasa;8;SUB RINCIAN OBJEK;19
+5.1.02.04.001.00003;Belanja Perjalanan Dinas Dalam Kota;8;SUB RINCIAN OBJEK;19
+5.1.02.04.001.00004;Belanja Perjalanan Dinas Paket Meeting Dalam Kota;8;SUB RINCIAN OBJEK;19
+5.1.02.04.001.00005;Belanja Perjalanan Dinas Paket Meeting Luar Kota;8;SUB RINCIAN OBJEK;19
+5.1.02.04.002;Belanja Perjalanan Dinas Luar Negeri;6;RINCIAN OBJEK;13
+5.1.02.04.002.00001;Belanja Perjalanan Dinas Biasa Luar Negeri;8;SUB RINCIAN OBJEK;19
+5.1.02.05;Belanja Uang dan/atau Jasa untuk Diberikan kepada Pihak Ketiga/Pihak Lain/Masyarakat;4;OBJEK;9
+5.1.02.05.001;Belanja Uang yang Diberikan kepada Pihak Ketiga/Pihak Lain/Masyarakat;6;RINCIAN OBJEK;13
+5.1.02.05.001.00001;Belanja Hadiah yang Bersifat Perlombaan;8;SUB RINCIAN OBJEK;19
+5.1.02.05.002;Belanja Jasa yang Diberikan kepada Pihak Ketiga/Pihak Lain/Masyarakat;6;RINCIAN OBJEK;13
+5.1.02.05.002.00002;Belanja Jasa yang Diberikan kepada Masyarakat;8;SUB RINCIAN OBJEK;19
+5.1.02.89;Belanja Barang dan Jasa BOSP;4;OBJEK;9
+5.1.02.89.001;Belanja Barang dan Jasa BOSP-BOS;6;RINCIAN OBJEK;13
+5.1.02.89.001.00001;Belanja Barang dan Jasa BOSP-BOS Reguler;8;SUB RINCIAN OBJEK;19
+5.1.02.89.001.00002;Belanja Barang dan Jasa BOSP-BOS Kinerja;8;SUB RINCIAN OBJEK;19
+5.1.02.89.002;Belanja Barang dan Jasa BOSP-BOP PAUD;6;RINCIAN OBJEK;13
+5.1.02.89.002.00001;Belanja Barang dan Jasa BOSP-BOP PAUD Reguler;8;SUB RINCIAN OBJEK;19
+5.1.02.89.003;Belanja Barang dan Jasa BOSP-BOP Kesetaraan;6;RINCIAN OBJEK;13
+5.1.02.89.003.00001;Belanja Barang dan Jasa BOSP-BOP Kesetaraan Reguler;8;SUB RINCIAN OBJEK;19
+5.1.02.90;Belanja Barang dan Jasa BOK Puskesmas;4;OBJEK;9
+5.1.02.90.001;Belanja Barang dan Jasa BOK Puskesmas;6;RINCIAN OBJEK;13
+5.1.02.90.001.00001;Belanja Barang dan Jasa BOK Puskesmas;8;SUB RINCIAN OBJEK;19
+5.1.02.99;Belanja Barang dan Jasa BLUD;4;OBJEK;9
+5.1.02.99.099;Belanja Barang dan Jasa BLUD;6;RINCIAN OBJEK;13
+5.1.02.99.099.09999;Belanja Barang dan Jasa BLUD;8;SUB RINCIAN OBJEK;19
+5.1.05;Belanja Hibah;3;JENIS;6
+5.1.05.05;Belanja Hibah kepada Badan, Lembaga, Organisasi Kemasyarakatan yang Berbadan Hukum Indonesia;4;OBJEK;9
+5.1.05.05.001;Belanja Hibah kepada Badan dan Lembaga yang Bersifat Nirlaba, Sukarela dan Sosial yang Dibentuk Berdasarkan Peraturan Perundang-Undangan;6;RINCIAN OBJEK;13
+5.1.05.05.001.00001;Belanja Hibah Uang kepada Badan dan Lembaga yang Bersifat Nirlaba, Sukarela dan Sosial yang Dibentuk Berdasarkan Peraturan Perundang-Undangan;8;SUB RINCIAN OBJEK;19
+5.1.05.05.003;Belanja Hibah kepada Badan dan Lembaga Nirlaba, Sukarela Bersifat Sosial Kemasyarakatan;6;RINCIAN OBJEK;13
+5.1.05.05.003.00001;Belanja Hibah Uang kepada Badan dan Lembaga Nirlaba, Sukarela Bersifat Sosial Kemasyarakatan;8;SUB RINCIAN OBJEK;19
+5.1.05.07;Belanja Hibah Bantuan Keuangan kepada Partai Politik;4;OBJEK;9
+5.1.05.07.001;Belanja Hibah Bantuan Keuangan kepada Partai Politik;6;RINCIAN OBJEK;13
+5.1.05.07.001.00001;Belanja Hibah berupa Bantuan Keuangan kepada Partai Politik;8;SUB RINCIAN OBJEK;19
+5.1.05.08;Belanja Hibah Dana BOSP;4;OBJEK;9
+5.1.05.08.001;Belanja Hibah Dana BOSP-BOS;6;RINCIAN OBJEK;13
+5.1.05.08.001.00001;Belanja Hibah Dana BOSP-BOS;8;SUB RINCIAN OBJEK;19
+5.1.05.08.002;Belanja Hibah Dana BOSP-BOP PAUD;6;RINCIAN OBJEK;13
+5.1.05.08.002.00001;Belanja Hibah Dana BOSP-BOP PAUD;8;SUB RINCIAN OBJEK;19
+5.1.05.08.003;Belanja Hibah Dana BOSP-BOP Kesetaraan;6;RINCIAN OBJEK;13
+5.1.05.08.003.00001;Belanja Hibah Dana BOSP-BOP Kesetaraan;8;SUB RINCIAN OBJEK;19
+5.2;BELANJA MODAL;2;KELOMPOK;3
+5.2.02;Belanja Modal Peralatan dan Mesin;3;JENIS;6
+5.2.02.01;Belanja Modal Alat Besar;4;OBJEK;9
+5.2.02.01.001;Belanja Modal Alat Besar Darat;6;RINCIAN OBJEK;13
+5.2.02.01.001.00003;Belanja Modal Excavator;8;SUB RINCIAN OBJEK;19
+5.2.02.02;Belanja Modal Alat Angkutan;4;OBJEK;9
+5.2.02.02.001;Belanja Modal Alat Angkutan Darat Bermotor;6;RINCIAN OBJEK;13
+5.2.02.02.001.00004;Belanja Modal Kendaraan Bermotor Beroda Dua;8;SUB RINCIAN OBJEK;19
+5.2.02.02.004;Belanja Modal Alat Angkutan Apung Tak Bermotor;6;RINCIAN OBJEK;13
+5.2.02.02.004.00003;Belanja Modal Alat Angkutan Apung Tak Bermotor Khusus;8;SUB RINCIAN OBJEK;19
+5.2.02.03;Belanja Modal Alat Bengkel dan Alat Ukur;4;OBJEK;9
+5.2.02.03.001;Belanja Modal Alat Bengkel Bermesin;6;RINCIAN OBJEK;13
+5.2.02.03.001.00006;Belanja Modal Perkakas Bengkel Kayu;8;SUB RINCIAN OBJEK;19
+5.2.02.05;Belanja Modal Alat Kantor dan Rumah Tangga;4;OBJEK;9
+5.2.02.05.001;Belanja Modal Alat Kantor;6;RINCIAN OBJEK;13
+5.2.02.05.001.00005;Belanja Modal Alat Kantor Lainnya;8;SUB RINCIAN OBJEK;19
+5.2.02.05.002;Belanja Modal Alat Rumah Tangga;6;RINCIAN OBJEK;13
+5.2.02.05.002.00001;Belanja Modal Mebel;8;SUB RINCIAN OBJEK;19
+5.2.02.05.002.00003;Belanja Modal Alat Pembersih;8;SUB RINCIAN OBJEK;19
+5.2.02.05.002.00004;Belanja Modal Alat Pendingin;8;SUB RINCIAN OBJEK;19
+5.2.02.05.002.00006;Belanja Modal Alat Rumah Tangga Lainnya (Home Use);8;SUB RINCIAN OBJEK;19
+5.2.02.05.002.00007;Belanja Modal Alat Pemadam Kebakaran;8;SUB RINCIAN OBJEK;19
+5.2.02.05.003;Belanja Modal Meja dan Kursi Kerja/Rapat Pejabat;6;RINCIAN OBJEK;13
+5.2.02.05.003.00003;Belanja Modal Kursi Kerja Pejabat;8;SUB RINCIAN OBJEK;19
+5.2.02.06;Belanja Modal Alat Studio, Komunikasi, dan Pemancar;4;OBJEK;9
+5.2.02.06.001;Belanja Modal Alat Studio;6;RINCIAN OBJEK;13
+5.2.02.06.001.00004;Belanja Modal Peralatan Cetak;8;SUB RINCIAN OBJEK;19
+5.2.02.06.001.00005;Belanja Modal Peralatan Studio Pemetaan/Peralatan Ukur Tanah;8;SUB RINCIAN OBJEK;19
+5.2.02.06.002;Belanja Modal Alat Komunikasi;6;RINCIAN OBJEK;13
+5.2.02.06.002.00001;Belanja Modal Alat Komunikasi Telephone;8;SUB RINCIAN OBJEK;19
+5.2.02.10;Belanja Modal Komputer;4;OBJEK;9
+5.2.02.10.001;Belanja Modal Komputer Unit;6;RINCIAN OBJEK;13
+5.2.02.10.001.00002;Belanja Modal Personal Computer;8;SUB RINCIAN OBJEK;19
+5.2.02.10.002;Belanja Modal Peralatan Komputer;6;RINCIAN OBJEK;13
+5.2.02.10.002.00003;Belanja Modal Peralatan Personal Computer;8;SUB RINCIAN OBJEK;19
+5.2.02.17;Belanja Modal Peralatan Proses/Produksi;4;OBJEK;9
+5.2.02.17.001;Belanja Modal Unit Peralatan Proses/Produksi;6;RINCIAN OBJEK;13
+5.2.02.17.001.00019;Belanja Modal Transport and Storage Equipment for Liquid;8;SUB RINCIAN OBJEK;19
+5.2.02.18;Belanja Modal Rambu-Rambu;4;OBJEK;9
+5.2.02.18.001;Belanja Modal Rambu-Rambu Lalu Lintas Darat;6;RINCIAN OBJEK;13
+5.2.02.18.001.00002;Belanja Modal Rambu Tidak Bersuar;8;SUB RINCIAN OBJEK;19
+5.2.02.89;Belanja Modal Peralatan dan Mesin BOSP;4;OBJEK;9
+5.2.02.89.001;Belanja Modal Peralatan dan Mesin BOSP-BOS;6;RINCIAN OBJEK;13
+5.2.02.89.001.00001;Belanja Modal Peralatan dan Mesin BOSP-BOS Reguler;8;SUB RINCIAN OBJEK;19
+5.2.02.99;Belanja Modal Peralatan dan Mesin BLUD;4;OBJEK;9
+5.2.02.99.099;Belanja Modal Peralatan dan Mesin BLUD;6;RINCIAN OBJEK;13
+5.2.02.99.099.09999;Belanja Modal Peralatan dan Mesin BLUD;8;SUB RINCIAN OBJEK;19
+5.2.03;Belanja Modal Gedung dan Bangunan;3;JENIS;6
+5.2.03.01;Belanja Modal Bangunan Gedung;4;OBJEK;9
+5.2.03.01.001;Belanja Modal Bangunan Gedung Tempat Kerja;6;RINCIAN OBJEK;13
+5.2.03.01.001.00001;Belanja Modal Bangunan Gedung Kantor;8;SUB RINCIAN OBJEK;19
+5.2.03.01.001.00006;Belanja Modal Bangunan Kesehatan;8;SUB RINCIAN OBJEK;19
+5.2.03.01.001.00008;Belanja Modal Bangunan Gedung Tempat Ibadah;8;SUB RINCIAN OBJEK;19
+5.2.03.01.001.00010;Belanja Modal Bangunan Gedung Tempat Pendidikan;8;SUB RINCIAN OBJEK;19
+5.2.03.01.001.00012;Belanja Modal Bangunan Gedung Pertokoan/Koperasi/Pasar;8;SUB RINCIAN OBJEK;19
+5.2.03.01.001.00032;Belanja Modal Bangunan Fasilitas Umum;8;SUB RINCIAN OBJEK;19
+5.2.03.04;Belanja Modal Tugu Titik Kontrol/Pasti;4;OBJEK;9
+5.2.03.04.001;Belanja Modal Tugu/Tanda Batas;6;RINCIAN OBJEK;13
+5.2.03.04.001.00004;Belanja Modal Pagar;8;SUB RINCIAN OBJEK;19
+5.2.03.99;Belanja Modal Gedung dan Bangunan BLUD;4;OBJEK;9
+5.2.03.99.099;Belanja Modal Gedung dan Bangunan BLUD;6;RINCIAN OBJEK;13
+5.2.03.99.099.09999;Belanja Modal Gedung dan Bangunan BLUD;8;SUB RINCIAN OBJEK;19
+5.2.04;Belanja Modal Jalan, Jaringan, dan Irigasi;3;JENIS;6
+5.2.04.01;Belanja Modal Jalan dan Jembatan;4;OBJEK;9
+5.2.04.01.001;Belanja Modal Jalan;6;RINCIAN OBJEK;13
+5.2.04.01.001.00003;Belanja Modal Jalan Kabupaten;8;SUB RINCIAN OBJEK;19
+5.2.04.01.001.00010;Belanja Modal Jalan Lainnya;8;SUB RINCIAN OBJEK;19
+5.2.04.01.002;Belanja Modal Jembatan;6;RINCIAN OBJEK;13
+5.2.04.01.002.00003;Belanja Modal Jembatan pada Jalan Kabupaten;8;SUB RINCIAN OBJEK;19
+5.2.04.02;Belanja Modal Bangunan Air;4;OBJEK;9
+5.2.04.02.001;Belanja Modal Bangunan Air Irigasi;6;RINCIAN OBJEK;13
+5.2.04.02.001.00008;Belanja Modal Bangunan Air Irigasi Lainnya;8;SUB RINCIAN OBJEK;19
+5.2.04.99;Belanja Modal Jalan, Jaringan, dan Irigasi BLUD;4;OBJEK;9
+5.2.04.99.099;Belanja Modal Jalan, Jaringan, dan Irigasi BLUD;6;RINCIAN OBJEK;13
+5.2.04.99.099.09999;Belanja Modal Jalan, Jaringan, dan Irigasi BLUD;8;SUB RINCIAN OBJEK;19
+5.2.05;Belanja Modal Aset Tetap Lainnya;3;JENIS;6
+5.2.05.89;Belanja Modal Aset Tetap Lainnya BOSP;4;OBJEK;9
+5.2.05.89.001;Belanja Modal Aset Tetap Lainnya BOSP-BOS;6;RINCIAN OBJEK;13
+5.2.05.89.001.00001;Belanja Modal Aset Tetap Lainnya BOSP-BOS Reguler;8;SUB RINCIAN OBJEK;19
+5.2.06;Belanja Modal Aset Lainnya;3;JENIS;6
+5.2.06.99;Belanja Modal Aset Lainnya BLUD;4;OBJEK;9
+5.2.06.99.099;Belanja Modal Aset Lainnya BLUD;6;RINCIAN OBJEK;13
+5.2.06.99.099.09999;Belanja Modal Aset Lainnya BLUD;8;SUB RINCIAN OBJEK;19
+5.3;BELANJA TIDAK TERDUGA;2;KELOMPOK;3
+5.3.01;Belanja Tidak Terduga;3;JENIS;6
+5.3.01.01;Belanja Tidak Terduga;4;OBJEK;9
+5.3.01.01.001;Belanja Tidak Terduga;6;RINCIAN OBJEK;13
+5.3.01.01.001.00001;Belanja Tidak Terduga;8;SUB RINCIAN OBJEK;19
+5.4;BELANJA TRANSFER;2;KELOMPOK;3
+5.4.01;Belanja Bagi Hasil;3;JENIS;6
+5.4.01.01;Belanja Bagi Hasil Pajak Daerah Kepada Pemerintahan Kabupaten/Kota dan Desa;4;OBJEK;9
+5.4.01.01.003;Belanja Bagi Hasil Pajak Daerah Kepada Pemerintahan Desa;6;RINCIAN OBJEK;13
+5.4.01.01.003.00001;Belanja Bagi Hasil Pajak Daerah Kepada Pemerintahan Desa;8;SUB RINCIAN OBJEK;19
+5.4.01.02;Belanja Bagi Hasil Retribusi Daerah Kabupaten/Kota Kepada Pemerintah Desa;4;OBJEK;9
+5.4.01.02.001;Belanja Bagi Hasil Retribusi Daerah Kabupaten/Kota Kepada Pemerintah Desa;6;RINCIAN OBJEK;13
+5.4.01.02.001.00001;Belanja Bagi Hasil Retribusi Daerah Kabupaten/Kota Kepada Pemerintah Desa;8;SUB RINCIAN OBJEK;19
+5.4.02;Belanja Bantuan Keuangan;3;JENIS;6
+5.4.02.02;Belanja Bantuan Keuangan antar Daerah Kabupaten/Kota;4;OBJEK;9
+5.4.02.02.002;Belanja Bantuan Keuangan Khusus kepada Pemerintah Kabupaten/Kota;6;RINCIAN OBJEK;13
+5.4.02.02.002.00001;Belanja Bantuan Keuangan Khusus antar Daerah Kabupaten/Kota;8;SUB RINCIAN OBJEK;19
+5.4.02.05;Belanja Bantuan Keuangan Daerah Provinsi atau Kabupaten/Kota kepada Desa;4;OBJEK;9
+5.4.02.05.001;Belanja Bantuan Keuangan Umum Daerah Provinsi atau Kabupaten/Kota kepada Desa;6;RINCIAN OBJEK;13
+5.4.02.05.001.00003;Belanja Bantuan Keuangan Umum Kabupaten/Kota kepada Desa;8;SUB RINCIAN OBJEK;19
+5.4.02.05.002;Belanja Bantuan Keuangan Khusus Daerah Provinsi atau Kabupaten/Kota kepada Desa;6;RINCIAN OBJEK;13
+5.4.02.05.002.00003;Belanja Bantuan Keuangan Khusus Kabupaten/Kota kepada Desa;8;SUB RINCIAN OBJEK;19
+6;PEMBIAYAAN DAERAH;1;AKUN;1
+6.1;PENERIMAAN PEMBIAYAAN;2;KELOMPOK;3
+6.1.01;Sisa Lebih Perhitungan Anggaran Tahun Sebelumnya;3;JENIS;6
+6.1.01.02;Pelampauan Penerimaan Pendapatan Transfer;4;OBJEK;9
+6.1.01.02.001;Pelampauan Penerimaan Pendapatan Transfer-Transfer Pemerintah Pusat;6;RINCIAN OBJEK;13
+6.1.01.02.001.00300;Pelampauan Penerimaan Pendapatan Transfer-Transfer Pemerintah Pusat-Dana Alokasi Khusus (DAK)-DAK Non Fisik-TPG PNSD;8;SUB RINCIAN OBJEK;19
+6.1.01.05;Penghematan Belanja;4;OBJEK;9
+6.1.01.05.001;Penghematan Belanja-Belanja Operasi;6;RINCIAN OBJEK;13
+6.1.01.05.001.00001;Penghematan Belanja Pegawai-Gaji dan Tunjangan ASN;8;SUB RINCIAN OBJEK;19
+6.1.01.05.001.00007;Penghematan Belanja Barang dan Jasa-Barang;8;SUB RINCIAN OBJEK;19
+6.1.01.05.001.00008;Penghematan Belanja Barang dan Jasa-Jasa;8;SUB RINCIAN OBJEK;19
+6.1.01.05.001.00009;Penghematan Belanja Barang dan Jasa-Pemeliharaan;8;SUB RINCIAN OBJEK;19
+6.1.01.05.001.00010;Penghematan Belanja Barang dan Jasa-Perjalanan Dinas;8;SUB RINCIAN OBJEK;19
+6.1.01.05.001.00011;Penghematan Belanja Barang dan Jasa-Barang dan/atau Jasa untuk Diserahkan/Dijual/ Diberikan kepada Masyarakat/Pihak Ketiga;8;SUB RINCIAN OBJEK;19
+6.1.01.05.001.00029;Penghematan Belanja Bantuan Sosial-Bantuan Sosial kepada Kelompok Masyarakat;8;SUB RINCIAN OBJEK;19
+6.1.01.05.002;Penghematan Belanja-Belanja Modal;6;RINCIAN OBJEK;13
+6.1.01.05.002.00003;Penghematan Belanja Modal Peralatan dan Mesin-Alat Angkutan;8;SUB RINCIAN OBJEK;19
+6.1.01.05.002.00021;Penghematan Belanja Modal Gedung dan Bangunan-Bangunan Gedung;8;SUB RINCIAN OBJEK;19
+6.1.01.05.002.00025;Penghematan Belanja Modal Jalan, Jaringan, dan Irigasi-Jalan dan Jembatan;8;SUB RINCIAN OBJEK;19
+6.1.01.05.002.00029;Penghematan Belanja Modal Aset Tetap Lainnya-Bahan Perpustakaan;8;SUB RINCIAN OBJEK;19
+6.1.01.05.002.00037;Penghematan Belanja Modal Peralatan dan Mesin BOSP;8;SUB RINCIAN OBJEK;19
+6.1.01.05.002.00038;Penghematan Belanja Modal Peralatan dan Mesin BLUD;8;SUB RINCIAN OBJEK;19
+6.1.01.05.002.00039;Penghematan Belanja Modal Gedung dan Bangunan BLUD;8;SUB RINCIAN OBJEK;19
+6.1.01.05.002.00040;Penghematan Belanja Modal Jalan, Jaringan, dan Irigasi BLUD;8;SUB RINCIAN OBJEK;19
+6.1.01.05.002.00041;Penghematan Belanja Modal Aset Tetap Lainnya BOSP;8;SUB RINCIAN OBJEK;19
+6.1.01.05.002.00043;Penghematan Belanja Modal Aset Lainnya-Aset Tidak Berwujud;8;SUB RINCIAN OBJEK;19
+6.1.01.05.002.00044;Penghematan Belanja Modal Aset Lainnya BLUD;8;SUB RINCIAN OBJEK;19
+6.1.01.05.004;Sisa Belanja Transfer;6;RINCIAN OBJEK;13
+6.1.01.05.004.00003;Sisa Belanja Bantuan Keuangan-Bantuan Keuangan antar Daerah Kabupaten/Kota;8;SUB RINCIAN OBJEK;19
+6.1.01.07;Sisa Dana Akibat Tidak Tercapainya Capaian Target Kinerja dan Sisa Dana Pengeluaran Pembiayaan;4;OBJEK;9
+6.1.01.07.001;Sisa Dana Akibat Tidak Tercapainya Capaian Target Kinerja;6;RINCIAN OBJEK;13
+6.1.01.07.001.00001;Sisa Dana Akibat Tidak Tercapainya Capaian Target Kinerja;8;SUB RINCIAN OBJEK;19
+6.1.01.08;Sisa Belanja Lainnya;4;OBJEK;9
+6.1.01.08.001;Sisa Lebih Perhitungan Anggaran BLUD;6;RINCIAN OBJEK;13
+6.1.01.08.001.00001;Sisa Lebih Perhitungan Anggaran BLUD;8;SUB RINCIAN OBJEK;19
+6.1.01.14.001;Sisa DBH Pajak;6;RINCIAN OBJEK;13
+6.1.01.14.001.00004;Sisa DBH Cukai Hasil Tembakau (CHT);8;SUB RINCIAN OBJEK;19
+6.1.01.14.003;Sisa DBH Lainnya;6;RINCIAN OBJEK;13
+6.1.01.14.003.00001;Sisa DBH Sawit;8;SUB RINCIAN OBJEK;19
+6.1.01.15.001;Sisa DAU yang Tidak Ditentukan Penggunaannya ;6;RINCIAN OBJEK;13
+6.1.01.15.001.00001;Sisa DAU;8;SUB RINCIAN OBJEK;19
+6.1.01.15.002;Sisa DAU yang Ditentukan Penggunaannya ;6;RINCIAN OBJEK;13
+6.1.01.15.002.00003;Sisa DAU Tambahan Dukungan Pendanaan atas Kebijakan Penggajian Pegawai Pemerintah dengan Perjanjian Kerja;8;SUB RINCIAN OBJEK;19
+6.1.01.15.002.00004;Sisa DAU yang Ditentukan Penggunaannya Bidang Pendidikan;8;SUB RINCIAN OBJEK;19
+6.1.01.15.002.00005;Sisa DAU yang Ditentukan Penggunaannya Bidang Kesehatan;8;SUB RINCIAN OBJEK;19
+6.1.01.16.001;Sisa DAK Fisik;6;RINCIAN OBJEK;13
+6.1.01.16.001.00002;Sisa DAK Fisik-Bidang Pendidikan-Reguler-SD;8;SUB RINCIAN OBJEK;19
+6.1.01.16.001.00025;Sisa DAK Fisik-Bidang Kesehatan dan KB-Reguler-KB;8;SUB RINCIAN OBJEK;19
+6.1.01.16.001.00117;Sisa DAK Fisik-Bidang Perlindungan Perempuan dan Anak-Perlindungan Perempuan dan Anak;8;SUB RINCIAN OBJEK;19
+6.1.01.16.002;Sisa DAK Non Fisik;6;RINCIAN OBJEK;13
+6.1.01.16.002.00004;Sisa DAK Non Fisik-TPG PNSD;8;SUB RINCIAN OBJEK;19
+6.1.01.16.002.00005;Sisa DAK Non Fisik-Tamsil Guru PNSD;8;SUB RINCIAN OBJEK;19
+6.1.01.16.002.00012;Sisa DAK Non Fisik-BOKKB-Pengawasan Obat dan Makanan;8;SUB RINCIAN OBJEK;19
+6.1.01.16.002.00015;Sisa DAK Non Fisik-BOKKB-BOKB;8;SUB RINCIAN OBJEK;19
+6.1.01.16.002.00022;Sisa DAK Non Fisik-Dana Pelayanan Perlindungan Perempuan dan Anak;8;SUB RINCIAN OBJEK;19
+6.1.01.16.002.00023;Sisa DAK Non Fisik-Dana Ketahanan Pangan dan Pertanian;8;SUB RINCIAN OBJEK;19
+6.1.01.16.002.00026;Sisa DAK Non Fisik-Dana BOSP-BOS Reguler;8;SUB RINCIAN OBJEK;19
+6.1.01.16.002.00028;Sisa DAK Non Fisik-Dana BOSP-BOP PAUD Reguler;8;SUB RINCIAN OBJEK;19
+6.1.01.16.002.00033;Sisa DAK Non Fisik-Dana BOK-BOK Dinas-BOK Kabupaten/Kota;8;SUB RINCIAN OBJEK;19
+6.1.01.16.002.00035;Sisa DAK Non Fisik-Dana BOK-BOK Puskesmas;8;SUB RINCIAN OBJEK;19
+6.1.05;Penerimaan Kembali Pemberian Pinjaman Daerah;3;JENIS;6
+6.1.05.06;Penerimaan Kembali Pinjaman kepada Masyarakat;4;OBJEK;9
+6.1.05.06.002;Penerimaan Kembali Dana Bergulir kepada Masyarakat;6;RINCIAN OBJEK;13
+6.1.05.06.002.00001;Penerimaan Kembali Dana Bergulir kepada Masyarakat;8;SUB RINCIAN OBJEK;19
+6.2;PENGELUARAN PEMBIAYAAN;2;KELOMPOK;3
+6.2.02;Penyertaan Modal Daerah;3;JENIS;6
+6.2.02.02;Penyertaan Modal Daerah pada Badan Usaha Milik Daerah (BUMD);4;OBJEK;9
+6.2.02.02.001;Penyertaan Modal Daerah pada BUMD;6;RINCIAN OBJEK;13
+6.2.02.02.001.00001;Penyertaan Modal Daerah pada BUMD;8;SUB RINCIAN OBJEK;19
+6.2.04;Pemberian Pinjaman Daerah;3;JENIS;6
+6.2.04.06;Pemberian Pinjaman Daerah kepada Masyarakat;4;OBJEK;9
+6.2.04.06.002;Pemberian Pinjaman-Dana Bergulir kepada Masyarakat;6;RINCIAN OBJEK;13
+6.2.04.06.002.00001;Pemberian Pinjaman-Dana Bergulir kepada Masyarakat;8;SUB RINCIAN OBJEK;19

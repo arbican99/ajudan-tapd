@@ -1,0 +1,747 @@
+import React, { useState, useEffect } from 'react';
+import { FileSpreadsheet, Printer, Layers, ChevronDown, ChevronUp, AlertTriangle, Info } from 'lucide-react';
+import { supabase } from '../supabaseClient';
+import * as XLSX from 'xlsx';
+
+export default function ModulVerifikasiRka() {
+  const [listTahapan, setListTahapan] = useState([]);
+  const [listSkpd, setListSkpd] = useState([]);
+  const [rules, setRules] = useState([]);
+  const [masterTematik, setMasterTematik] = useState([]); 
+  const [loading, setLoading] = useState(false);
+  
+  const [selectedTahapan, setSelectedTahapan] = useState('');
+  const [selectedSkpd, setSelectedSkpd] = useState(''); 
+  const [namaFile, setNamaFile] = useState('');
+  
+  const [subKegiatanTree, setSubKegiatanTree] = useState({});
+  const [bidangUrusanGroup, setBidangUrusanGroup] = useState({});
+  const [tematikReport, setTematikReport] = useState({}); 
+  const [summaryData, setSummaryData] = useState(null);
+  const [reportGenerated, setReportGenerated] = useState(false);
+  const [openAccordions, setOpenAccordions] = useState({});
+
+  useEffect(() => {
+    fetchMasterData();
+  }, []);
+
+  const fetchMasterData = async () => {
+    setLoading(true);
+    try {
+      const { data: statusData } = await supabase.from('tblstatus').select('*').order('kd_status');
+      setListTahapan(statusData || []);
+
+      const { data: skpdData } = await supabase.from('tblskpd').select('*');
+      const cleanedSkpd = (skpdData || []).map(item => {
+        const rawCode = String(item.kd_skpd || '').trim();
+        const parts = rawCode.split('.');
+        const mainSkpdCode = parts.slice(0, 6).join('.'); 
+
+        let namaResmi = String(item.nm_skpd || 'Unit Perangkat Daerah').trim();
+        if (namaResmi.toUpperCase().includes('DINAS KESEHATAN')) {
+          namaResmi = 'DINAS KESEHATAN';
+        }
+
+        return {
+          ...item,
+          kd_skpd_utama: mainSkpdCode,
+          display_nama: namaResmi
+        };
+      });
+
+      const uniqueSkpdInduk = cleanedSkpd.filter((value, index, self) =>
+        index === self.findIndex((t) => t.kd_skpd_utama === value.kd_skpd_utama)
+      ).sort((a, b) => a.kd_skpd_utama.localeCompare(b.kd_skpd_utama));
+
+      setListSkpd(uniqueSkpdInduk);
+
+      const { data: ruleData } = await supabase.from('tbl_rule_validasi').select('*');
+      setRules(ruleData || []);
+
+      const { data: mdsData } = await supabase.from('tblmds').select('katagori, kode, kdsubgiat, nmsubgiat');
+      setMasterTematik(mdsData || []);
+
+    } catch (err) {
+      console.error('Gagal sinkronisasi data master:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUploadExcel = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    if (!selectedTahapan || !selectedSkpd) {
+      alert('PERINGATAN: Silakan tentukan Status Tahapan APBD dan SKPD Induk terlebih dahulu sebelum mengunggah berkas Excel RKA!');
+      e.target.value = null; 
+      setNamaFile('');
+      setReportGenerated(false);
+      return;
+    }
+
+    setNamaFile(file.name);
+    setLoading(true);
+    const reader = new FileReader();
+    
+    reader.onload = (evt) => {
+      try {
+        const bstr = evt.target.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        
+        const rawData = XLSX.utils.sheet_to_json(ws);
+        if (rawData.length === 0) {
+          alert('File Excel kosong atau format tidak sesuai.');
+          setLoading(false);
+          return;
+        }
+
+        prosesSimulasiAuditTree(rawData);
+      } catch (err) {
+        alert('Gagal memproses file Excel.');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    reader.readAsBinaryString(file);
+  };
+
+  const prosesSimulasiAuditTree = (dataRows) => {
+    let totalPaguGlobal = 0;
+    let totalMandatoryGlobal = 0;
+    let totalSpmGlobal = 0;
+    let totalAnomaliGlobal = 0;
+
+    const dapatkanPesanAturan = (idAturan, pesanDefault) => {
+      const r = rules.find(item => item.id_aturan === idAturan);
+      return r ? r.error_message : pesanDefault;
+    };
+
+    const treeGroup = {};
+    const tematikGroup = {}; 
+    const urusanGroup = {}; 
+
+    dataRows.forEach((row) => {
+      const rawSkpdExcel = String(row['Kode SKPD'] || row['KODE SKPD'] || '').trim();
+      const skpdParts = rawSkpdExcel.split('.');
+      const skpdIndukExcel = skpdParts.slice(0, 6).join('.');
+
+      const namaBidangUrusanExcel = String(row['Bidang Urusan'] || row['BIDANG URUSAN'] || row['Nama Bidang Urusan'] || row['NAMA BIDANG URUSAN'] || 'URUSAN PEMERINTAHAN').trim().toUpperCase();
+
+      const subKeg = String(row['Kode Sub Kegiatan'] || row['KODE SUB KEGIATAN'] || '').trim();
+      const namaSub = String(row['Nama Sub Kegiatan'] || row['NAMA SUB KEGIATAN'] || '').trim();
+      const namaSubLower = namaSub.toLowerCase();
+      const rek = String(row['Kode Rekening'] || row['KODE REKENING'] || '').trim();
+      const namaRek = String(row['Nama Rekening'] || row['NAMA REKENING'] || '').trim();
+      const nominal = parseFloat(row['Anggaran'] || row['ANGGARAN'] || row['jumlah'] || row['Jumlah'] || 0);
+
+      if (!subKeg) return;
+
+      const angkaMurniSubKegExcel = subKeg.replace(/[^0-9]/g, '');
+      if (angkaMurniSubKegExcel.length > 0) {
+        const matchTematik = masterTematik.find(t => {
+          const angkaMurniMaster1 = String(t.kdsubgiat || '').replace(/[^0-9]/g, '');
+          const angkaMurniMaster2 = String(t.kode || '').replace(/[^0-9]/g, '');
+          return (angkaMurniMaster1 === angkaMurniSubKegExcel) || (angkaMurniMaster2 === angkaMurniSubKegExcel);
+        });
+
+        if (matchTematik && matchTematik.katagori) {
+          const namaKategoriMurni = String(matchTematik.katagori).toUpperCase().trim();
+          
+          if (!tematikGroup[namaKategoriMurni]) {
+            tematikGroup[namaKategoriMurni] = {
+              kategori: namaKategoriMurni,
+              bel_utama: 0,
+              bel_pendukung: 0,
+              jumlah: 0
+            };
+          }
+
+          let jenisKomponenTematik = 'pendukung';
+          const apakahSubKegiatanFisikTematik = subKeg.startsWith('1.03.02') || subKeg.startsWith('1.03.03') || namaSubLower.includes('pembangunan') || namaSubLower.includes('rehabilitasi') || namaSubLower.includes('konstruksi') || namaSubLower.includes('utilitas');
+          const apakahKonsultanFisikTematik = rek.startsWith('5.1.02.02.08') || rek.startsWith('5.1.02.02.008');
+
+          if (rek.startsWith('5.2')) {
+            jenisKomponenTematik = 'utama';
+          } else if (rek.startsWith('5.1') && apakahSubKegiatanFisikTematik && apakahKonsultanFisikTematik) {
+            jenisKomponenTematik = 'utama';
+          }
+
+          if (jenisKomponenTematik === 'utama') {
+            tematikGroup[namaKategoriMurni].bel_utama += nominal;
+          } else {
+            tematikGroup[namaKategoriMurni].bel_pendukung += nominal;
+          }
+          tematikGroup[namaKategoriMurni].jumlah += nominal;
+        }
+      }
+
+      if (skpdIndukExcel !== selectedSkpd) {
+        return; 
+      }
+
+      totalPaguGlobal += nominal;
+
+      if (!treeGroup[subKeg]) {
+        treeGroup[subKeg] = {
+          kd_skpd: skpdIndukExcel,
+          nama_bidang_urusan: namaBidangUrusanExcel,
+          kd_sub_kegiatan: subKeg,
+          nama_sub_kegiatan: namaSub,
+          total_pagu_sub: 0,
+          pagu_utama: 0,      
+          pagu_penunjang: 0,   
+          rekeningRows: [],
+          subErrors: [],
+          bel_pegawai: 0, bel_barjas: 0, bel_hibah: 0,
+          bel_modal_alat: 0, bel_modal_gedung: 0, bel_modal_jalan: 0,
+          bel_modal_aset_tetap: 0, bel_modal_aset_lain: 0,
+          bel_btt: 0, bel_bagi_hasil: 0, bel_bantuan_keu: 0
+        };
+      }
+
+      treeGroup[subKeg].total_pagu_sub += nominal;
+      
+      const apakahSubKegiatanFisik = subKeg.startsWith('1.03.02') || subKeg.startsWith('1.03.03') || namaSubLower.includes('pembangunan') || namaSubLower.includes('rehabilitasi') || namaSubLower.includes('konstruksi') || namaSubLower.includes('utilitas');
+      const apakahKonsultanFisik = rek.startsWith('5.1.02.02.08') || rek.startsWith('5.1.02.02.008');
+
+      if (rek.startsWith('5.2')) {
+        treeGroup[subKeg].pagu_utama += nominal;
+      } else if (rek.startsWith('5.1')) {
+        if (apakahSubKegiatanFisik && apakahKonsultanFisik) {
+          treeGroup[subKeg].pagu_utama += nominal;
+        } else {
+          treeGroup[subKeg].pagu_penunjang += nominal;
+        }
+      }
+
+      if (rek.startsWith('5.1.01')) treeGroup[subKeg].bel_pegawai += nominal;
+      else if (rek.startsWith('5.1.02') && !rek.startsWith('5.1.02.03')) treeGroup[subKeg].bel_barjas += nominal;
+      else if (rek.startsWith('5.1.02.03')) treeGroup[subKeg].bel_hibah += nominal;
+      else if (rek.startsWith('5.2.02')) treeGroup[subKeg].bel_modal_alat += nominal;
+      else if (rek.startsWith('5.2.03')) treeGroup[subKeg].bel_modal_gedung += nominal;
+      else if (rek.startsWith('5.2.04')) treeGroup[subKeg].bel_modal_jalan += nominal;
+      else if (rek.startsWith('5.2.05')) treeGroup[subKeg].bel_modal_aset_tetap += nominal;
+      else if (rek.startsWith('5.2.06')) treeGroup[subKeg].bel_modal_aset_lain += nominal;
+      else if (rek.startsWith('5.3')) treeGroup[subKeg].bel_btt += nominal;
+      else if (rek.startsWith('5.4.01')) treeGroup[subKeg].bel_bagi_hasil += nominal;
+      else if (rek.startsWith('5.4.02')) treeGroup[subKeg].bel_bantuan_keu += nominal;
+
+      let barisErrors = [];
+      if (!subKeg.endsWith('.01') && subKeg.length >= 4 && skpdIndukExcel.length >= 4) {
+        if (skpdIndukExcel.substring(0, 4) !== subKeg.substring(0, 4)) {
+          barisErrors.push(dapatkanPesanAturan('R-01', 'Gagal Validasi Kewenangan! SKPD dilarang menganggarkan Sub-Kegiatan di luar bidang urusan wajibnya.'));
+        }
+      }
+      if (apakahSubKegiatanFisik && apakahKonsultanFisik && nominal > 0) {
+        barisErrors.push(`[${rek}] ` + dapatkanPesanAturan('R-02', 'Pencampuran Akun! Untuk sub-kegiatan konstruksi fisik, Jasa Konsultan harus menggunakan akun Belanja Modal (awalan 5.2) agar nilainya dikapitalisasi ke aset tetap.'));
+      }
+      const dinasTeknis = ['1.03', '1.04', '2.10'];
+      if (!dinasTeknis.some(pfx => skpdIndukExcel.startsWith(pfx)) && rek.startsWith('5.2.04') && nominal > 0) {
+        barisErrors.push(dapatkanPesanAturan('R-04', 'Pelanggaran Aturan! SKPD Administratif dilarang menganggarkan Belanja Modal Jalan, Irigasi, dan Jaringan.'));
+      }
+      const subKegParts = subKeg.split('.');
+      const akhiranSubKeg = subKegParts[subKegParts.length - 1];
+      const apakahSubKegiatanRutinAparatur = subKeg.includes('.01.') || akhiranSubKeg === '0001' || akhiranSubKeg === '0002' || namaSubLower.includes('penunjang urusan') || namaSubLower.includes('administrasi perangkat daerah');
+      if (apakahSubKegiatanRutinAparatur && !namaSubLower.includes('pembangunan') && !namaSubLower.includes('pengadaan') && (rek.startsWith('5.2.03') || rek.startsWith('5.2.04')) && nominal > 50000000) {
+        barisErrors.push(dapatkanPesanAturan('R-05', 'Salah Penempatan! Sub-kegiatan penunjang administrasi kantor rutin hanya untuk operasional.'));
+      }
+
+      if (barisErrors.length > 0) {
+        totalAnomaliGlobal += barisErrors.length;
+      }
+
+      treeGroup[subKeg].rekeningRows.push({
+        kd_rekening: rek,
+        nama_rekening: namaRek || 'Tanpa Nama Rekening',
+        jumlah: nominal,
+        errors: barisErrors
+      });
+    });
+
+    Object.values(treeGroup).forEach((subNode) => {
+      if (subNode.pagu_utama > 0 && subNode.pagu_penunjang > subNode.pagu_utama) {
+        const pesanR03 = dapatkanPesanAturan('R-03', 'Struktur Anggaran Tidak Wajar: Porsi Belanja Pendukung Operasional lebih besar daripada Belanja Utama.');
+        subNode.subErrors.push(pesanR03);
+        totalAnomaliGlobal += 1;
+      }
+
+      subNode.rekeningRows.forEach(r => {
+        if (r.errors && r.errors.length > 0) {
+          r.errors.forEach(errTxt => {
+            if (!subNode.subErrors.includes(errTxt)) {
+              subNode.subErrors.push(errTxt);
+            }
+          });
+        }
+      });
+
+      const keyUrusan = subNode.nama_bidang_urusan;
+      if (!urusanGroup[keyUrusan]) {
+        urusanGroup[keyUrusan] = {
+          nama_bidang: keyUrusan,
+          subKegiatanList: [],
+          total_utama: 0,
+          total_penunjang: 0,
+          total_pagu: 0
+        };
+      }
+      urusanGroup[keyUrusan].subKegiatanList.push(subNode);
+      urusanGroup[keyUrusan].total_utama += subNode.pagu_utama;
+      urusanGroup[keyUrusan].total_penunjang += subNode.pagu_penunjang;
+      urusanGroup[keyUrusan].total_pagu += subNode.total_pagu_sub;
+    });
+
+    if (Object.keys(treeGroup).length === 0 && Object.keys(tematikGroup).length === 0) {
+      alert(`Informasi: Tidak ditemukan data RKA di berkas Excel.`);
+      setSummaryData(null);
+      setSubKegiatanTree({});
+      setBidangUrusanGroup({});
+      setTematikReport({});
+      setReportGenerated(false);
+      return;
+    }
+
+    setSummaryData({
+      totalPagu: totalPaguGlobal,
+      totalMandatory: totalMandatoryGlobal,
+      persenMandatory: totalPaguGlobal > 0 ? (totalMandatoryGlobal / totalPaguGlobal) * 100 : 0,
+      totalSpm: totalSpmGlobal,
+      persenSpm: totalPaguGlobal > 0 ? (totalSpmGlobal / totalPaguGlobal) * 100 : 0,
+      totalAnomali: totalAnomaliGlobal
+    });
+
+    setSubKegiatanTree(treeGroup);
+    setBidangUrusanGroup(urusanGroup);
+    setTematikReport(tematikGroup);
+    setOpenAccordions(Object.keys(treeGroup).reduce((acc, k) => ({ ...acc, [k]: true }), {}));
+    setReportGenerated(true);
+  };
+
+  const toggleAccordion = (kd) => {
+    setOpenAccordions(prev => ({ ...prev, [kd]: !prev[kd] }));
+  };
+
+  // ========================================================
+  // ENGINE CETAK BARU: IFRAME ISOLATION PRINTING (ANTI BOCOR)
+  // ========================================================
+  const eksekusiCetakIframe = () => {
+    const currentSkpdObj = listSkpd.find(s => s.kd_skpd_utama === selectedSkpd);
+    const currentTahapanObj = listTahapan.find(t => String(t.id) === String(selectedTahapan));
+    const tahunAnggaran = currentTahapanObj ? currentTahapanObj.status.split(' ').pop() : '2026';
+    
+    let u1 = 0, p1 = 0, t1 = 0;
+    Object.values(subKegiatanTree).forEach(x => { u1 += x.pagu_utama; p1 += x.pagu_penunjang; t1 += x.total_pagu_sub; });
+
+    let u2 = 0, p2 = 0, t2 = 0;
+    Object.values(tematikReport).forEach(x => { u2 += x.bel_utama; p2 += x.bel_pendukung; t2 += x.jumlah; });
+
+    // 1. Bikin elemen iframe bayangan tersembunyi
+    let iframe = document.getElementById('bkad-print-iframe');
+    if (!iframe) {
+      iframe = document.createElement('iframe');
+      iframe.id = 'bkad-print-iframe';
+      iframe.style.position = 'absolute';
+      iframe.style.width = '0px';
+      iframe.style.height = '0px';
+      iframe.style.border = 'none';
+      document.body.appendChild(iframe);
+    }
+
+    // 2. Susun HTML bersih (Hanya Kop & 4 Tabel Verifikasi)
+    let htmlContent = `
+      <html>
+      <head>
+        <title>Cetak Verifikasi RKA</title>
+        <style>
+          body { font-family: 'Times New Roman', Times, serif; color: #000000; background-color: #fff; margin: 0; padding: 0; }
+          @page { size: A4 landscape; margin: 12mm 15mm 12mm 15mm; }
+          
+          .kop-surat-resmi { text-align: center; line-height: 1.3; margin-bottom: 18px; border-bottom: 3.5px double #000000; padding-bottom: 5px; }
+          .kop-pemda-teks { font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+          .kop-bkad-teks { font-size: 16px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+          .kop-laporan-teks { font-size: 12px; font-weight: bold; text-transform: uppercase; }
+          
+          .meta-info-tabel-resmi { width: 100%; margin-bottom: 15px; font-size: 11px; border-collapse: collapse; }
+          .meta-info-tabel-resmi td { padding: 2px 0; font-weight: bold; }
+          
+          .sub-judul-tabel-resmi { font-size: 11px; font-weight: bold; margin-top: 18px; margin-bottom: 6px; text-transform: uppercase; }
+          
+          .tabel-format-word { width: 100%; border-collapse: collapse; margin-bottom: 15px; page-break-inside: auto; }
+          .tabel-format-word th { border: 1px solid #000000; padding: 6px 4px; font-size: 9.5px; font-weight: bold; text-align: center; background-color: #eaeaea; }
+          .tabel-format-word td { border: 1px solid #000000; padding: 4.5px 5px; font-size: 9.5px; }
+          .tabel-format-word tr { page-break-inside: avoid; page-break-after: auto; }
+          
+          .tr-group-header-urusan { background-color: #f3f3f3; font-weight: bold; }
+          .p-center { text-align: center; }
+          .p-right { text-align: right; white-space: nowrap; }
+          .p-bold { font-weight: bold; }
+          .bg-total-row { background-color: #dbdbdb; font-weight: bold; }
+          
+          .force-page-break { page-break-before: always; break-before: page; display: block; height: 0; }
+        </style>
+      </head>
+      <body>
+        
+        <div class="kop-surat-resmi">
+          <div class="kop-pemda-teks">PEMERINTAH DAERAH KABUPATEN SIJUNJUNG</div>
+          <div class="kop-bkad-teks">BADAN KEUANGAN DAN ASET DAERAH</div>
+          <div class="kop-laporan-teks">LAPORAN HASIL VERIFIKASI RENCANA KERJA DAN ANGGARAN BELANJA DAERAH (RKA)</div>
+          <div class="kop-laporan-teks">TAHUN ANGGARAN ${tahunAnggaran}</div>
+        </div>
+
+        <table class="meta-info-tabel-resmi">
+          <tbody>
+            <tr><td style="width: 160px;">Kode SKPD Kunci</td><td style="width: 15px;">:</td><td>${selectedSkpd || '...'}</td></tr>
+            <tr><td>Nama Entitas Perangkat Daerah</td><td>:</td><td>${currentSkpdObj ? currentSkpdObj.display_nama : '...'}</td></tr>
+            <tr><td>Tahapan Perencanaan Finansial</td><td>:</td><td>${currentTahapanObj ? currentTahapanObj.status.toUpperCase() : '...'}</td></tr>
+          </tbody>
+        </table>
+
+        <div class="sub-judul-tabel-resmi">1. Hasil Penilaian Struktur Usulan Anggaran Berdasarkan Bidang Urusan Perangkat Daerah</div>
+        <table class="tabel-format-word">
+          <thead>
+            <tr>
+              <th style="width: 5%;" rowspan="2">No</th>
+              <th style="width: 55%;" rowspan="2">Bidang Urusan / Program / Kegiatan / Sub Kegiatan</th>
+              <th colspan="2" style="width: 26%;">Komponen Alokasi</th>
+              <th rowspan="2" style="width: 14%;">Jumlah Belanja</th>
+            </tr>
+            <tr>
+              <th style="width: 13%;">Belanja Utama</th>
+              <th style="width: 13%;">Belanja Pendukung</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${Object.values(bidangUrusanGroup).map((group, gIdx) => `
+              <tr class="tr-group-header-urusan">
+                <td class="p-center">${gIdx + 1}</td>
+                <td class="p-bold">${group.nama_bidang}</td>
+                <td class="p-right p-bold">Rp ${group.total_utama.toLocaleString('id-ID')}</td>
+                <td class="p-right p-bold">Rp ${group.total_penunjang.toLocaleString('id-ID')}</td>
+                <td class="p-right p-bold">Rp ${group.total_pagu.toLocaleString('id-ID')}</td>
+              </tr>
+              ${group.subKegiatanList.map((sub, sIdx) => `
+                <tr>
+                  <td class="p-center">${gIdx + 1}.${sIdx + 1}</td>
+                  <td style="padding-left: 12px;">[${sub.kd_sub_kegiatan}] ${sub.nama_sub_kegiatan}</td>
+                  <td class="p-right">Rp ${sub.pagu_utama.toLocaleString('id-ID')}</td>
+                  <td class="p-right">Rp ${sub.pagu_penunjang.toLocaleString('id-ID')}</td>
+                  <td class="p-right p-bold">Rp ${sub.total_pagu_sub.toLocaleString('id-ID')}</td>
+                </tr>
+              `).join('')}
+            `).join('')}
+            <tr class="bg-total-row">
+              <td colspan="2" class="p-bold p-center">TOTAL PLAFON SKPD INDUK</td>
+              <td class="p-right">Rp ${u1.toLocaleString('id-ID')}</td>
+              <td class="p-right">Rp ${p1.toLocaleString('id-ID')}</td>
+              <td class="p-right p-bold">Rp ${t1.toLocaleString('id-ID')}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="sub-judul-tabel-resmi">2. Tracking Pemetaan Usulan Anggaran Makro / Tematik Daerah</div>
+        <table class="tabel-format-word">
+          <thead>
+            <tr>
+              <th style="width: 5%;" rowspan="2">No</th>
+              <th style="width: 55%;" rowspan="2">Kluster Kategori Tematik Daerah</th>
+              <th colspan="2" style="width: 26%;">Klasifikasi Belanja</th>
+              <th rowspan="2" style="width: 14%;">Total Pagu Tematik</th>
+            </tr>
+            <tr>
+              <th style="width: 13%;">Belanja Utama</th>
+              <th style="width: 13%;">Belanja Pendukung</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${Object.keys(tematikReport).length > 0 ? `
+              ${Object.values(tematikReport).map((item, idx) => `
+                <tr>
+                  <td class="p-center">${idx + 1}</td>
+                  <td class="p-bold">${item.kategori}</td>
+                  <td class="p-right">Rp ${item.bel_utama.toLocaleString('id-ID')}</td>
+                  <td class="p-right">Rp ${item.bel_pendukung.toLocaleString('id-ID')}</td>
+                  <td class="p-right p-bold">Rp ${item.jumlah.toLocaleString('id-ID')}</td>
+                </tr>
+              `).join('')}
+              <tr class="bg-total-row">
+                <td colspan="2" class="p-bold p-center">TOTAL ANGGARAN TEMATIK TERIKAT</td>
+                <td class="p-right">Rp ${u2.toLocaleString('id-ID')}</td>
+                <td class="p-right">Rp ${p2.toLocaleString('id-ID')}</td>
+                <td class="p-right p-bold">Rp ${t2.toLocaleString('id-ID')}</td>
+              </tr>
+            ` : `
+              <tr><td colspan="5" class="p-center" style="font-style: italic; padding: 10px;">Tidak terdeteksi sub-kegiatan tematik makro dalam entitas RKA ini.</td></tr>
+            `}
+          </tbody>
+        </table>
+
+        <div class="force-page-break"></div>
+
+        <div class="sub-judul-tabel-resmi" style="margin-top: 0px;">3. Matriks Distribusi Akun Jenis Rekening Belanja Sinkronisasi Permendagri</div>
+        <table class="tabel-format-word" style="table-layout: fixed; width: 100%;">
+          <thead>
+            <tr>
+              <th style="width: 4%;" rowspan="2">No</th>
+              <th style="width: 22%;" rowspan="2">Nomenklatur Sub-Kegiatan</th>
+              <th style="width: 21%;" colspan="3">BELANJA OPERASI</th>
+              <th style="width: 35%;" colspan="5">BELANJA MODAL</th>
+              <th style="width: 6%;" rowspan="2">BTT</th>
+              <th style="width: 12%;" colspan="2">BELANJA TRANSFER</th>
+            </tr>
+            <tr>
+              <th style="font-size: 7px; padding: 3px 1px;">Pegawai</th>
+              <th style="font-size: 7px; padding: 3px 1px;">Barjas</th>
+              <th style="font-size: 7px; padding: 3px 1px;">Hibah</th>
+              <th style="font-size: 7px; padding: 3px 1px;">M. Alat</th>
+              <th style="font-size: 7px; padding: 3px 1px;">M. Gedung</th>
+              <th style="font-size: 7px; padding: 3px 1px;">M. Jalan</th>
+              <th style="font-size: 7px; padding: 3px 1px;">M. Aset T.</th>
+              <th style="font-size: 7px; padding: 3px 1px;">M. Lain</th>
+              <th style="font-size: 7px; padding: 3px 1px;">Bagi Hasil</th>
+              <th style="font-size: 7px; padding: 3px 1px;">Ban-Keu</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${Object.values(subKegiatanTree).map((item, idx) => `
+              <tr style="font-size: 7.5px;">
+                <td class="p-center">${idx + 1}</td>
+                <td style="word-wrap: break-word; font-size: 7.5px; line-height: 1.1;">[${item.kd_sub_kegiatan}] ${item.nama_sub_kegiatan}</td>
+                <td class="p-right">${item.bel_pegawai > 0 ? item.bel_pegawai.toLocaleString('id-ID') : '-'}</td>
+                <td class="p-right">${item.bel_barjas > 0 ? item.bel_barjas.toLocaleString('id-ID') : '-'}</td>
+                <td class="p-right">${item.bel_hibah > 0 ? item.bel_hibah.toLocaleString('id-ID') : '-'}</td>
+                <td class="p-right">${item.bel_modal_alat > 0 ? item.bel_modal_alat.toLocaleString('id-ID') : '-'}</td>
+                <td class="p-right">${item.bel_modal_gedung > 0 ? item.bel_modal_gedung.toLocaleString('id-ID') : '-'}</td>
+                <td class="p-right">${item.bel_modal_jalan > 0 ? item.bel_modal_jalan.toLocaleString('id-ID') : '-'}</td>
+                <td class="p-right">${item.bel_modal_aset_tetap > 0 ? item.bel_modal_aset_tetap.toLocaleString('id-ID') : '-'}</td>
+                <td class="p-right">${item.bel_modal_aset_lain > 0 ? item.bel_modal_aset_lain.toLocaleString('id-ID') : '-'}</td>
+                <td class="p-right">${item.bel_btt > 0 ? item.bel_btt.toLocaleString('id-ID') : '-'}</td>
+                <td class="p-right">${item.bel_bagi_hasil > 0 ? item.bel_bagi_hasil.toLocaleString('id-ID') : '-'}</td>
+                <td class="p-right">${item.bel_bantuan_keu > 0 ? item.bel_bantuan_keu.toLocaleString('id-ID') : '-'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+
+        <div class="force-page-break"></div>
+
+        <div class="sub-judul-tabel-resmi" style="margin-top: 0px;">4. Daftar Catatan Koreksi & Temuan Pelanggaran Regulasi Komite TAPD (Validasi Objektif)</div>
+        <table class="tabel-format-word">
+          <thead>
+            <tr>
+              <th class="p-center" style="width: 6%;">No</th>
+              <th style="width: 34%;">Uraian Sub Kegiatan Bermasalah</th>
+              <th style="width: 60%;">Rumusan Koreksi / Catatan Pelanggaran Aturan Permendagri</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${(() => {
+              let nomorUrut = 0;
+              let rowsHtml = '';
+              
+              Object.values(subKegiatanTree).forEach((sub) => {
+                if (sub.subErrors && sub.subErrors.length > 0) {
+                  nomorUrut++;
+                  rowsHtml += `
+                    <tr>
+                      <td class="p-center p-bold">${nomorUrut}</td>
+                      <td class="p-bold">[${sub.kd_sub_kegiatan}] ${sub.nama_sub_kegiatan}</td>
+                      <td>
+                        <div style="display: flex; flex-direction: column; gap: 4px; font-weight: bold;">
+                          ${sub.subErrors.map(err => `<div>• ${err}</div>`).join('')}
+                        </div>
+                      </td>
+                    </tr>
+                  `;
+                }
+              });
+
+              return rowsHtml || `
+                <tr>
+                  <td class="p-center">1</td>
+                  <td class="p-center" style="font-style: italic;">Seluruh Usulan Anggaran Kerja Perangkat Daerah</td>
+                  <td class="p-bold" style="color: #047857;">Sempurna. Seluruh usulan anggaran RKA dinyatakan lolos pengujian regulasi daerah (Tingkat Kepatuhan 100%).</td>
+                </tr>
+              `;
+            })()}
+          </tbody>
+        </table>
+
+      </body>
+      </html>
+    `;
+
+    // 3. Tembakkan HTML ke dalam iframe, lalu panggil print
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(htmlContent);
+    doc.close();
+
+    // Beri jeda sedikit agar browser selesai me-render dokumen bayangan sebelum dialog cetak muncul
+    setTimeout(() => {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+    }, 500);
+  };
+
+  return (
+    <div className="space-y-6 text-slate-100 font-sans">
+      
+      {/* 1. PANEL UTAMA / LAYAR KENDALI */}
+      <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-6 shadow-xl">
+        <h3 className="text-amber-400 font-mono font-bold uppercase tracking-wider mb-5 flex items-center gap-2 text-sm">
+          <Layers size={16} /> Panel Kendali Verifikasi & Penilaian RKA
+        </h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="block text-[10px] font-mono text-amber-400/70 uppercase tracking-widest font-bold">1. Status Tahapan APBD</label>
+              <select
+                value={selectedTahapan}
+                onChange={(e) => setSelectedTahapan(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg px-3 py-2 text-xs outline-none"
+              >
+                <option value="" className="text-slate-950 bg-white">-- PILIH TAHAPAN APBD --</option>
+                {listTahapan.map((tahap) => (
+                  <option key={tahap.id} value={tahap.id} className="text-slate-950 bg-white">
+                    [{tahap.kd_status}] {tahap.status}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-[10px] font-mono text-amber-400/70 uppercase tracking-widest font-bold">2. Pilih SKPD Induk</label>
+              <select
+                value={selectedSkpd}
+                onChange={(e) => setSelectedSkpd(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg px-3 py-2 text-xs outline-none"
+              >
+                <option value="" className="text-slate-950 bg-white">-- PILIH Perangkat Daerah / SKPD Induk --</option>
+                {listSkpd.map((skpd, idx) => (
+                  <option key={idx} value={skpd.kd_skpd_utama} className="text-slate-950 bg-white">
+                    [{skpd.kd_skpd_utama}] {skpd.display_nama}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="space-y-1.5 h-full">
+            <label className="block text-[10px] font-mono text-amber-400/70 uppercase tracking-widest font-bold">3. Ambil Berkas File Excel RKA</label>
+            <div className="relative border-2 border-dashed border-slate-800 hover:border-cyan-500/50 rounded-lg p-6 bg-slate-950/40 text-center flex flex-col items-center justify-center min-h-[115px]">
+              <input 
+                type="file" accept=".xlsx, .xls" onChange={handleUploadExcel}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                disabled={loading}
+              />
+              <FileSpreadsheet size={24} className="text-cyan-400 mb-2" />
+              <span className="font-mono font-bold text-white text-[11px]">
+                {loading ? 'MEMPROSES VERIFIKASI...' : 'DRAG AND DROP / KLIK FILE EXCEL'}
+              </span>
+              {namaFile && (
+                <div className="mt-2 text-emerald-400 text-[10px] bg-emerald-950/50 border border-emerald-500/20 px-2 py-0.5 rounded truncate max-w-xs">
+                  📁 Berkas Terpasang: {namaFile}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. NOTIFIKASI AKSES SUPER CETAK */}
+      {reportGenerated && summaryData && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-900 border border-slate-800 p-4 rounded-xl items-center shadow-lg">
+          <div>
+            <p className="text-cyan-400 font-bold text-xs">✓ Struktur Data RKA Perangkat Daerah Sukses Disinkronisasi!</p>
+            <p className="text-slate-400 mt-1 text-[11px]">Gunakan tombol akselerasi cetak bersih di samping kanan untuk dokumen fisik.</p>
+          </div>
+          <div className="flex justify-end items-center">
+            <button 
+              onClick={eksekusiCetakIframe}
+              className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-slate-950 font-black flex items-center gap-2 rounded-lg text-xs transition-colors shadow-lg"
+            >
+              <Printer size={14} />
+              <span>CETAK BERKAS HASIL VERIFIKASI BIASA (ANTI-BOCOR)</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 3. VIEW SCREEN INTERAKTIF (ACCORDION JALAN DENGAN NORMAL) */}
+      {reportGenerated && (
+        <div className="space-y-4">
+          <div className="text-slate-400 font-mono text-[11px] uppercase flex items-center gap-2">
+            <Info size={12} className="text-cyan-400" /> Hasil Pengujian & Struktur Akun Anggaran Komponen Layar Interaktif
+          </div>
+
+          {Object.values(subKegiatanTree).map((sub, idx) => {
+            const isOpen = !!openAccordions[sub.kd_sub_kegiatan];
+            return (
+              <div key={idx} className="bg-slate-900/60 border border-slate-800/80 rounded-xl overflow-hidden shadow-sm">
+                <div 
+                  onClick={() => toggleAccordion(sub.kd_sub_kegiatan)}
+                  className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-800/40 select-none"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="text-slate-500">{isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</span>
+                    <div className="flex flex-col gap-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-cyan-400 font-mono font-bold">[{sub.kd_sub_kegiatan}]</span>
+                        <span className="text-white font-bold truncate max-w-xl text-[13px]">{sub.nama_sub_kegiatan.toUpperCase()}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono">
+                        <span className="bg-slate-800 px-2 py-0.5 rounded text-amber-400 text-[9px] font-bold">{sub.nama_bidang_urusan}</span>
+                        <span>| Belanja Utama: <span className="text-emerald-400 font-bold">{(sub.total_pagu_sub > 0 ? (sub.pagu_utama/sub.total_pagu_sub)*100 : 0).toFixed(1)}%</span></span>
+                        <span>| Belanja Pendukung: <span className="text-cyan-400 font-bold">{(sub.total_pagu_sub > 0 ? (sub.pagu_penunjang/sub.total_pagu_sub)*100 : 0).toFixed(1)}%</span></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="font-mono text-white font-black text-sm pl-4">
+                    Rp {sub.total_pagu_sub.toLocaleString('id-ID')}
+                  </div>
+                </div>
+
+                {isOpen && (
+                  <div className="border-t border-slate-800/50 bg-slate-950/50 p-4 space-y-4">
+                    <div className="space-y-1.5">
+                      <div className="text-[10px] font-mono text-slate-500 uppercase tracking-wider pl-1">Rincian Komponen Akun Belanja Dokumen RKA:</div>
+                      {sub.rekeningRows.map((rek, rIdx) => (
+                        <div key={rIdx} className={`p-2 rounded-lg text-xs flex items-center justify-between ${rek.errors.length > 0 ? 'bg-amber-950/20 border border-amber-500/20' : 'hover:bg-slate-900/50'}`}>
+                          <span className="text-slate-300 font-mono">[{rek.kd_rekening}] {rek.nama_rekening}</span>
+                          <span className="text-slate-200 font-mono font-medium shrink-0">Rp {rek.jumlah.toLocaleString('id-ID')}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {sub.subErrors.length > 0 && (
+                      <div className="bg-rose-950/40 border border-rose-500/30 p-3 rounded-lg space-y-1 mt-3">
+                        <div className="text-rose-400 font-bold text-xs flex items-center gap-1.5">
+                          <AlertTriangle size={12} /> Terdeteksi Penyimpangan Regulasi (Hasil Evaluasi TAPD):
+                        </div>
+                        <ul className="list-inside text-[11px] text-rose-200/90 space-y-1.5 pl-1">
+                          {sub.subErrors.map((err, eIdx) => (
+                            <li key={eIdx} className="bg-rose-950/60 p-2 border border-rose-800/40 rounded">
+                              ⚠️ {err}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+    </div>
+  );
+}
