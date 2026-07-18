@@ -61,21 +61,44 @@ export default function ModulRka() {
     }
   };
 
-  // Fungsi mengambil rincian belanja RKA berdasarkan filter tahapan aktif
+  // PERBAIKAN: Fungsi mengambil data RKA massal menggunakan teknik Chunking/Pagination (Bypass Limit 1000 Supabase)
   const fetchData = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('rka')
-        .select('*')
-        .eq('status', selectedStatusFilter)
-        .order('kdskpd', { ascending: true })
-        .order('kdsubunit', { ascending: true })
-        .order('kdsubgiat', { ascending: true })
-        .order('kdrek', { ascending: true });
+      let allData = [];
+      let page = 0;
+      const pageSize = 1000;
+      let hasMore = true;
 
-      if (error) throw error;
-      setRkaData(data || []);
+      while (hasMore) {
+        const fromRange = page * pageSize;
+        const toRange = fromRange + pageSize - 1;
+
+        const { data, error } = await supabase
+          .from('rka')
+          .select('*')
+          .eq('status', selectedStatusFilter)
+          .order('kdskpd', { ascending: true })
+          .order('kdsubunit', { ascending: true })
+          .order('kdsubgiat', { ascending: true })
+          .order('kdrek', { ascending: true })
+          .range(fromRange, toRange);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          allData = [...allData, ...data];
+          if (data.length < pageSize) {
+            hasMore = false;
+          } else {
+            page++;
+          }
+        } else {
+          hasMore = false;
+        }
+      }
+
+      setRkaData(allData);
     } catch (err) {
       alert('Gagal mengambil data RKA: ' + err.message);
     } finally {
@@ -250,12 +273,13 @@ export default function ModulRka() {
 
         if (deleteError) throw deleteError;
 
-        // Lakukan Bulk Insert massal data bersih baru
-        const { error: insertError } = await supabase
-          .from('rka')
-          .insert(dataToInsert);
-
-        if (insertError) throw insertError;
+        // PERBAIKAN: Proses Bulk Insert dalam pecahan chunk maksimal 500 baris per eksekusi untuk menghindari batas payload API Supabase
+        const chunkSize = 500;
+        for (let i = 0; i < dataToInsert.length; i += chunkSize) {
+          const chunk = dataToInsert.slice(i, i + chunkSize);
+          const { error: insertError } = await supabase.from('rka').insert(chunk);
+          if (insertError) throw insertError;
+        }
         
         alert(`Sukses Sinkronisasi! Berhasil memuat ${dataToInsert.length} data ke tahapan "${statusKunci}".`);
         setSelectedStatusFilter(statusKunci);
@@ -330,7 +354,7 @@ export default function ModulRka() {
     );
   });
 
-  // LOGIKA POHON BERJENJANG (Kondisional Khusus Dinas Kesehatan)
+  // PERBAIKAN LOGIKA POHON BERJENJANG (Menghindari percampuran objek bypass antar SKPD)
   const groupedData = finalFilteredData.reduce((acc, item) => {
     const nmSkpdUpper = item.nmskpd ? item.nmskpd.trim().toUpperCase() : 'TANPA SKPD';
     const keySkpd = `${item.kdskpd} - ${nmSkpdUpper}`;
@@ -349,8 +373,8 @@ export default function ModulRka() {
       }
       keySubunit = `${subunitSeksi} - ${nmSubunitSeksi}`;
     } else {
-      // Jika bukan Dinkes, bypass dengan key konstan agar tidak memecah sub-struktur secara visual
-      keySubunit = "BYPASS_SUBUNIT";
+      // PERBAIKAN: Berikan key bypass yang unik berlandaskan kode SKPD masing-masing agar tidak saling bertumpuk satu sama lain
+      keySubunit = `BYPASS_SUBUNIT_${item.kdskpd}`;
     }
 
     const keySubgiat = `${item.kdsubgiat} - ${item.nmsubgiat ? item.nmsubgiat.trim().toUpperCase() : 'TANPA SUB-KEGIATAN'}`;
@@ -477,8 +501,8 @@ export default function ModulRka() {
         </div>
 
         <div className="bg-slate-900 border border-slate-800/80 rounded-lg p-3 flex flex-col justify-center">
-          <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Total Pagu Tahapan Aktif</span>
-          <span className="text-base font-mono font-bold text-teal-400 mt-0.5">Rp {totalPaguAktif.toLocaleString('id-ID')},00</span>
+          <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Total Anggaran</span>
+          <span className="text-base font-mono font-bold text-teal-400 mt-0.5">Rp {totalPaguAktif.toLocaleString('id-ID')}</span>
         </div>
       </div>
 
@@ -513,6 +537,9 @@ export default function ModulRka() {
                     arr.forEach(i => totalPaguSkpd += (Number(i.jml) || 0));
                   });
                 });
+
+                // PERBAIKAN KEY: Dapatkan nama bypass yang spesifik untuk baris ini
+                const bypassKey = `BYPASS_SUBUNIT_${skpdKey.split(' - ')[0]}`;
 
                 return (
                   <React.Fragment key={skpdKey}>
@@ -559,9 +586,8 @@ export default function ModulRka() {
                           );
                         })
                       ) : (
-                        // JIKA BUKAN DINAS KESEHATAN -> BYPASS SUBUNIT, LANGSUNG SUB-KEGIATAN
-                        // Menggunakan key "BYPASS_SUBUNIT" yang telah diatur di fungsi .reduce()
-                        subunitsMap["BYPASS_SUBUNIT"] && renderSubgiatDanRekening(subunitsMap["BYPASS_SUBUNIT"], "px-7", "pl-14 pr-4")
+                        // JIKA BUKAN DINAS KESEHATAN -> BYPASS SUBUNIT LANGSUNG KE SUB-KEGIATAN
+                        subunitsMap[bypassKey] && renderSubgiatDanRekening(subunitsMap[bypassKey], "px-7", "pl-14 pr-4")
                       )
                     )}
                   </React.Fragment>

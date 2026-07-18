@@ -3,8 +3,7 @@ import {
   ArrowRight, Lock, Mail, Eye, EyeOff, 
   FileSpreadsheet, LogOut, Radio, Activity, CheckCircle, Users, 
   Layers, ChevronDown, ChevronRight, Folder, ShieldCheck, ToggleLeft,
-  Menu, ChevronLeft, HelpCircle, LayoutGrid, Sliders, Database, BookOpen,
-  ClipboardCheck, TrendingUp, DollarSign
+  Menu, ChevronLeft, HelpCircle, LayoutGrid, Sliders, Database, BookOpen
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 
@@ -16,7 +15,6 @@ import ModulCekRealisasi from './components/ModulCekRealisasi';
 import ModulTahapanApbd from './components/ModulTahapanApbd'; 
 import ModulTematik from './components/ModulTematik'; 
 import ModulRka from './components/ModulRka'; // Terimpor dengan benar
-import ModulRealisasiBelanja from './components/ModulRealisasiBelanja';
 
 export default function App() {
   const [email, setEmail] = useState('');
@@ -39,7 +37,7 @@ export default function App() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setLoading(true); // 🌟 PERBAIKAN: Menggunakan fungsi setter setLoading
+    setLoading(true); 
     
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     
@@ -49,7 +47,7 @@ export default function App() {
       setUserEmail(data.user.email);
       setIsLoggedIn(true);
     }
-    setLoading(false); // 🌟 PERBAIKAN: Menggunakan fungsi setter setLoading
+    setLoading(false);
   };
 
   const handleLogout = async () => {
@@ -69,10 +67,6 @@ export default function App() {
       case 'tematik': return 'Master Kelompok Laporan Tematik APBD';
       case 'verifikasi-rka': return 'Sistem Validasi RKA';
       case 'verifikasi-realisasi': return 'Audit Komparatif Realisasi';
-      // Label untuk menu baru
-      case 'asistensi-usulan': return 'Asistensi Usulan APBD';
-      case 'realisasi-pendapatan': return 'Data Realisasi Pendapatan';
-      case 'realisasi-belanja': return 'Data Realisasi Belanja';
       default: return 'Console Workspace';
     }
   };
@@ -163,7 +157,7 @@ export default function App() {
               sidebarCollapsed ? 'w-[76px]' : 'w-68'
             }`}
           >
-            <div className="flex flex-col gap-4 overflow-y-auto pr-1 select-none scrollbar-thin">
+            <div className="flex flex-col gap-4">
               {!sidebarCollapsed && (
                 <span className="text-[9px] text-cyan-400/40 font-bold tracking-[0.25em] px-2 mb-1 uppercase border-b border-slate-900 pb-2">
                   // CORE_SYSTEM_ACCORDION
@@ -228,7 +222,7 @@ export default function App() {
                       <span className="truncate">Tahapan APBD</span>
                     </button>
 
-                    {/* 🌟 SUBMENU BARU: MASTER RKA */}
+                    {/* 🌟 SUBMENU BARU: MASTER RKA (Terletak Tepat di Atas Data Realisasi) */}
                     <button 
                       onClick={() => setActiveTab('master-rka')}
                       className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-md text-left text-[11px] font-bold tracking-wide transition-all border active:scale-98 cursor-pointer ${
@@ -315,108 +309,11 @@ export default function App() {
                       <FileSpreadsheet size={13} className={activeTab === 'verifikasi-rka' ? 'text-cyan-400' : 'text-slate-600'} />
                       <span className="truncate">Verifikasi Struktur RKA</span>
                     </button>
-                  </div>
-                )}
-              </div>
 
-              {/* 🌟 ⚡ ACCORDION GROUP 3: PROSES ASISTENSI (MENU BARU) */}
-              <div className="flex flex-col gap-1 bg-slate-900/30 p-1 rounded-xl border border-slate-900">
-                <button 
-                  onClick={() => {
-                    if(sidebarCollapsed) setSidebarCollapsed(false);
-                    setOpenAccordion(openAccordion === 'asistensi' ? '' : 'asistensi');
-                  }}
-                  className={`w-full flex items-center justify-between px-3 py-3 rounded-lg text-left text-xs font-black tracking-wider transition-all border relative group active:scale-98 cursor-pointer ${
-                    openAccordion === 'asistensi'
-                      ? 'bg-gradient-to-r from-slate-900 to-slate-950 border-cyan-400 text-cyan-300 shadow-[0_4px_15px_rgba(6,182,212,0.2)]' 
-                      : 'border-slate-800 text-white/90 bg-slate-950/60 hover:border-slate-700 hover:text-slate-200'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <ClipboardCheck size={15} className={openAccordion === 'asistensi' ? 'text-cyan-400 drop-shadow-[0_0_5px_rgba(6,182,212,0.8)]' : 'text-slate-400'} />
-                    {!sidebarCollapsed && <span>03. PROSES ASISTENSI</span>}
-                  </div>
-                  {!sidebarCollapsed && (
-                    <ChevronDown size={14} className={`text-cyan-400 transition-transform duration-300 ${openAccordion === 'asistensi' ? 'transform rotate-180' : ''}`} />
-                  )}
+                    
 
-                  {sidebarCollapsed && (
-                    <div className="absolute left-16 bg-slate-950 border border-cyan-500/40 text-cyan-300 text-[10px] font-bold py-1.5 px-3 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-opacity z-30 font-sans">
-                      [03] ACCORDION PROSES ASISTENSI
-                    </div>
-                  )}
-                </button>
 
-                {openAccordion === 'asistensi' && !sidebarCollapsed && (
-                  <div className="mt-1.5 p-1.5 bg-slate-950/80 border border-slate-800/60 rounded-lg flex flex-col gap-1 animate-fadeIn">
-                    <button 
-                      onClick={() => setActiveTab('asistensi-usulan')}
-                      className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-md text-left text-[11px] font-bold tracking-wide transition-all border active:scale-98 cursor-pointer ${
-                        activeTab === 'asistensi-usulan' 
-                          ? 'bg-cyan-950/40 border-cyan-500/50 text-cyan-300 shadow-[inset_0_0_8px_rgba(6,182,212,0.2)]' 
-                          : 'border-transparent text-white/90 hover:bg-slate-900/60 hover:text-slate-300'
-                      }`}
-                    >
-                      <ArrowRight size={13} className={activeTab === 'asistensi-usulan' ? 'text-cyan-400' : 'text-slate-600'} />
-                      <span className="truncate">Asistensi Usulan APBD</span>
-                    </button>
-                  </div>
-                )}
-              </div>
 
-              {/* 🌟 ⚡ ACCORDION GROUP 4: DATA REALISASI (MENU BARU) */}
-              <div className="flex flex-col gap-1 bg-slate-900/30 p-1 rounded-xl border border-slate-900">
-                <button 
-                  onClick={() => {
-                    if(sidebarCollapsed) setSidebarCollapsed(false);
-                    setOpenAccordion(openAccordion === 'realisasi-group' ? '' : 'realisasi-group');
-                  }}
-                  className={`w-full flex items-center justify-between px-3 py-3 rounded-lg text-left text-xs font-black tracking-wider transition-all border relative group active:scale-98 cursor-pointer ${
-                    openAccordion === 'realisasi-group'
-                      ? 'bg-gradient-to-r from-slate-900 to-slate-950 border-cyan-400 text-cyan-300 shadow-[0_4px_15px_rgba(6,182,212,0.2)]' 
-                      : 'border-slate-800 text-white/90 bg-slate-950/60 hover:border-slate-700 hover:text-slate-200'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <TrendingUp size={15} className={openAccordion === 'realisasi-group' ? 'text-cyan-400 drop-shadow-[0_0_5px_rgba(6,182,212,0.8)]' : 'text-slate-400'} />
-                    {!sidebarCollapsed && <span>04. DATA REALISASI</span>}
-                  </div>
-                  {!sidebarCollapsed && (
-                    <ChevronDown size={14} className={`text-cyan-400 transition-transform duration-300 ${openAccordion === 'realisasi-group' ? 'transform rotate-180' : ''}`} />
-                  )}
-
-                  {sidebarCollapsed && (
-                    <div className="absolute left-16 bg-slate-950 border border-cyan-500/40 text-cyan-300 text-[10px] font-bold py-1.5 px-3 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-opacity z-30 font-sans">
-                      [04] ACCORDION DATA REALISASI
-                    </div>
-                  )}
-                </button>
-
-                {openAccordion === 'realisasi-group' && !sidebarCollapsed && (
-                  <div className="mt-1.5 p-1.5 bg-slate-950/80 border border-slate-800/60 rounded-lg flex flex-col gap-1 animate-fadeIn">
-                    <button 
-                      onClick={() => setActiveTab('realisasi-pendapatan')}
-                      className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-md text-left text-[11px] font-bold tracking-wide transition-all border active:scale-98 cursor-pointer ${
-                        activeTab === 'realisasi-pendapatan' 
-                          ? 'bg-cyan-950/40 border-cyan-500/50 text-cyan-300 shadow-[inset_0_0_8px_rgba(6,182,212,0.2)]' 
-                          : 'border-transparent text-white/90 hover:bg-slate-900/60 hover:text-slate-300'
-                      }`}
-                    >
-                      <DollarSign size={13} className={activeTab === 'realisasi-pendapatan' ? 'text-cyan-400' : 'text-slate-600'} />
-                      <span className="truncate">Realisasi Pendapatan</span>
-                    </button>
-
-                    <button 
-                      onClick={() => setActiveTab('realisasi-belanja')}
-                      className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-md text-left text-[11px] font-bold tracking-wide transition-all border active:scale-98 cursor-pointer ${
-                        activeTab === 'realisasi-belanja' 
-                          ? 'bg-cyan-950/40 border-cyan-500/50 text-cyan-300 shadow-[inset_0_0_8px_rgba(6,182,212,0.2)]' 
-                          : 'border-transparent text-white/90 hover:bg-slate-900/60 hover:text-slate-300'
-                      }`}
-                    >
-                      <Layers size={13} className={activeTab === 'realisasi-belanja' ? 'text-cyan-400' : 'text-slate-600'} />
-                      <span className="truncate">Realisasi Belanja</span>
-                    </button>
                   </div>
                 )}
               </div>
@@ -497,35 +394,6 @@ export default function App() {
                     <ShieldCheck size={12} /> CORE INTEGRATION // MODUL COMPONENT VERIFIKASI REALISASI
                   </div>
                   <ModulCekRealisasi />
-                </div>
-              )}
-
-              {/* 🌟 ROUTE VIEW BARU: MERENDER SUBMENU MENU 03 & MENU 04 */}
-              {activeTab === 'asistensi-usulan' && (
-                <div className="bg-slate-950/60 border-2 border-cyan-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(6,182,212,0.04)] animate-fadeIn">
-                  <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
-                    <ShieldCheck size={12} /> PROCESS INTEGRATION // ASISTENSI USULAN APBD
-                  </div>
-                  <div className="text-slate-400 font-mono text-sm">Modul Asistensi Usulan APBD siap dikembangkan di sini.</div>
-                </div>
-              )}
-
-              {activeTab === 'realisasi-pendapatan' && (
-                <div className="bg-slate-950/60 border-2 border-cyan-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(6,182,212,0.04)] animate-fadeIn">
-                  <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
-                    <ShieldCheck size={12} /> DATA INTEGRATION // REALISASI PENDAPATAN
-                  </div>
-                  <div className="text-slate-400 font-mono text-sm">Modul Realisasi Pendapatan siap dikembangkan di sini.</div>
-                </div>
-              )}
-
-              {/* 🌟 PERBAIKAN: Kode yang sempat terpotong kini tersusun utuh merender ModulRealisasiBelanja */}
-              {activeTab === 'realisasi-belanja' && (
-                <div className="bg-slate-950/60 border-2 border-cyan-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(6,182,212,0.04)] animate-fadeIn">
-                  <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
-                    <ShieldCheck size={12} /> DATA INTEGRATION // REALISASI BELANJA
-                  </div>
-                  <ModulRealisasiBelanja />
                 </div>
               )}
 
