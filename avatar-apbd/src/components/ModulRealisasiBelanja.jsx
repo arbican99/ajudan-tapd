@@ -372,10 +372,15 @@ export default function ModulRealisasiBelanja() {
             <span className="text-slate-400 font-medium">SISA:</span> 
             <span className="text-amber-500 font-bold whitespace-nowrap">{formatRupiah(sisa)}</span>
           </div>
-          <div className="flex justify-between items-center gap-4 border-t border-slate-900 pt-1 text-[10px]">
-            <span className="text-slate-400 font-bold">% PAGU:</span> 
-            <span className="text-amber-400 font-black whitespace-nowrap bg-indigo-950/40 px-1.5 py-0.5 rounded border border-indigo-900/40">{proporsiPagu.toFixed(2)}%</span>
-          </div>
+          {/* Menyembunyikan PROP. PAGU jika chart-nya adalah Total Rekap, sekaligus merubah warna ke kuning neon */}
+          {title !== "Total Rekap" && (
+            <div className="flex justify-between items-center gap-4 border-t border-slate-900 pt-1 text-[10px]">
+              <span className="text-yellow-400 font-bold">% PAGU:</span> 
+              <span className="text-yellow-400 font-black whitespace-nowrap bg-yellow-950/40 px-1.5 py-0.5 rounded border border-yellow-900/40">
+                {proporsiPagu.toFixed(2)}%
+              </span>
+            </div>
+          )}
         </div>
       </div>
     );
