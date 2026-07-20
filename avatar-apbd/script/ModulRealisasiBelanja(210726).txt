@@ -34,7 +34,7 @@ export default function ModulRealisasiBelanja() {
     fetchMainData();
   }, [selectedSkpd, selectedTahun]);
 
-  // --- 1. AMBIL DATA FILTER (Diubah hanya teknik loop Supabase-nya) ---
+  // --- 1. AMBIL DATA FILTER ---
   const ambilDataFilter = async () => {
     try {
       let semuaData = [];
@@ -96,7 +96,7 @@ export default function ModulRealisasiBelanja() {
     }
   };
 
-  // --- 2. FETCH MAIN DATA (Diubah hanya teknik loop Supabase-nya) ---
+  // --- 2. FETCH MAIN DATA ---
   const fetchMainData = async () => {
     setLoading(true);
     try {
@@ -314,8 +314,8 @@ export default function ModulRealisasiBelanja() {
     const skpdMap = new window.Map();
 
     rawRealData.forEach(item => {
-      const targetKode = item.Kode_Subunit && item.Kode_Subunit.trim() !== "" ? item.Kode_Subunit : (item.Kode_Skpd || 'UNMAPPED');
-      const targetNama = item.Kode_Subunit && item.Kode_Subunit.trim() !== "" ? item.Nama_Subunit : (item.Nama_Skpd || 'Tanpa Nama SKPD');
+      const targetKode = item.Kode_Skpd ? item.Kode_Skpd.trim() : 'UNMAPPED';
+      const targetNama = item.Nama_Skpd ? item.Nama_Skpd.trim() : 'Tanpa Nama SKPD';
       
       const ang = parseFloat(item.Anggaran) || 0;
       const rea = parseFloat(item.Realisasi) || 0;
@@ -357,15 +357,18 @@ export default function ModulRealisasiBelanja() {
     return `${((realisasi / anggaran) * 100).toFixed(2)}%`;
   };
 
-  // --- 5. COMPONENT DONUT CHART ---
+  // --- 5. COMPONENT DONUT CHART (FIXED: Tetap tampil walau Rp 0) ---
   const RenderPieChart = ({ title, anggaran, realisasi, colorNeon, glowClass, totalRekapPagu }) => {
-    if (!anggaran || anggaran === 0) return null;
-    const persen = (realisasi / anggaran) * 100;
+    // Validasi pembatas null dihapus agar layout tetap presisi 8 kotak
+    const safeAnggaran = anggaran || 0;
+    const safeRealisasi = realisasi || 0;
+    
+    const persen = safeAnggaran > 0 ? (safeRealisasi / safeAnggaran) * 100 : 0;
     const radius = 40; 
     const circumference = 2 * Math.PI * radius;
     const strokeDashoffset = circumference - (Math.min(persen, 100) / 100) * circumference;
-    const sisa = anggaran - realisasi;
-    const proporsiPagu = totalRekapPagu > 0 ? (anggaran / totalRekapPagu) * 100 : 0;
+    const sisa = safeAnggaran - safeRealisasi;
+    const proporsiPagu = totalRekapPagu > 0 ? (safeAnggaran / totalRekapPagu) * 100 : 0;
 
     return (
       <div className="bg-gradient-to-b from-slate-900 via-slate-950 to-black border border-slate-800 p-5 rounded-2xl flex flex-col md:flex-row items-center gap-5 relative overflow-hidden shadow-[0_0_20px_rgba(0,0,0,0.8)] min-h-[175px] w-full">
@@ -403,11 +406,11 @@ export default function ModulRealisasiBelanja() {
           </div>
           <div className="flex justify-between items-center gap-4">
             <span className="text-slate-400 font-medium">PAGU:</span> 
-            <span className="text-cyan-400 font-bold whitespace-nowrap">{formatRupiah(anggaran)}</span>
+            <span className="text-cyan-400 font-bold whitespace-nowrap">{formatRupiah(safeAnggaran)}</span>
           </div>
           <div className="flex justify-between items-center gap-4">
             <span className="text-slate-400 font-medium">REAL:</span> 
-            <span className="text-emerald-400 font-black whitespace-nowrap">{formatRupiah(realisasi)}</span>
+            <span className="text-emerald-400 font-black whitespace-nowrap">{formatRupiah(safeRealisasi)}</span>
           </div>
           <div className="flex justify-between items-center gap-4">
             <span className="text-slate-400 font-medium">SISA:</span> 
@@ -488,7 +491,7 @@ export default function ModulRealisasiBelanja() {
             onChange={(e) => setSelectedSkpd(e.target.value)}
             className="w-full bg-slate-900 border border-slate-700 focus:border-cyan-400 rounded-xl px-3 py-2 text-xs font-mono font-bold text-cyan-300 focus:outline-none cursor-pointer"
           >
-            <option value="REKAP">» [ALL PORTAL] REKAPITULASI TOTAL DAERAH</option>
+            <option value="REKAP">» REKAPITULASI BELANJA DAERAH</option>
             {skpdList.map((skpd, i) => (
               <option key={i} value={skpd.kode_skpd}>» {skpd.kode_skpd} - {skpd.nama_skpd}</option>
             ))}
@@ -596,15 +599,14 @@ export default function ModulRealisasiBelanja() {
                 <div>
                   {activePage === 1 && (
                     <div className="space-y-6 p-2 font-mono">
-                      <div className="text-[11px] font-bold text-slate-400 tracking-wider mb-2 flex items-center gap-2">
+                      <div className="text-[14px] font-bold text-white-400 tracking-wider mb-2 flex items-center gap-2">
                         <TrendingUp size={14} className="text-amber-400" />
-                        INTEGRATED SINGLE-BAR MATRIX (CONTRAST MODE)
+                        MATRIK REALISASI BELANJA DAERAH
                       </div>
                       
                       <div className="space-y-6">
                         {page5SkpdMatrix.map((skpd, idx) => {
-                          const maxPagu = Math.max(...page5SkpdMatrix.map(o => o.totalAng), 1);
-                          const pctAnggaran = (skpd.totalAng / maxPagu) * 100;
+                          const pctRealisasi = skpd.totalAng > 0 ? (skpd.totalReal / skpd.totalAng) * 100 : 0;
                           
                           return (
                             <div key={idx} className="bg-slate-900/40 p-4 rounded-xl border border-slate-800 hover:border-slate-700 transition-all space-y-2">
@@ -622,16 +624,11 @@ export default function ModulRealisasiBelanja() {
                                 <div className="text-slate-300">REALISASI: <span className="text-yellow-400 font-black">{formatRupiah(skpd.totalReal)}</span></div>
                               </div>
 
-                              <div className="w-full bg-slate-950 h-5 rounded-lg overflow-hidden border border-slate-800 p-0.5 relative shadow-[inset_0_0_10px_rgba(0,0,0,0.8)]">
+                              <div className="w-full bg-cyan-950/40 h-5 rounded-lg overflow-hidden border border-cyan-800/60 p-0.5 relative shadow-[inset_0_0_10px_rgba(0,0,0,0.8)]">
                                 <div 
-                                  className="h-full bg-gradient-to-r from-cyan-950 to-cyan-800 border border-cyan-500/30 rounded transition-all duration-700 relative flex items-center"
-                                  style={{ width: `${Math.max(pctAnggaran, 1)}%` }}
-                                >
-                                  <div 
-                                    className="h-full bg-gradient-to-r from-amber-500 via-yellow-400 to-yellow-300 rounded shadow-[0_0_12px_rgba(234,179,8,0.5)] transition-all duration-700"
-                                    style={{ width: `${skpd.totalAng > 0 ? (skpd.totalReal / skpd.totalAng) * 100 : 0}%` }}
-                                  />
-                                </div>
+                                  className="h-full bg-gradient-to-r from-amber-500 via-yellow-400 to-yellow-300 rounded shadow-[0_0_12px_rgba(234,179,8,0.6)] transition-all duration-1000"
+                                  style={{ width: `${Math.min(pctRealisasi, 100)}%` }}
+                                />
                               </div>
                             </div>
                           );
@@ -700,7 +697,7 @@ export default function ModulRealisasiBelanja() {
                             <tr key={index} className={`hover:bg-cyan-950/20 transition-colors group ${isParent ? 'bg-slate-950 font-black text-cyan-300' : 'text-slate-200'}`}>
                               <td className={`p-3.5 whitespace-nowrap border-r border-slate-900 font-bold ${isParent ? 'text-cyan-400' : 'text-slate-500'}`}>{row.kode}</td>
                               <td className="p-3.5 border-r border-slate-900 text-justify text-slate-100 whitespace-normal leading-relaxed block w-full" style={{ paddingLeft: `${level * 12}px` }}>
-                                {isParent ? row.nama.toUpperCase() : row.nama}
+                                  {isParent ? row.nama.toUpperCase() : row.nama}
                               </td>
                               <td className="p-3.5 text-right border-r border-slate-900 text-slate-400">{formatRupiah(row.anggaran)}</td>
                               <td className="p-3.5 text-right border-r border-slate-900 text-emerald-400 font-bold">{formatRupiah(row.realisasi)}</td>
