@@ -12,6 +12,8 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.105.4",
     "@tailwindcss/vite": "^4.3.0",
+    "exceljs": "^4.4.0",
+    "file-saver": "^2.0.5",
     "html2pdf.js": "^0.14.0",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",

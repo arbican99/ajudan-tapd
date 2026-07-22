@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 import { 
   BarChart2, Layers, Users, Map as MapIcon, 
   Cpu, Terminal, Calendar, ChevronDown, ChevronRight, TrendingUp, ShoppingBag, Building2,
@@ -688,89 +690,157 @@ export default function ModulRealisasiBelanja() {
     }
   };
 
-  // --- HANDLER DOWNLOAD EXCEL (FORMAT NOMINAL & ALIGNMENT PRESISI) ---
-  const handleExportXLS = () => {
-    if (!printAreaRef.current) return;
-    
-    // Ambil isi HTML dari area cetak
-    const tableHTML = printAreaRef.current.innerHTML;
+  // --- HANDLER DOWNLOAD EXCEL NATIVE (.XLSX ASLI - SAMA PERSIS GAMBAR & BEBAS WARNING) ---
+  const handleExportXLS = async () => {
+    try {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Laporan Realisasi');
 
-    const blob = new Blob([`
-      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-      <head>
-        <meta charset="utf-8" />
-        <style>
-          body { 
-            font-family: Arial, Helvetica, sans-serif; 
-            margin: 10px;
-          }
-          
-          /* Styling Judul Kop */
-          h2 { 
-            font-size: 14pt !important; 
-            font-weight: bold !important; 
-            text-align: center; 
-            margin-bottom: 2px !important;
-          }
-          h3 { 
-            font-size: 11pt !important; 
-            font-weight: bold !important; 
-            text-align: center; 
-            margin-top: 0px !important; 
-            margin-bottom: 15px !important;
+      // 1. Pengaturan Lebar Kolom
+      worksheet.columns = [
+        { key: 'no', width: 6 },
+        { key: 'kode', width: 28 },
+        { key: 'keterangan', width: 55 },
+        { key: 'anggaran', width: 25 },
+        { key: 'realisasi', width: 25 },
+        { key: 'persen', width: 12 },
+        { key: 'sisa', width: 25 }
+      ];
+
+      // 2. Baris Judul Kop (Row 1 & 2)
+      const rowJudul1 = worksheet.addRow(['LAPORAN REALISASI ANGGARAN']);
+      worksheet.mergeCells('A1:G1');
+      rowJudul1.getCell(1).font = { name: 'Arial', size: 14, bold: true };
+      rowJudul1.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+
+      const tahunTeks = selectedTahun === 'ALL' ? '2026' : selectedTahun;
+      const rowJudul2 = worksheet.addRow([`TAHUN ANGGARAN ${tahunTeks}`]);
+      worksheet.mergeCells('A2:G2');
+      rowJudul2.getCell(1).font = { name: 'Arial', size: 11, bold: true };
+      rowJudul2.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+
+      worksheet.addRow([]); // Blank Row (Row 3)
+
+      // 3. Header Tabel (Row 4 & 5)
+      const h1 = worksheet.addRow(['No', 'Kode', 'Keterangan', 'Usulan Perubahan APBD', 'Realisasi SPJ', '', 'Sisa APBD']);
+      const h2 = worksheet.addRow(['', '', '', '', 'Rp', '%', '']);
+
+      // Merge Header Cells
+      worksheet.mergeCells('A4:A5'); // No
+      worksheet.mergeCells('B4:B5'); // Kode
+      worksheet.mergeCells('C4:C5'); // Keterangan
+      worksheet.mergeCells('D4:D5'); // APBD
+      worksheet.mergeCells('E4:F4'); // Realisasi SPJ
+      worksheet.mergeCells('G4:G5'); // Sisa APBD
+
+      // Row 6: Baris Penomoran Kolom (1, 2, 3, 5, 7, 8 = 5 - 7)
+      const h3 = worksheet.addRow(['1', '2', '3', '5', '7', '', '8 = 5 - 7']);
+
+      // Style All Header Cells (Row 4, 5, 6)
+      [h1, h2, h3].forEach((row) => {
+        row.eachCell({ includeEmpty: true }, (cell) => {
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFE2E8F0' } // Abu-abu terang khas form
+          };
+          cell.font = { name: 'Arial', size: 9, bold: true, color: { argb: 'FF000000' } };
+          cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+          cell.border = {
+            top: { style: 'thin', color: { argb: 'FF000000' } },
+            left: { style: 'thin', color: { argb: 'FF000000' } },
+            bottom: { style: 'thin', color: { argb: 'FF000000' } },
+            right: { style: 'thin', color: { argb: 'FF000000' } }
+          };
+        });
+      });
+
+      // 4. Populate Data Laporan
+      cetakReportTree.forEach((skpd, skpdIdx) => {
+        const noUtama = skpdIdx + 1;
+        const sisaSkpd = skpd.anggaran - skpd.realisasi;
+        const persenSkpd = skpd.anggaran > 0 ? (skpd.realisasi / skpd.anggaran) * 100 : 0;
+
+        // SKPD Row
+        addRowData(worksheet, noUtama.toString(), skpd.kode, skpd.nama.toUpperCase(), skpd.anggaran, skpd.realisasi, persenSkpd, sisaSkpd, true);
+
+        skpd.subunitList.forEach((sub, subIdx) => {
+          const noSubunit = `${noUtama}.${subIdx + 1}`;
+          const sisaSubunit = sub.anggaran - sub.realisasi;
+          const persenSubunit = sub.anggaran > 0 ? (sub.realisasi / sub.anggaran) * 100 : 0;
+          const isDinkesSubunit = skpd.kode === DINKES_KODE;
+
+          if (isDinkesSubunit) {
+            addRowData(worksheet, noSubunit, sub.kode, sub.nama.toUpperCase(), sub.anggaran, sub.realisasi, persenSubunit, sisaSubunit, true);
           }
 
-          /* Styling Tabel Utama */
-          table { 
-            border-collapse: collapse !important; 
-            width: 100% !important; 
-            font-size: 9pt !important; 
-          }
-          
-          th, td { 
-            border: 0.5pt solid #000000 !important; 
-            padding: 4px 6px !important; 
-            vertical-align: middle !important;
-          }
+          sub.subgiatList.forEach((sg, sgIdx) => {
+            const noSubgiat = isDinkesSubunit ? `${noSubunit}.${sgIdx + 1}` : `${noUtama}.${sgIdx + 1}`;
+            const sisaSg = sg.anggaran - sg.realisasi;
+            const persenSg = sg.anggaran > 0 ? (sg.realisasi / sg.anggaran) * 100 : 0;
 
-          /* Header Tabel Warna Abu-Abu */
-          thead tr { 
-            background-color: #E2E8F0 !important; 
-            font-weight: bold !important; 
-          }
+            addRowData(worksheet, noSubgiat, sg.kode, sg.nama, sg.anggaran, sg.realisasi, persenSg, sisaSg, false);
 
-          /* Perataan Teks & Format Sel Khusus Excel */
-          
-          /* 1. Kolom Rata Tengah (No & Persen) */
-          .text-center { 
-            text-align: center !important; 
-          }
-          
-          /* 2. Kolom Rata Kanan (Nominal Uang/Angka) */
-          .text-right { 
-            text-align: right !important; 
-            mso-number-format: "\\#\\,##0\\.00"; /* Format angka uang resmi Excel */
-          }
-          
-          /* 3. Kolom Kode & Teks (Tetap diformat Text murni agar kode tidak terdistorsi) */
-          td:nth-child(1), td:nth-child(2) {
-            mso-number-format: "\\@"; 
-          }
-        </style>
-      </head>
-      <body>
-        ${tableHTML}
-      </body>
-      </html>
-    `], { type: 'application/vnd.ms-excel' });
+            sg.rekeningList.forEach((rk) => {
+              const sisaRk = rk.anggaran - rk.realisasi;
+              const persenRk = rk.anggaran > 0 ? (rk.realisasi / rk.anggaran) * 100 : 0;
 
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `LAPORAN_REALISASI_ANGGARAN_${selectedTahun}_${new Date().getTime()}.xls`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+              addRowData(worksheet, '', rk.kode, `   ${rk.nama}`, rk.anggaran, rk.realisasi, persenRk, sisaRk, false);
+            });
+          });
+        });
+      });
+
+      // 5. Generate & Download File .XLSX Native
+      const buffer = await workbook.xlsx.writeBuffer();
+      const fileName = `LAPORAN_REALISASI_ANGGARAN_${tahunTeks}_${new Date().getTime()}.xlsx`;
+      saveAs(new Blob([buffer]), fileName);
+
+    } catch (err) {
+      console.error("Gagal export Excel:", err);
+      alert("Terjadi kesalahan saat mengeksport file Excel.");
+    }
+  };
+
+  // --- HELPER UNTUK TAMBAH BARIS DATA DENGAN FORMAT TEPAT ---
+  const addRowData = (worksheet, no, kode, keterangan, anggaran, realisasi, persen, sisa, isBold) => {
+    const row = worksheet.addRow([
+      no,
+      kode,
+      keterangan,
+      anggaran,
+      realisasi,
+      persen,
+      sisa
+    ]);
+
+    row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+      cell.font = { name: 'Arial', size: 9, bold: isBold };
+      
+      // Border Tipis Hitam
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+
+      // Format Alignment & Angka
+      if (colNumber === 1) {
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      } else if (colNumber === 2) {
+        cell.alignment = { horizontal: 'left', vertical: 'middle' };
+        cell.numFmt = '@'; // Format Kode sebagai Text murni
+      } else if (colNumber === 3) {
+        cell.alignment = { horizontal: 'left', vertical: 'middle' };
+      } else if (colNumber === 4 || colNumber === 5 || colNumber === 7) {
+        cell.alignment = { horizontal: 'right', vertical: 'middle' };
+        cell.numFmt = '#,##0.00'; // Format Nominal Rupiah (e.g. 379.296.641.507,00)
+      } else if (colNumber === 6) {
+        cell.alignment = { horizontal: 'right', vertical: 'middle' };
+        cell.numFmt = '0.00'; // Format Persen (e.g. 38,03)
+      }
+    });
   };
 
   // --- COMPONENT DONUT CHART ---
@@ -1098,13 +1168,14 @@ export default function ModulRealisasiBelanja() {
             </div>
             
             <div className="flex flex-wrap gap-2 w-full md:w-auto">
-              <button
+              
+              {/* <button
                 onClick={handlePrintPDF}
                 className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-mono text-xs font-black rounded-xl shadow-lg transition-all cursor-pointer"
               >
                 <Printer size={15} />
                 <span>CETAK BROWSER</span>
-              </button>
+              </button> */}
 
               <button
                 onClick={handleDownloadPDF}
