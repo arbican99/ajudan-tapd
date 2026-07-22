@@ -524,8 +524,12 @@ export default function ModulRealisasiBelanja() {
         <RenderPieChart title="Belanja Barang" anggaran={processedData.stats.barang.anggaran} realisasi={processedData.stats.barang.realisasi} colorNeon="stroke-fuchsia-400" glowClass="bg-fuchsia-400 shadow-[0_0_15px_rgba(232,121,249,0.8)]" totalRekapPagu={processedData.stats.rekap.anggaran} />
         <RenderPieChart title="Perjalanan Dinas" anggaran={processedData.stats.perdin.anggaran} realisasi={processedData.stats.perdin.realisasi} colorNeon="stroke-yellow-400" glowClass="bg-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.8)]" totalRekapPagu={processedData.stats.rekap.anggaran} />
         <RenderPieChart title="Belanja Modal" anggaran={processedData.stats.modal.anggaran} realisasi={processedData.stats.modal.realisasi} colorNeon="stroke-amber-400" glowClass="bg-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.8)]" totalRekapPagu={processedData.stats.rekap.anggaran} />
+        
+        {/*
         <RenderPieChart title="Belanja Tak Terduga" anggaran={processedData.stats.takTerduga.anggaran} realisasi={processedData.stats.takTerduga.realisasi} colorNeon="stroke-red-500" glowClass="bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.8)]" totalRekapPagu={processedData.stats.rekap.anggaran} />
         <RenderPieChart title="Belanja Transfer" anggaran={processedData.stats.transfer.anggaran} realisasi={processedData.stats.transfer.realisasi} colorNeon="stroke-emerald-400" glowClass="bg-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.8)]" totalRekapPagu={processedData.stats.rekap.anggaran} />
+        */}
+
       </div>
 
       {/* INTERACTIVE DYNAMIC PAGE TABS */}

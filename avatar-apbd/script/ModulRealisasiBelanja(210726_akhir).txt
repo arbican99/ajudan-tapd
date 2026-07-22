@@ -317,7 +317,7 @@ export default function ModulRealisasiBelanja() {
     };
   }, [rawRealData, mrekMap]);
 
-  // --- 4. DATA GROUPING SUBUNIT KHUSUS (UNTUK PAGE 2-5 DINAS KESEHATAN) ---
+  // --- 4. DATA GROUPING SUBUNIT KHUSUS (DINAS KESEHATAN MODE) ---
   const subunitGroupedData = useMemo(() => {
     if (selectedSkpd !== DINKES_KODE) return [];
 
@@ -333,7 +333,8 @@ export default function ModulRealisasiBelanja() {
       const namaSubgiat = item.Nama_Subgiat || 'Tanpa Nama Subkegiatan';
 
       let passFilter = false;
-      if (activePage === 2) passFilter = true; 
+      if (activePage === 1) passFilter = true; 
+      else if (activePage === 2) passFilter = true; 
       else if (activePage === 3 && kodeRek.startsWith('5.1.01')) passFilter = true; 
       else if (activePage === 4 && kodeRek.startsWith('5.1.02.04')) passFilter = true; 
       else if (activePage === 5 && kodeRek.startsWith('5.1.02.01')) passFilter = true; 
@@ -690,7 +691,7 @@ export default function ModulRealisasiBelanja() {
         <div className="flex-1 space-y-1">
           <label className="flex items-center gap-1.5 text-[9px] font-mono text-cyan-400 font-bold uppercase tracking-widest pl-1">
             <Terminal size={11} className="text-cyan-400 animate-pulse" />
-            FILTER DATA SKPD
+            FILTER DATA COMPONENT (SKPD)
           </label>
           <select
             value={selectedSkpd}
@@ -798,11 +799,11 @@ export default function ModulRealisasiBelanja() {
             </div>
           ) : (
             <div>
-              {/* JIKA DINAS KESEHATAN DAN ACTIVE PAGE BUKAN REKAP AKUN (ACTIVE PAGE !== 1) */}
-              {selectedSkpd === DINKES_KODE && activePage !== 1 ? (
+              {/* JIKA PILIHAN FILTER ADALAH DINAS KESEHATAN */}
+              {selectedSkpd === DINKES_KODE ? (
                 renderDinkesSubrowsView()
               ) : (
-                /* STANDAR VIEW UNTUK SKPD LAIN, REKAP, SERTA PAGE REKAP AKUN DINAS KESEHATAN */
+                /* STANDAR VIEW UNTUK SKPD LAIN / REKAP */
                 <div>
                   {selectedSkpd === 'REKAP' && (
                     <div>
