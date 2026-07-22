@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { 
   BarChart2, Layers, Users, Map as MapIcon, 
-  Cpu, Terminal, Calendar, ChevronDown, ChevronRight, TrendingUp, ShoppingBag, Building2
+  Cpu, Terminal, Calendar, ChevronDown, ChevronRight, TrendingUp, ShoppingBag, Building2,
+  Printer, Download, FileSpreadsheet, Settings, Eye
 } from 'lucide-react';
 
 const DINKES_KODE = '1.02.0.00.0.00.01.0000';
@@ -27,6 +28,14 @@ export default function ModulRealisasiBelanja() {
   // State Khusus Expand Dinas Kesehatan (2-Level Expansion)
   const [expandedSubunits, setExpandedSubunits] = useState({});
   const [expandedDinkesSubgiat, setExpandedDinkesSubgiat] = useState({});
+
+  // State Pengaturan Cetakan (Google Sheets Style)
+  const [printPaperSize, setPrintPaperSize] = useState('A4');
+  const [printOrientation, setPrintOrientation] = useState('landscape');
+  const [printMargin, setPrintMargin] = useState('normal');
+  const [showGridlines, setShowGridlines] = useState(true);
+
+  const printAreaRef = useRef(null);
 
   useEffect(() => {
     setActivePage(1);
@@ -317,7 +326,7 @@ export default function ModulRealisasiBelanja() {
     };
   }, [rawRealData, mrekMap]);
 
-  // --- 4. DATA GROUPING SUBUNIT KHUSUS (UNTUK PAGE 2-5 DINAS KESEHATAN) ---
+  // --- 4. DATA GROUPING SUBUNIT KHUSUS (UNTUK PAGE DINAS KESEHATAN) ---
   const subunitGroupedData = useMemo(() => {
     if (selectedSkpd !== DINKES_KODE) return [];
 
@@ -389,7 +398,92 @@ export default function ModulRealisasiBelanja() {
     })).sort((a, b) => a.kodeSubunit.localeCompare(b.kodeSubunit));
   }, [rawRealData, selectedSkpd, activePage, mrekMap]);
 
-  // --- 5. MATRIKS GRAFIK BATANG SKPD ---
+  // --- 5. DATA UNTUK CETAK (SUPPORT MULTI-LEVEL DINKES SUBUNIT) ---
+  const cetakReportTree = useMemo(() => {
+    const skpdGroup = new window.Map();
+
+    rawRealData.forEach(item => {
+      const kodeSkpd = item.Kode_Skpd ? item.Kode_Skpd.trim() : 'UNMAPPED';
+      const namaSkpd = item.Nama_Skpd ? item.Nama_Skpd.trim() : 'Tanpa Nama SKPD';
+      const kodeSubunit = item.Kode_Subunit ? item.Kode_Subunit.trim() : kodeSkpd;
+      const namaSubunit = item.Nama_Subunit ? item.Nama_Subunit.trim() : namaSkpd;
+      const kodeSubgiat = item.Kode_Subgiat ? item.Kode_Subgiat.trim() : 'UNMAPPED_SUBGIAT';
+      const namaSubgiat = item.Nama_Subgiat ? item.Nama_Subgiat.trim() : 'Tanpa Nama Subkegiatan';
+      const kodeRek = normalizeKodeRekening(item.Kode_Rekening);
+      const namaRek = mrekMap.get(kodeRek) || item.Nama_Rekening || 'Tanpa Nama Rekening';
+      
+      const ang = parseFloat(item.Anggaran) || 0;
+      const rea = parseFloat(item.Realisasi) || 0;
+
+      if (!skpdGroup.has(kodeSkpd)) {
+        skpdGroup.set(kodeSkpd, {
+          kode: kodeSkpd,
+          nama: namaSkpd,
+          anggaran: 0,
+          realisasi: 0,
+          subunitMap: new window.Map()
+        });
+      }
+
+      const skpdNode = skpdGroup.get(kodeSkpd);
+      skpdNode.anggaran += ang;
+      skpdNode.realisasi += rea;
+
+      if (!skpdNode.subunitMap.has(kodeSubunit)) {
+        skpdNode.subunitMap.set(kodeSubunit, {
+          kode: kodeSubunit,
+          nama: namaSubunit,
+          anggaran: 0,
+          realisasi: 0,
+          subgiatMap: new window.Map()
+        });
+      }
+
+      const subNode = skpdNode.subunitMap.get(kodeSubunit);
+      subNode.anggaran += ang;
+      subNode.realisasi += rea;
+
+      if (!subNode.subgiatMap.has(kodeSubgiat)) {
+        subNode.subgiatMap.set(kodeSubgiat, {
+          kode: kodeSubgiat,
+          nama: namaSubgiat,
+          anggaran: 0,
+          realisasi: 0,
+          rekeningMap: new window.Map()
+        });
+      }
+
+      const sgNode = subNode.subgiatMap.get(kodeSubgiat);
+      sgNode.anggaran += ang;
+      sgNode.realisasi += rea;
+
+      if (!sgNode.rekeningMap.has(kodeRek)) {
+        sgNode.rekeningMap.set(kodeRek, {
+          kode: kodeRek,
+          nama: namaRek,
+          anggaran: 0,
+          realisasi: 0
+        });
+      }
+
+      const rkNode = sgNode.rekeningMap.get(kodeRek);
+      rkNode.anggaran += ang;
+      rkNode.realisasi += rea;
+    });
+
+    return Array.from(skpdGroup.values()).map(skpd => ({
+      ...skpd,
+      subunitList: Array.from(skpd.subunitMap.values()).map(sub => ({
+        ...sub,
+        subgiatList: Array.from(sub.subgiatMap.values()).map(sg => ({
+          ...sg,
+          rekeningList: Array.from(sg.rekeningMap.values()).sort((a, b) => a.kode.localeCompare(b.kode))
+        })).sort((a, b) => a.kode.localeCompare(b.kode))
+      })).sort((a, b) => a.kode.localeCompare(b.kode))
+    })).sort((a, b) => a.kode.localeCompare(b.kode));
+  }, [rawRealData, mrekMap]);
+
+  // --- 6. MATRIKS GRAFIK BATANG SKPD ---
   const page5SkpdMatrix = useMemo(() => {
     const skpdMap = new window.Map();
 
@@ -434,9 +528,66 @@ export default function ModulRealisasiBelanja() {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka || 0);
   };
 
+  const formatAngkaIndo = (angka) => {
+    return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(angka || 0);
+  };
+
   const hitungPersen = (anggaran, realisasi) => {
     if (!anggaran) return '0.00%';
     return `${((realisasi / anggaran) * 100).toFixed(2)}%`;
+  };
+
+  const hitungPersenAngka = (anggaran, realisasi) => {
+    if (!anggaran) return '0,00';
+    return ((realisasi / anggaran) * 100).toFixed(2).replace('.', ',');
+  };
+
+  // --- HANDLER CETAK DAN EKSPOR ---
+  const handlePrintPDF = () => {
+    window.print();
+  };
+
+  const handleExportXLS = () => {
+    if (!printAreaRef.current) return;
+    const tableHTML = printAreaRef.current.innerHTML;
+    const blob = new Blob([`
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta charset="utf-8" />
+        <!--[if gte mso 9]>
+        <xml>
+          <x:ExcelWorkbook>
+            <x:ExcelWorksheets>
+              <x:ExcelWorksheet>
+                <x:Name>Laporan APBD</x:Name>
+                <x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions>
+              </x:ExcelWorksheet>
+            </x:ExcelWorksheets>
+          </x:ExcelWorkbook>
+        </xml>
+        <![endif]-->
+        <style>
+          table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 11px; }
+          th, td { border: 1px solid #000; padding: 4px; text-align: left; }
+          th { background-color: #f2f2f2; font-weight: bold; text-align: center; }
+          .text-center { text-align: center; }
+          .text-right { text-align: right; }
+          .font-bold { font-weight: bold; }
+        </style>
+      </head>
+      <body>
+        ${tableHTML}
+      </body>
+      </html>
+    `], { type: 'application/vnd.ms-excel' });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `LAPORAN_REALISASI_ANGGARAN_${selectedTahun}_${new Date().getTime()}.xls`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   // --- COMPONENT DONUT CHART ---
@@ -682,15 +833,271 @@ export default function ModulRealisasiBelanja() {
     );
   };
 
+  // --- RENDER PAGE CETAK DATA (SUBROW SPECIFIC FOR DINAS KESEHATAN) ---
+  const renderCetakDataView = () => {
+    return (
+      <div className="space-y-6">
+        {/* CSS CETAKAN MEDIA PRINT */}
+        <style>{`
+          @media print {
+            body * {
+              visibility: hidden;
+            }
+            #area-cetak-print, #area-cetak-print * {
+              visibility: visible;
+            }
+            #area-cetak-print {
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 100%;
+              margin: 0;
+              padding: 0;
+              background: white !important;
+              color: black !important;
+            }
+            .no-print {
+              display: none !important;
+            }
+            @page {
+              size: ${printPaperSize} ${printOrientation};
+              margin: ${printMargin === 'sembarang' ? '5mm' : printMargin === 'narrow' ? '8mm' : printMargin === 'wide' ? '25mm' : '12mm'};
+            }
+          }
+        `}</style>
+
+        {/* SETTINGS PANEL (GOOGLE SHEETS STYLE) */}
+        <div className="no-print bg-slate-900 border-2 border-slate-700 rounded-2xl p-5 space-y-4 shadow-2xl">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800 pb-4">
+            <div className="flex items-center gap-2">
+              <Settings className="text-amber-400 animate-spin" size={18} />
+              <h3 className="font-mono text-sm font-black text-amber-400 uppercase tracking-widest">
+                PENGATURAN CETAKAN & EKSPOR LAPORAN
+              </h3>
+            </div>
+            
+            <div className="flex flex-wrap gap-2 w-full md:w-auto">
+              <button
+                onClick={handlePrintPDF}
+                className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-mono text-xs font-black rounded-xl shadow-lg transition-all cursor-pointer"
+              >
+                <Printer size={15} />
+                <span>CETAK / PDF</span>
+              </button>
+              <button
+                onClick={handleExportXLS}
+                className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-mono text-xs font-black rounded-xl shadow-lg transition-all cursor-pointer"
+              >
+                <FileSpreadsheet size={15} />
+                <span>EKSPOR KE EXCEL (.XLS)</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-mono text-xs">
+            {/* PAPER SIZE */}
+            <div className="space-y-1.5">
+              <label className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Ukuran Kertas</label>
+              <select
+                value={printPaperSize}
+                onChange={(e) => setPrintPaperSize(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-700 focus:border-cyan-400 rounded-lg p-2 text-cyan-300 font-bold focus:outline-none"
+              >
+                <option value="A4">A4 (210 x 297 mm)</option>
+                <option value="Letter">Letter (8.5 x 11 in)</option>
+                <option value="Legal">Legal (8.5 x 14 in)</option>
+                <option value="F4">F4 / Folio (215 x 330 mm)</option>
+              </select>
+            </div>
+
+            {/* ORIENTATION */}
+            <div className="space-y-1.5">
+              <label className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Orientasi Kertas</label>
+              <select
+                value={printOrientation}
+                onChange={(e) => setPrintOrientation(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-700 focus:border-cyan-400 rounded-lg p-2 text-cyan-300 font-bold focus:outline-none"
+              >
+                <option value="landscape">Landscape (Mendatar)</option>
+                <option value="portrait">Portrait (Tegak)</option>
+              </select>
+            </div>
+
+            {/* MARGIN */}
+            <div className="space-y-1.5">
+              <label className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Margin Halaman</label>
+              <select
+                value={printMargin}
+                onChange={(e) => setPrintMargin(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-700 focus:border-cyan-400 rounded-lg p-2 text-cyan-300 font-bold focus:outline-none"
+              >
+                <option value="normal">Normal (12 mm)</option>
+                <option value="narrow">Sempit / Narrow (8 mm)</option>
+                <option value="wide">Lebar / Wide (25 mm)</option>
+              </select>
+            </div>
+
+            {/* GRIDLINES TOGGLE */}
+            <div className="space-y-1.5 flex flex-col justify-end">
+              <label className="flex items-center gap-2 cursor-pointer bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-200">
+                <input
+                  type="checkbox"
+                  checked={showGridlines}
+                  onChange={(e) => setShowGridlines(e.target.checked)}
+                  className="rounded text-cyan-500 focus:ring-0 cursor-pointer w-4 h-4"
+                />
+                <span className="font-bold text-[11px]">Tampilkan Garis Kisi (Gridlines)</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        {/* PREVIEW CONTAINER */}
+        <div className="bg-slate-950 border-2 border-slate-800 rounded-2xl p-6 overflow-x-auto shadow-2xl flex justify-center">
+          <div 
+            id="area-cetak-print"
+            ref={printAreaRef}
+            className={`bg-white text-black font-sans shadow-2xl p-8 rounded min-w-[900px] max-w-[1200px] transition-all`}
+            style={{ width: '100%' }}
+          >
+            {/* FORMAT HEADER JUDUL LAPORAN */}
+            <div className="text-center font-bold font-sans uppercase mb-6 space-y-1 text-black">
+              <h2 className="text-base tracking-wide border-b-2 border-black pb-1 inline-block">
+                LAPORAN REALISASI ANGGARAN
+              </h2>
+              <h3 className="text-sm tracking-wide">
+                TAHUN ANGGARAN {selectedTahun === 'ALL' ? '2026' : selectedTahun}
+              </h3>
+            </div>
+
+            {/* TABEL FORMAT CETAKAN BERSTRUKTUR SUBROW SUBUNIT (KHUSUS DINKES) */}
+            <table className={`w-full text-[11px] font-sans border-collapse ${showGridlines ? 'border border-black' : ''}`}>
+              <thead>
+                {/* BARIS HEADER 1 */}
+                <tr className="bg-gray-100 font-bold text-center text-black">
+                  <th className="border border-black p-2 w-12" rowSpan={2}>No</th>
+                  <th className="border border-black p-2 w-44" rowSpan={2}>Kode</th>
+                  <th className="border border-black p-2" rowSpan={2}>Keterangan</th>
+                  <th className="border border-black p-2 w-40" rowSpan={2}>Usulan Perubahan<br/>APBD</th>
+                  <th className="border border-black p-2" colSpan={2}>Realisasi SPJ</th>
+                  <th className="border border-black p-2 w-40" rowSpan={2}>Sisa APBD</th>
+                </tr>
+                {/* BARIS HEADER 2 */}
+                <tr className="bg-gray-100 font-bold text-center text-black">
+                  <th className="border border-black p-1.5 w-32">Rp</th>
+                  <th className="border border-black p-1.5 w-16">%</th>
+                </tr>
+                {/* BARIS PENOMORAN KOLOM 1, 2, 3, 5, 7, 8 = 5 - 7 */}
+                <tr className="bg-gray-50 font-bold text-center text-black text-[10px]">
+                  <td className="border border-black p-1">1</td>
+                  <td className="border border-black p-1">2</td>
+                  <td className="border border-black p-1">3</td>
+                  <td className="border border-black p-1">5</td>
+                  <td className="border border-black p-1" colSpan={2}>7</td>
+                  <td className="border border-black p-1">8 = 5 - 7</td>
+                </tr>
+              </thead>
+              <tbody>
+                {cetakReportTree.map((skpd, skpdIdx) => {
+                  const noUtama = skpdIdx + 1;
+                  const sisaSkpd = skpd.anggaran - skpd.realisasi;
+
+                  return (
+                    <React.Fragment key={skpdIdx}>
+                      {/* BARIS 1: SKPD UTAMA */}
+                      <tr className="font-bold bg-white text-black">
+                        <td className="border border-black p-1.5 text-center">{noUtama}</td>
+                        <td className="border border-black p-1.5">{skpd.kode}</td>
+                        <td className="border border-black p-1.5 uppercase">{skpd.nama}</td>
+                        <td className="border border-black p-1.5 text-right whitespace-nowrap">{formatAngkaIndo(skpd.anggaran)}</td>
+                        <td className="border border-black p-1.5 text-right whitespace-nowrap">{formatAngkaIndo(skpd.realisasi)}</td>
+                        <td className="border border-black p-1.5 text-center whitespace-nowrap">{hitungPersenAngka(skpd.anggaran, skpd.realisasi)}</td>
+                        <td className="border border-black p-1.5 text-right whitespace-nowrap">{formatAngkaIndo(sisaSkpd)}</td>
+                      </tr>
+
+                      {/* ITERASI SUBUNIT (TERMASUK DINAS KESEHATAN & SUBUNITNYA) */}
+                      {skpd.subunitList.map((sub, subIdx) => {
+                        const noSubunit = `${noUtama}.${subIdx + 1}`;
+                        const sisaSubunit = sub.anggaran - sub.realisasi;
+                        const isDinkesSubunit = skpd.kode === DINKES_KODE;
+
+                        return (
+                          <React.Fragment key={subIdx}>
+                            {/* BARIS SUBUNIT (JIKA KHUSUS DINKES / JIKA SUBUNIT TERLIRIK BEDA DENGAN SKPD UTAMA) */}
+                            {isDinkesSubunit && (
+                              <tr className="font-bold bg-white text-black">
+                                <td className="border border-black p-1.5 text-center">{noSubunit}</td>
+                                <td className="border border-black p-1.5">{sub.kode}</td>
+                                <td className="border border-black p-1.5 uppercase">{sub.nama}</td>
+                                <td className="border border-black p-1.5 text-right whitespace-nowrap">{formatAngkaIndo(sub.anggaran)}</td>
+                                <td className="border border-black p-1.5 text-right whitespace-nowrap">{formatAngkaIndo(sub.realisasi)}</td>
+                                <td className="border border-black p-1.5 text-center whitespace-nowrap">{hitungPersenAngka(sub.anggaran, sub.realisasi)}</td>
+                                <td className="border border-black p-1.5 text-right whitespace-nowrap">{formatAngkaIndo(sisaSubunit)}</td>
+                              </tr>
+                            )}
+
+                            {/* BARIS SUBKEGIATAN */}
+                            {sub.subgiatList.map((sg, sgIdx) => {
+                              const noSubgiat = isDinkesSubunit 
+                                ? `${noSubunit}.${sgIdx + 1}` 
+                                : `${noUtama}.${sgIdx + 1}`;
+                              const sisaSg = sg.anggaran - sg.realisasi;
+
+                              return (
+                                <React.Fragment key={sgIdx}>
+                                  {/* BARIS SUBKEGIATAN (2.1.1, 2.2.1, DST) */}
+                                  <tr className="font-bold bg-white text-black">
+                                    <td className="border border-black p-1.5 text-center">{noSubgiat}</td>
+                                    <td className="border border-black p-1.5">{sg.kode}</td>
+                                    <td className="border border-black p-1.5">{sg.nama}</td>
+                                    <td className="border border-black p-1.5 text-right whitespace-nowrap">{formatAngkaIndo(sg.anggaran)}</td>
+                                    <td className="border border-black p-1.5 text-right whitespace-nowrap">{formatAngkaIndo(sg.realisasi)}</td>
+                                    <td className="border border-black p-1.5 text-center whitespace-nowrap">{hitungPersenAngka(sg.anggaran, sg.realisasi)}</td>
+                                    <td className="border border-black p-1.5 text-right whitespace-nowrap">{formatAngkaIndo(sisaSg)}</td>
+                                  </tr>
+
+                                  {/* BARIS RINCIAN REKENING */}
+                                  {sg.rekeningList.map((rk, rkIdx) => {
+                                    const sisaRk = rk.anggaran - rk.realisasi;
+
+                                    return (
+                                      <tr key={rkIdx} className="bg-white text-black">
+                                        <td className="border border-black p-1.5 text-center"></td>
+                                        <td className="border border-black p-1.5 text-gray-700">{rk.kode}</td>
+                                        <td className="border border-black p-1.5 pl-4">{rk.nama}</td>
+                                        <td className="border border-black p-1.5 text-right whitespace-nowrap">{formatAngkaIndo(rk.anggaran)}</td>
+                                        <td className="border border-black p-1.5 text-right whitespace-nowrap">{formatAngkaIndo(rk.realisasi)}</td>
+                                        <td className="border border-black p-1.5 text-center whitespace-nowrap">{hitungPersenAngka(rk.anggaran, rk.realisasi)}</td>
+                                        <td className="border border-black p-1.5 text-right whitespace-nowrap">{formatAngkaIndo(sisaRk)}</td>
+                                      </tr>
+                                    );
+                                  })}
+                                </React.Fragment>
+                              );
+                            })}
+                          </React.Fragment>
+                        );
+                      })}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6 text-slate-100 p-1">
       
       {/* FILTER CONTROL PANEL */}
-      <div className="flex flex-col sm:flex-row gap-4 bg-slate-950/90 border-2 border-cyan-500/30 rounded-2xl p-4 shadow-[0_0_30px_rgba(6,182,212,0.05)] backdrop-blur-md">
+      <div className="no-print flex flex-col sm:flex-row gap-4 bg-slate-950/90 border-2 border-cyan-500/30 rounded-2xl p-4 shadow-[0_0_30px_rgba(6,182,212,0.05)] backdrop-blur-md">
         <div className="flex-1 space-y-1">
           <label className="flex items-center gap-1.5 text-[9px] font-mono text-cyan-400 font-bold uppercase tracking-widest pl-1">
             <Terminal size={11} className="text-cyan-400 animate-pulse" />
-            FILTER DATA SKPD
+            FILTER DATA COMPONENT (SKPD)
           </label>
           <select
             value={selectedSkpd}
@@ -723,7 +1130,7 @@ export default function ModulRealisasiBelanja() {
       </div>
 
       {/* CORE DONUT CHARTS ROW */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className="no-print grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         <RenderPieChart title="Total Rekap" anggaran={processedData.stats.rekap.anggaran} realisasi={processedData.stats.rekap.realisasi} colorNeon="stroke-cyan-400" glowClass="bg-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.8)]" totalRekapPagu={processedData.stats.rekap.anggaran} />
         <RenderPieChart title="Belanja Operasi" anggaran={processedData.stats.operasi.anggaran} realisasi={processedData.stats.operasi.realisasi} colorNeon="stroke-indigo-400" glowClass="bg-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.8)]" totalRekapPagu={processedData.stats.rekap.anggaran} />
         <RenderPieChart title="Belanja Pegawai" anggaran={processedData.stats.pegawai.anggaran} realisasi={processedData.stats.pegawai.realisasi} colorNeon="stroke-teal-400" glowClass="bg-teal-400 shadow-[0_0_15px_rgba(45,212,191,0.8)]" totalRekapPagu={processedData.stats.rekap.anggaran} />
@@ -734,10 +1141,11 @@ export default function ModulRealisasiBelanja() {
 
       {/* INTERACTIVE DYNAMIC PAGE TABS */}
       {selectedSkpd === 'REKAP' ? (
-        <div className="flex gap-2 bg-slate-900/90 p-2 border border-amber-500/30 rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.6)]">
+        <div className="no-print flex gap-2 bg-slate-900/90 p-2 border border-amber-500/30 rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.6)]">
           {[
             { id: 1, label: 'PAGE 1: MATRIKS REALISASI BELANJA SKPD', icon: BarChart2, color: 'from-amber-500 to-yellow-400' },
-            { id: 2, label: 'PAGE 2: REKAP KONSOLIDASI AKUN TOTAL', icon: Layers, color: 'from-cyan-400 to-blue-500' }
+            { id: 2, label: 'PAGE 2: REKAP KONSOLIDASI AKUN TOTAL', icon: Layers, color: 'from-cyan-400 to-blue-500' },
+            { id: 6, label: 'PAGE CETAK DATA', icon: Printer, color: 'from-emerald-400 to-teal-500' }
           ].map((page) => {
             const Icon = page.icon;
             const isSelected = activePage === page.id;
@@ -758,13 +1166,14 @@ export default function ModulRealisasiBelanja() {
           })}
         </div>
       ) : (
-        <div className="flex flex-wrap gap-2 bg-slate-900/90 p-2 border border-slate-700 rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.6)]">
+        <div className="no-print flex flex-wrap gap-2 bg-slate-900/90 p-2 border border-slate-700 rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.6)]">
           {[
             { id: 1, label: 'REKAP AKUN', icon: Layers },
             { id: 2, label: 'SUBKEGIATAN', icon: BarChart2 },
             { id: 3, label: 'BL. PEGAWAI', icon: Users },
             { id: 5, label: 'BL. BARANG', icon: ShoppingBag },
-            { id: 4, label: 'PERJALANAN DINAS', icon: MapIcon }
+            { id: 4, label: 'PERJALANAN DINAS', icon: MapIcon },
+            { id: 6, label: 'CETAK DATA', icon: Printer }
           ].map((page) => {
             const Icon = page.icon;
             const isSelected = activePage === page.id;
@@ -788,7 +1197,7 @@ export default function ModulRealisasiBelanja() {
 
       {/* CONTENT DATA WINDOW */}
       <div className="space-y-4">
-        <RenderHorizontalHeaderBar />
+        {activePage !== 6 && <RenderHorizontalHeaderBar />}
 
         <div className="bg-slate-950/95 border-2 border-slate-800 rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.7)] p-4">
           {loading ? (
@@ -798,305 +1207,312 @@ export default function ModulRealisasiBelanja() {
             </div>
           ) : (
             <div>
-              {/* JIKA DINAS KESEHATAN DAN ACTIVE PAGE BUKAN REKAP AKUN (ACTIVE PAGE !== 1) */}
-              {selectedSkpd === DINKES_KODE && activePage !== 1 ? (
-                renderDinkesSubrowsView()
+              {/* PAGE CETAK DATA (ACTIVE PAGE = 6) */}
+              {activePage === 6 ? (
+                renderCetakDataView()
               ) : (
-                /* STANDAR VIEW UNTUK SKPD LAIN, REKAP, SERTA PAGE REKAP AKUN DINAS KESEHATAN */
-                <div>
-                  {selectedSkpd === 'REKAP' && (
+                <>
+                  {/* JIKA DINAS KESEHATAN DAN ACTIVE PAGE BUKAN REKAP AKUN (ACTIVE PAGE !== 1) */}
+                  {selectedSkpd === DINKES_KODE && activePage !== 1 ? (
+                    renderDinkesSubrowsView()
+                  ) : (
+                    /* STANDAR VIEW UNTUK SKPD LAIN, REKAP, SERTA PAGE REKAP AKUN DINAS KESEHATAN */
                     <div>
-                      {activePage === 1 && (
-                        <div className="space-y-6 p-2 font-mono">
-                          <div className="text-[14px] font-bold text-white tracking-wider mb-2 flex items-center gap-2">
-                            <TrendingUp size={14} className="text-amber-400" />
-                            MATRIKS REALISASI BELANJA DAERAH
-                          </div>
-                          
-                          <div className="space-y-6">
-                            {page5SkpdMatrix.map((skpd, idx) => {
-                              const pctRealisasi = skpd.totalAng > 0 ? (skpd.totalReal / skpd.totalAng) * 100 : 0;
+                      {selectedSkpd === 'REKAP' && (
+                        <div>
+                          {activePage === 1 && (
+                            <div className="space-y-6 p-2 font-mono">
+                              <div className="text-[14px] font-bold text-white tracking-wider mb-2 flex items-center gap-2">
+                                <TrendingUp size={14} className="text-amber-400" />
+                                MATRIKS REALISASI BELANJA DAERAH
+                              </div>
                               
-                              return (
-                                <div key={idx} className="bg-slate-900/40 p-4 rounded-xl border border-slate-800 hover:border-slate-700 transition-all space-y-2">
-                                  <div className="flex justify-between items-end text-[10px] text-slate-300 font-bold">
-                                    <span className="text-sky-400 font-black tracking-wide max-w-xs md:max-w-xl text-justify leading-normal block drop-shadow-[0_0_6px_rgba(56,189,248,0.6)]">
-                                      {skpd.kode} - {skpd.nama.toUpperCase()}
-                                    </span>
-                                    <span className="text-slate-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800 font-mono">
-                                      CAPAIAN: <span className="text-emerald-400 font-black">{hitungPersen(skpd.totalAng, skpd.totalReal)}</span>
-                                    </span>
-                                  </div>
+                              <div className="space-y-6">
+                                {page5SkpdMatrix.map((skpd, idx) => {
+                                  const pctRealisasi = skpd.totalAng > 0 ? (skpd.totalReal / skpd.totalAng) * 100 : 0;
                                   
-                                  <div className="flex justify-between font-mono text-[9px] px-0.5">
-                                    <div className="text-slate-400">PAGU: <span className="text-cyan-400 font-bold">{formatRupiah(skpd.totalAng)}</span></div>
-                                    <div className="text-slate-300">REALISASI: <span className="text-yellow-400 font-black">{formatRupiah(skpd.totalReal)}</span></div>
-                                  </div>
+                                  return (
+                                    <div key={idx} className="bg-slate-900/40 p-4 rounded-xl border border-slate-800 hover:border-slate-700 transition-all space-y-2">
+                                      <div className="flex justify-between items-end text-[10px] text-slate-300 font-bold">
+                                        <span className="text-sky-400 font-black tracking-wide max-w-xs md:max-w-xl text-justify leading-normal block drop-shadow-[0_0_6px_rgba(56,189,248,0.6)]">
+                                          {skpd.kode} - {skpd.nama.toUpperCase()}
+                                        </span>
+                                        <span className="text-slate-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800 font-mono">
+                                          CAPAIAN: <span className="text-emerald-400 font-black">{hitungPersen(skpd.totalAng, skpd.totalReal)}</span>
+                                        </span>
+                                      </div>
+                                      
+                                      <div className="flex justify-between font-mono text-[9px] px-0.5">
+                                        <div className="text-slate-400">PAGU: <span className="text-cyan-400 font-bold">{formatRupiah(skpd.totalAng)}</span></div>
+                                        <div className="text-slate-300">REALISASI: <span className="text-yellow-400 font-black">{formatRupiah(skpd.totalReal)}</span></div>
+                                      </div>
 
-                                  <div className="w-full bg-cyan-950/40 h-5 rounded-lg overflow-hidden border border-cyan-800/60 p-0.5 relative shadow-[inset_0_0_10px_rgba(0,0,0,0.8)]">
-                                    <div 
-                                      className="h-full bg-gradient-to-r from-amber-500 via-yellow-400 to-yellow-300 rounded shadow-[0_0_12px_rgba(234,179,8,0.6)] transition-all duration-1000"
-                                      style={{ width: `${Math.min(pctRealisasi, 100)}%` }}
-                                    />
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
+                                      <div className="w-full bg-cyan-950/40 h-5 rounded-lg overflow-hidden border border-cyan-800/60 p-0.5 relative shadow-[inset_0_0_10px_rgba(0,0,0,0.8)]">
+                                        <div 
+                                          className="h-full bg-gradient-to-r from-amber-500 via-yellow-400 to-yellow-300 rounded shadow-[0_0_12px_rgba(234,179,8,0.6)] transition-all duration-1000"
+                                          style={{ width: `${Math.min(pctRealisasi, 100)}%` }}
+                                        />
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {activePage === 2 && (
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-left font-mono text-[11px] border-collapse">
+                                <thead>
+                                  <tr className="bg-slate-900/80 border-b-2 border-slate-800 text-slate-300 text-[10px] tracking-widest font-black uppercase">
+                                    <th className="p-4 border-r border-slate-900 text-center">Kode Rekening</th>
+                                    <th className="p-4 border-r border-slate-900 text-center">Struktur Nomenklatur Konsolidasi Total Daerah</th>
+                                    <th className="p-4 text-center border-r border-slate-900">Total Pagu</th>
+                                    <th className="p-4 text-center border-r border-slate-900">Total Realisasi</th>
+                                    <th className="p-4 text-center border-r border-slate-900">Sisa Anggaran</th>
+                                    <th className="p-4 text-center">Capaian</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-900/80">
+                                  {processedData.page1.map((row, index) => {
+                                    const level = row.kode.split('.').length;
+                                    const isParent = level <= 3;
+                                    return (
+                                      <tr key={index} className={`hover:bg-cyan-950/20 transition-colors group ${isParent ? 'bg-slate-950 font-black text-cyan-300' : 'text-slate-200'}`}>
+                                        <td className={`p-3.5 whitespace-nowrap border-r border-slate-900 font-bold ${isParent ? 'text-cyan-400' : 'text-slate-500'}`}>{row.kode}</td>
+                                        <td className="p-3.5 border-r border-slate-900 text-justify text-slate-100 whitespace-normal leading-relaxed block w-full" style={{ paddingLeft: `${level * 12}px` }}>
+                                          {isParent ? row.nama.toUpperCase() : row.nama}
+                                        </td>
+                                        <td className="p-3.5 text-right border-r border-slate-900 text-slate-400">{formatRupiah(row.anggaran)}</td>
+                                        <td className="p-3.5 text-right border-r border-slate-900 text-emerald-400 font-bold">{formatRupiah(row.realisasi)}</td>
+                                        <td className="p-3.5 text-right border-r border-slate-900 text-amber-500/90">{formatRupiah(row.anggaran - row.realisasi)}</td>
+                                        <td className="p-3.5 text-center font-black text-cyan-400 bg-cyan-950/10">{hitungPersen(row.anggaran, row.realisasi)}</td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
                         </div>
                       )}
 
-                      {activePage === 2 && (
+                      {selectedSkpd !== 'REKAP' && (
                         <div className="overflow-x-auto">
-                          <table className="w-full text-left font-mono text-[11px] border-collapse">
-                            <thead>
-                              <tr className="bg-slate-900/80 border-b-2 border-slate-800 text-slate-300 text-[10px] tracking-widest font-black uppercase">
-                                <th className="p-4 border-r border-slate-900 text-center">Kode Rekening</th>
-                                <th className="p-4 border-r border-slate-900 text-center">Struktur Nomenklatur Konsolidasi Total Daerah</th>
-                                <th className="p-4 text-center border-r border-slate-900">Total Pagu</th>
-                                <th className="p-4 text-center border-r border-slate-900">Total Realisasi</th>
-                                <th className="p-4 text-center border-r border-slate-900">Sisa Anggaran</th>
-                                <th className="p-4 text-center">Capaian</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-900/80">
-                              {processedData.page1.map((row, index) => {
-                                const level = row.kode.split('.').length;
-                                const isParent = level <= 3;
-                                return (
-                                  <tr key={index} className={`hover:bg-cyan-950/20 transition-colors group ${isParent ? 'bg-slate-950 font-black text-cyan-300' : 'text-slate-200'}`}>
-                                    <td className={`p-3.5 whitespace-nowrap border-r border-slate-900 font-bold ${isParent ? 'text-cyan-400' : 'text-slate-500'}`}>{row.kode}</td>
-                                    <td className="p-3.5 border-r border-slate-900 text-justify text-slate-100 whitespace-normal leading-relaxed block w-full" style={{ paddingLeft: `${level * 12}px` }}>
-                                      {isParent ? row.nama.toUpperCase() : row.nama}
-                                    </td>
+                          {activePage === 1 && (
+                            <table className="w-full text-left font-mono text-[11px] border-collapse">
+                              <thead>
+                                <tr className="bg-slate-900/80 border-b-2 border-slate-800 text-slate-300 text-[10px] tracking-widest font-black uppercase">
+                                  <th className="p-4 border-r border-slate-900 text-center">Kode Rekening</th>
+                                  <th className="p-4 border-r border-slate-900 text-center">Struktur Nomenklatur Rekening</th>
+                                  <th className="p-4 text-center border-r border-slate-900">Pagu Anggaran</th>
+                                  <th className="p-4 text-center border-r border-slate-900">Realisasi Keuangan</th>
+                                  <th className="p-4 text-center border-r border-slate-900">Sisa Anggaran</th>
+                                  <th className="p-4 text-center">Capaian</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-900/80">
+                                {processedData.page1.map((row, index) => {
+                                  const level = row.kode.split('.').length;
+                                  const isParent = level <= 3;
+                                  return (
+                                    <tr key={index} className={`hover:bg-cyan-950/20 transition-colors group ${isParent ? 'bg-slate-950 font-black text-cyan-300' : 'text-slate-200'}`}>
+                                      <td className={`p-3.5 whitespace-nowrap border-r border-slate-900 font-bold ${isParent ? 'text-cyan-400' : 'text-slate-500'}`}>{row.kode}</td>
+                                      <td className="p-3.5 border-r border-slate-900 text-justify text-slate-100 whitespace-normal leading-relaxed block w-full" style={{ paddingLeft: `${level * 12}px` }}>
+                                        {isParent ? row.nama.toUpperCase() : row.nama}
+                                      </td>
+                                      <td className="p-3.5 text-right border-r border-slate-900 text-slate-400">{formatRupiah(row.anggaran)}</td>
+                                      <td className="p-3.5 text-right border-r border-slate-900 text-emerald-400 font-bold">{formatRupiah(row.realisasi)}</td>
+                                      <td className="p-3.5 text-right border-r border-slate-900 text-amber-500/90">{formatRupiah(row.anggaran - row.realisasi)}</td>
+                                      <td className="p-3.5 text-center font-black text-cyan-400 bg-cyan-950/10">{hitungPersen(row.anggaran, row.realisasi)}</td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          )}
+
+                          {activePage === 2 && (
+                            <table className="w-full text-left font-mono text-[11px] border-collapse">
+                              <thead>
+                                <tr className="bg-slate-900/80 border-b-2 border-slate-800 text-slate-300 text-[10px] tracking-widest font-black uppercase">
+                                  <th className="p-4 border-r border-slate-900 w-48 text-center">Kode Identifikasi</th>
+                                  <th className="p-4 border-r border-slate-900 text-center">Nomenklatur Kerja (Subkegiatan &rarr; Rekening)</th>
+                                  <th className="p-4 text-center border-r border-slate-900">Pagu Anggaran</th>
+                                  <th className="p-4 text-center border-r border-slate-900">Realisasi</th>
+                                  <th className="p-4 text-center border-r border-slate-900">Sisa Pagu</th>
+                                  <th className="p-4 text-center">Capaian</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-900/60">
+                                {processedData.page2.map((subgiat, idx) => {
+                                  const isExpanded = !!expandedSubgiat[subgiat.kode];
+                                  return (
+                                    <React.Fragment key={idx}>
+                                      <tr 
+                                        onClick={() => toggleSubgiat(subgiat.kode)}
+                                        className="bg-slate-950/60 hover:bg-indigo-950/30 border-l-4 border-indigo-500 cursor-pointer text-indigo-300 font-bold transition-all"
+                                      >
+                                        <td className="p-3 border-r border-slate-900 tracking-wide font-black">{subgiat.kode}</td>
+                                        <td className="p-3 border-r border-slate-900 flex items-center gap-2 text-justify text-slate-100 whitespace-normal leading-relaxed">
+                                          {isExpanded ? <ChevronDown size={14} className="text-indigo-400 flex-shrink-0" /> : <ChevronRight size={14} className="text-indigo-400 flex-shrink-0" />}
+                                          <span>{subgiat.nama.toUpperCase()}</span>
+                                        </td>
+                                        <td className="p-3 text-right border-r border-slate-900 text-slate-400">{formatRupiah(subgiat.anggaran)}</td>
+                                        <td className="p-3 text-right border-r border-slate-900 text-emerald-400 font-black">{formatRupiah(subgiat.realisasi)}</td>
+                                        <td className="p-3 text-right border-r border-slate-900 text-amber-500">{formatRupiah(subgiat.anggaran - subgiat.realisasi)}</td>
+                                        <td className="p-3 text-center font-black text-indigo-400 bg-indigo-950/10">{hitungPersen(subgiat.anggaran, subgiat.realisasi)}</td>
+                                      </tr>
+                                      {isExpanded && subgiat.children.map((child, cIdx) => (
+                                        <tr key={cIdx} className="bg-slate-900/20 hover:bg-slate-900/50 text-slate-300 text-[10px]">
+                                          <td className="p-2.5 pl-6 border-r border-slate-900 text-slate-500 font-medium">{child.kode}</td>
+                                          <td className="p-2.5 pl-10 border-r border-slate-900 text-justify text-slate-400 whitespace-normal leading-relaxed">
+                                            &bull; {child.nama}
+                                          </td>
+                                          <td className="p-2.5 text-right border-r border-slate-900 text-slate-400">{formatRupiah(child.anggaran)}</td>
+                                          <td className="p-2.5 text-right border-r border-slate-900 text-emerald-400/80">{formatRupiah(child.realisasi)}</td>
+                                          <td className="p-2.5 text-right border-r border-slate-900 text-slate-500">{formatRupiah(child.anggaran - child.realisasi)}</td>
+                                          <td className="p-2.5 text-center text-cyan-400 font-bold">{hitungPersen(child.anggaran, child.realisasi)}</td>
+                                        </tr>
+                                      ))}
+                                    </React.Fragment>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          )}
+
+                          {activePage === 3 && (
+                            <table className="w-full text-left font-mono text-[11px] border-collapse">
+                              <thead>
+                                <tr className="bg-slate-900/80 border-b-2 border-slate-800 text-slate-300 text-[10px] tracking-widest font-black uppercase">
+                                  <th className="p-4 border-r border-slate-900 text-center">Kode Objek &rarr; Subrincian</th>
+                                  <th className="p-4 border-r border-slate-900 text-center">Uraian Komponen Belanja Pegawai</th>
+                                  <th className="p-4 text-center border-r border-slate-900">Anggaran</th>
+                                  <th className="p-4 text-center border-r border-slate-900">Realisasi</th>
+                                  <th className="p-4 text-center border-r border-slate-900">Sisa Anggaran</th>
+                                  <th className="p-4 text-center">Persen</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-900/60 text-slate-200">
+                                {processedData.page3.map((row, index) => (
+                                  <tr key={index} className="hover:bg-cyan-950/20 transition-colors group">
+                                    <td className="p-3.5 text-cyan-400 font-bold whitespace-nowrap border-r border-slate-900">{row.kode}</td>
+                                    <td className="p-3.5 border-r border-slate-900 text-justify text-slate-100 whitespace-normal leading-relaxed">{row.nama}</td>
                                     <td className="p-3.5 text-right border-r border-slate-900 text-slate-400">{formatRupiah(row.anggaran)}</td>
                                     <td className="p-3.5 text-right border-r border-slate-900 text-emerald-400 font-bold">{formatRupiah(row.realisasi)}</td>
-                                    <td className="p-3.5 text-right border-r border-slate-900 text-amber-500/90">{formatRupiah(row.anggaran - row.realisasi)}</td>
+                                    <td className="p-3.5 text-right border-r border-slate-900 text-amber-500">{formatRupiah(row.anggaran - row.realisasi)}</td>
                                     <td className="p-3.5 text-center font-black text-cyan-400 bg-cyan-950/10">{hitungPersen(row.anggaran, row.realisasi)}</td>
                                   </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
+                                ))}
+                              </tbody>
+                            </table>
+                          )}
+
+                          {activePage === 4 && (
+                            <table className="w-full text-left font-mono text-[11px] border-collapse">
+                              <thead>
+                                <tr className="bg-slate-900/80 border-b-2 border-slate-800 text-slate-300 text-[10px] tracking-widest font-black uppercase">
+                                  <th className="p-4 border-r border-slate-900 w-48 text-center">Kode Objek</th>
+                                  <th className="p-4 border-r border-slate-900 text-center">Komponen Kerja Perjalanan Dinas (Akun 5.1.02.04)</th>
+                                  <th className="p-4 text-center border-r border-slate-900">Anggaran</th>
+                                  <th className="p-4 text-center border-r border-slate-900">Realisasi</th>
+                                  <th className="p-4 text-center border-r border-slate-900">Sisa Pagu</th>
+                                  <th className="p-4 text-center">Persen</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-900/60">
+                                {processedData.page4.map((perdin, idx) => {
+                                  const isExpanded = !!expandedPerdin[perdin.kode];
+                                  return (
+                                    <React.Fragment key={idx}>
+                                      <tr 
+                                        onClick={() => togglePerdin(perdin.kode)}
+                                        className="bg-slate-950 hover:bg-amber-950/20 border-l-4 border-amber-500 cursor-pointer text-amber-400 font-bold transition-all"
+                                      >
+                                        <td className="p-3 border-r border-slate-900 text-slate-500">{perdin.kode}</td>
+                                        <td className="p-3 border-r border-slate-900 flex items-center gap-2 text-justify text-slate-200 whitespace-normal leading-relaxed">
+                                          {isExpanded ? <ChevronDown size={14} className="text-amber-400 flex-shrink-0" /> : <ChevronRight size={14} className="text-amber-400 flex-shrink-0" />}
+                                          <span>{perdin.nama.toUpperCase()}</span>
+                                        </td>
+                                        <td className="p-3 text-right border-r border-slate-900 text-slate-400">{formatRupiah(perdin.anggaran)}</td>
+                                        <td className="p-3 text-right border-r border-slate-900 text-emerald-400 font-bold">{formatRupiah(perdin.realisasi)}</td>
+                                        <td className="p-3 text-right border-r border-slate-900 text-slate-500">{formatRupiah(perdin.anggaran - perdin.realisasi)}</td>
+                                        <td className="p-3 text-center font-black text-amber-400 bg-amber-950/10">{hitungPersen(perdin.anggaran, perdin.realisasi)}</td>
+                                      </tr>
+                                      {isExpanded && perdin.children && perdin.children.map((child, cIdx) => (
+                                        <tr key={cIdx} className="bg-slate-900/40 text-[10px] text-slate-300">
+                                          <td className="p-2.5 pl-6 border-r border-slate-900 text-slate-500">{child.kode}</td>
+                                          <td className="p-2.5 pl-10 border-r border-slate-900 text-justify text-amber-300/80 whitespace-normal leading-relaxed">
+                                            &bull; {child.nama}
+                                          </td>
+                                          <td className="p-2.5 text-right border-r border-slate-900 text-slate-400">{formatRupiah(child.anggaran)}</td>
+                                          <td className="p-2.5 text-right border-r border-slate-900 text-emerald-400/80">{formatRupiah(child.realisasi)}</td>
+                                          <td className="p-2.5 text-right border-r border-slate-900 text-slate-600">{formatRupiah(child.anggaran - child.realisasi)}</td>
+                                          <td className="p-2.5 text-center font-bold text-emerald-400">{hitungPersen(child.anggaran, child.realisasi)}</td>
+                                        </tr>
+                                      ))}
+                                    </React.Fragment>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          )}
+
+                          {activePage === 5 && (
+                            <table className="w-full text-left font-mono text-[11px] border-collapse">
+                              <thead>
+                                <tr className="bg-slate-900/80 border-b-2 border-slate-800 text-slate-300 text-[10px] tracking-widest font-black uppercase">
+                                  <th className="p-4 border-r border-slate-900 w-48 text-center">Kode Unit</th>
+                                  <th className="p-4 border-r border-slate-900 text-center">Komponen Kerja Belanja Barang (Akun 5.1.02.01)</th>
+                                  <th className="p-4 text-center border-r border-slate-900">Anggaran</th>
+                                  <th className="p-4 text-center border-r border-slate-900">Realisasi</th>
+                                  <th className="p-4 text-center border-r border-slate-900">Sisa Pagu</th>
+                                  <th className="p-4 text-center">Persen</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-900/60">
+                                {processedData.page5.map((barang, idx) => {
+                                  const isExpanded = !!expandedBarang[barang.kode];
+                                  return (
+                                    <React.Fragment key={idx}>
+                                      <tr 
+                                        onClick={() => toggleBarang(barang.kode)}
+                                        className="bg-slate-950 hover:bg-fuchsia-950/20 border-l-4 border-fuchsia-500 cursor-pointer text-fuchsia-300 font-bold transition-all"
+                                      >
+                                        <td className="p-3 border-r border-slate-900 text-slate-500">{barang.kode}</td>
+                                        <td className="p-3 border-r border-slate-900 flex items-center gap-2 text-justify text-slate-200 whitespace-normal leading-relaxed">
+                                          {isExpanded ? <ChevronDown size={14} className="text-fuchsia-400 flex-shrink-0" /> : <ChevronRight size={14} className="text-fuchsia-400 flex-shrink-0" />}
+                                          <span>{barang.nama.toUpperCase()}</span>
+                                        </td>
+                                        <td className="p-3 text-right border-r border-slate-900 text-slate-400">{formatRupiah(barang.anggaran)}</td>
+                                        <td className="p-3 text-right border-r border-slate-900 text-emerald-400 font-bold">{formatRupiah(barang.realisasi)}</td>
+                                        <td className="p-3 text-right border-r border-slate-900 text-slate-500">{formatRupiah(barang.anggaran - barang.realisasi)}</td>
+                                        <td className="p-3 text-center font-black text-fuchsia-400 bg-fuchsia-950/10">{hitungPersen(barang.anggaran, barang.realisasi)}</td>
+                                      </tr>
+                                      {isExpanded && barang.children && barang.children.map((child, cIdx) => (
+                                        <tr key={cIdx} className="bg-slate-900/40 text-[10px] text-slate-300">
+                                          <td className="p-2.5 pl-6 border-r border-slate-900 text-slate-500">{child.kode}</td>
+                                          <td className="p-2.5 pl-10 border-r border-slate-900 text-justify text-fuchsia-300/80 whitespace-normal leading-relaxed">
+                                            &bull; {child.nama}
+                                          </td>
+                                          <td className="p-2.5 text-right border-r border-slate-900 text-slate-400">{formatRupiah(child.anggaran)}</td>
+                                          <td className="p-2.5 text-right border-r border-slate-900 text-emerald-400/80">{formatRupiah(child.realisasi)}</td>
+                                          <td className="p-2.5 text-right border-r border-slate-900 text-slate-600">{formatRupiah(child.anggaran - child.realisasi)}</td>
+                                          <td className="p-2.5 text-center font-bold text-emerald-400">{hitungPersen(child.anggaran, child.realisasi)}</td>
+                                        </tr>
+                                      ))}
+                                    </React.Fragment>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          )}
                         </div>
                       )}
                     </div>
                   )}
-
-                  {selectedSkpd !== 'REKAP' && (
-                    <div className="overflow-x-auto">
-                      {activePage === 1 && (
-                        <table className="w-full text-left font-mono text-[11px] border-collapse">
-                          <thead>
-                            <tr className="bg-slate-900/80 border-b-2 border-slate-800 text-slate-300 text-[10px] tracking-widest font-black uppercase">
-                              <th className="p-4 border-r border-slate-900 text-center">Kode Rekening</th>
-                              <th className="p-4 border-r border-slate-900 text-center">Struktur Nomenklatur Rekening</th>
-                              <th className="p-4 text-center border-r border-slate-900">Pagu Anggaran</th>
-                              <th className="p-4 text-center border-r border-slate-900">Realisasi Keuangan</th>
-                              <th className="p-4 text-center border-r border-slate-900">Sisa Anggaran</th>
-                              <th className="p-4 text-center">Capaian</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-900/80">
-                            {processedData.page1.map((row, index) => {
-                              const level = row.kode.split('.').length;
-                              const isParent = level <= 3;
-                              return (
-                                <tr key={index} className={`hover:bg-cyan-950/20 transition-colors group ${isParent ? 'bg-slate-950 font-black text-cyan-300' : 'text-slate-200'}`}>
-                                  <td className={`p-3.5 whitespace-nowrap border-r border-slate-900 font-bold ${isParent ? 'text-cyan-400' : 'text-slate-500'}`}>{row.kode}</td>
-                                  <td className="p-3.5 border-r border-slate-900 text-justify text-slate-100 whitespace-normal leading-relaxed block w-full" style={{ paddingLeft: `${level * 12}px` }}>
-                                    {isParent ? row.nama.toUpperCase() : row.nama}
-                                  </td>
-                                  <td className="p-3.5 text-right border-r border-slate-900 text-slate-400">{formatRupiah(row.anggaran)}</td>
-                                  <td className="p-3.5 text-right border-r border-slate-900 text-emerald-400 font-bold">{formatRupiah(row.realisasi)}</td>
-                                  <td className="p-3.5 text-right border-r border-slate-900 text-amber-500/90">{formatRupiah(row.anggaran - row.realisasi)}</td>
-                                  <td className="p-3.5 text-center font-black text-cyan-400 bg-cyan-950/10">{hitungPersen(row.anggaran, row.realisasi)}</td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      )}
-
-                      {activePage === 2 && (
-                        <table className="w-full text-left font-mono text-[11px] border-collapse">
-                          <thead>
-                            <tr className="bg-slate-900/80 border-b-2 border-slate-800 text-slate-300 text-[10px] tracking-widest font-black uppercase">
-                              <th className="p-4 border-r border-slate-900 w-48 text-center">Kode Identifikasi</th>
-                              <th className="p-4 border-r border-slate-900 text-center">Nomenklatur Kerja (Subkegiatan &rarr; Rekening)</th>
-                              <th className="p-4 text-center border-r border-slate-900">Pagu Anggaran</th>
-                              <th className="p-4 text-center border-r border-slate-900">Realisasi</th>
-                              <th className="p-4 text-center border-r border-slate-900">Sisa Pagu</th>
-                              <th className="p-4 text-center">Capaian</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-900/60">
-                            {processedData.page2.map((subgiat, idx) => {
-                              const isExpanded = !!expandedSubgiat[subgiat.kode];
-                              return (
-                                <React.Fragment key={idx}>
-                                  <tr 
-                                    onClick={() => toggleSubgiat(subgiat.kode)}
-                                    className="bg-slate-950/60 hover:bg-indigo-950/30 border-l-4 border-indigo-500 cursor-pointer text-indigo-300 font-bold transition-all"
-                                  >
-                                    <td className="p-3 border-r border-slate-900 tracking-wide font-black">{subgiat.kode}</td>
-                                    <td className="p-3 border-r border-slate-900 flex items-center gap-2 text-justify text-slate-100 whitespace-normal leading-relaxed">
-                                      {isExpanded ? <ChevronDown size={14} className="text-indigo-400 flex-shrink-0" /> : <ChevronRight size={14} className="text-indigo-400 flex-shrink-0" />}
-                                      <span>{subgiat.nama.toUpperCase()}</span>
-                                    </td>
-                                    <td className="p-3 text-right border-r border-slate-900 text-slate-400">{formatRupiah(subgiat.anggaran)}</td>
-                                    <td className="p-3 text-right border-r border-slate-900 text-emerald-400 font-black">{formatRupiah(subgiat.realisasi)}</td>
-                                    <td className="p-3 text-right border-r border-slate-900 text-amber-500">{formatRupiah(subgiat.anggaran - subgiat.realisasi)}</td>
-                                    <td className="p-3 text-center font-black text-indigo-400 bg-indigo-950/10">{hitungPersen(subgiat.anggaran, subgiat.realisasi)}</td>
-                                  </tr>
-                                  {isExpanded && subgiat.children.map((child, cIdx) => (
-                                    <tr key={cIdx} className="bg-slate-900/20 hover:bg-slate-900/50 text-slate-300 text-[10px]">
-                                      <td className="p-2.5 pl-6 border-r border-slate-900 text-slate-500 font-medium">{child.kode}</td>
-                                      <td className="p-2.5 pl-10 border-r border-slate-900 text-justify text-slate-400 whitespace-normal leading-relaxed">
-                                        &bull; {child.nama}
-                                      </td>
-                                      <td className="p-2.5 text-right border-r border-slate-900 text-slate-400">{formatRupiah(child.anggaran)}</td>
-                                      <td className="p-2.5 text-right border-r border-slate-900 text-emerald-400/80">{formatRupiah(child.realisasi)}</td>
-                                      <td className="p-2.5 text-right border-r border-slate-900 text-slate-500">{formatRupiah(child.anggaran - child.realisasi)}</td>
-                                      <td className="p-2.5 text-center text-cyan-400 font-bold">{hitungPersen(child.anggaran, child.realisasi)}</td>
-                                    </tr>
-                                  ))}
-                                </React.Fragment>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      )}
-
-                      {activePage === 3 && (
-                        <table className="w-full text-left font-mono text-[11px] border-collapse">
-                          <thead>
-                            <tr className="bg-slate-900/80 border-b-2 border-slate-800 text-slate-300 text-[10px] tracking-widest font-black uppercase">
-                              <th className="p-4 border-r border-slate-900 text-center">Kode Objek &rarr; Subrincian</th>
-                              <th className="p-4 border-r border-slate-900 text-center">Uraian Komponen Belanja Pegawai</th>
-                              <th className="p-4 text-center border-r border-slate-900">Anggaran</th>
-                              <th className="p-4 text-center border-r border-slate-900">Realisasi</th>
-                              <th className="p-4 text-center border-r border-slate-900">Sisa Anggaran</th>
-                              <th className="p-4 text-center">Persen</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-900/60 text-slate-200">
-                            {processedData.page3.map((row, index) => (
-                              <tr key={index} className="hover:bg-cyan-950/20 transition-colors group">
-                                <td className="p-3.5 text-cyan-400 font-bold whitespace-nowrap border-r border-slate-900">{row.kode}</td>
-                                <td className="p-3.5 border-r border-slate-900 text-justify text-slate-100 whitespace-normal leading-relaxed">{row.nama}</td>
-                                <td className="p-3.5 text-right border-r border-slate-900 text-slate-400">{formatRupiah(row.anggaran)}</td>
-                                <td className="p-3.5 text-right border-r border-slate-900 text-emerald-400 font-bold">{formatRupiah(row.realisasi)}</td>
-                                <td className="p-3.5 text-right border-r border-slate-900 text-amber-500">{formatRupiah(row.anggaran - row.realisasi)}</td>
-                                <td className="p-3.5 text-center font-black text-cyan-400 bg-cyan-950/10">{hitungPersen(row.anggaran, row.realisasi)}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      )}
-
-                      {activePage === 4 && (
-                        <table className="w-full text-left font-mono text-[11px] border-collapse">
-                          <thead>
-                            <tr className="bg-slate-900/80 border-b-2 border-slate-800 text-slate-300 text-[10px] tracking-widest font-black uppercase">
-                              <th className="p-4 border-r border-slate-900 w-48 text-center">Kode Objek</th>
-                              <th className="p-4 border-r border-slate-900 text-center">Komponen Kerja Perjalanan Dinas (Akun 5.1.02.04)</th>
-                              <th className="p-4 text-center border-r border-slate-900">Anggaran</th>
-                              <th className="p-4 text-center border-r border-slate-900">Realisasi</th>
-                              <th className="p-4 text-center border-r border-slate-900">Sisa Pagu</th>
-                              <th className="p-4 text-center">Persen</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-900/60">
-                            {processedData.page4.map((perdin, idx) => {
-                              const isExpanded = !!expandedPerdin[perdin.kode];
-                              return (
-                                <React.Fragment key={idx}>
-                                  <tr 
-                                    onClick={() => togglePerdin(perdin.kode)}
-                                    className="bg-slate-950 hover:bg-amber-950/20 border-l-4 border-amber-500 cursor-pointer text-amber-400 font-bold transition-all"
-                                  >
-                                    <td className="p-3 border-r border-slate-900 text-slate-500">{perdin.kode}</td>
-                                    <td className="p-3 border-r border-slate-900 flex items-center gap-2 text-justify text-slate-200 whitespace-normal leading-relaxed">
-                                      {isExpanded ? <ChevronDown size={14} className="text-amber-400 flex-shrink-0" /> : <ChevronRight size={14} className="text-amber-400 flex-shrink-0" />}
-                                      <span>{perdin.nama.toUpperCase()}</span>
-                                    </td>
-                                    <td className="p-3 text-right border-r border-slate-900 text-slate-400">{formatRupiah(perdin.anggaran)}</td>
-                                    <td className="p-3 text-right border-r border-slate-900 text-emerald-400 font-bold">{formatRupiah(perdin.realisasi)}</td>
-                                    <td className="p-3 text-right border-r border-slate-900 text-slate-500">{formatRupiah(perdin.anggaran - perdin.realisasi)}</td>
-                                    <td className="p-3 text-center font-black text-amber-400 bg-amber-950/10">{hitungPersen(perdin.anggaran, perdin.realisasi)}</td>
-                                  </tr>
-                                  {isExpanded && perdin.children && perdin.children.map((child, cIdx) => (
-                                    <tr key={cIdx} className="bg-slate-900/40 text-[10px] text-slate-300">
-                                      <td className="p-2.5 pl-6 border-r border-slate-900 text-slate-500">{child.kode}</td>
-                                      <td className="p-2.5 pl-10 border-r border-slate-900 text-justify text-amber-300/80 whitespace-normal leading-relaxed">
-                                        &bull; {child.nama}
-                                      </td>
-                                      <td className="p-2.5 text-right border-r border-slate-900 text-slate-400">{formatRupiah(child.anggaran)}</td>
-                                      <td className="p-2.5 text-right border-r border-slate-900 text-emerald-400/80">{formatRupiah(child.realisasi)}</td>
-                                      <td className="p-2.5 text-right border-r border-slate-900 text-slate-600">{formatRupiah(child.anggaran - child.realisasi)}</td>
-                                      <td className="p-2.5 text-center font-bold text-emerald-400">{hitungPersen(child.anggaran, child.realisasi)}</td>
-                                    </tr>
-                                  ))}
-                                </React.Fragment>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      )}
-
-                      {activePage === 5 && (
-                        <table className="w-full text-left font-mono text-[11px] border-collapse">
-                          <thead>
-                            <tr className="bg-slate-900/80 border-b-2 border-slate-800 text-slate-300 text-[10px] tracking-widest font-black uppercase">
-                              <th className="p-4 border-r border-slate-900 w-48 text-center">Kode Unit</th>
-                              <th className="p-4 border-r border-slate-900 text-center">Komponen Kerja Belanja Barang (Akun 5.1.02.01)</th>
-                              <th className="p-4 text-center border-r border-slate-900">Anggaran</th>
-                              <th className="p-4 text-center border-r border-slate-900">Realisasi</th>
-                              <th className="p-4 text-center border-r border-slate-900">Sisa Pagu</th>
-                              <th className="p-4 text-center">Persen</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-900/60">
-                            {processedData.page5.map((barang, idx) => {
-                              const isExpanded = !!expandedBarang[barang.kode];
-                              return (
-                                <React.Fragment key={idx}>
-                                  <tr 
-                                    onClick={() => toggleBarang(barang.kode)}
-                                    className="bg-slate-950 hover:bg-fuchsia-950/20 border-l-4 border-fuchsia-500 cursor-pointer text-fuchsia-300 font-bold transition-all"
-                                  >
-                                    <td className="p-3 border-r border-slate-900 text-slate-500">{barang.kode}</td>
-                                    <td className="p-3 border-r border-slate-900 flex items-center gap-2 text-justify text-slate-200 whitespace-normal leading-relaxed">
-                                      {isExpanded ? <ChevronDown size={14} className="text-fuchsia-400 flex-shrink-0" /> : <ChevronRight size={14} className="text-fuchsia-400 flex-shrink-0" />}
-                                      <span>{barang.nama.toUpperCase()}</span>
-                                    </td>
-                                    <td className="p-3 text-right border-r border-slate-900 text-slate-400">{formatRupiah(barang.anggaran)}</td>
-                                    <td className="p-3 text-right border-r border-slate-900 text-emerald-400 font-bold">{formatRupiah(barang.realisasi)}</td>
-                                    <td className="p-3 text-right border-r border-slate-900 text-slate-500">{formatRupiah(barang.anggaran - barang.realisasi)}</td>
-                                    <td className="p-3 text-center font-black text-fuchsia-400 bg-fuchsia-950/10">{hitungPersen(barang.anggaran, barang.realisasi)}</td>
-                                  </tr>
-                                  {isExpanded && barang.children && barang.children.map((child, cIdx) => (
-                                    <tr key={cIdx} className="bg-slate-900/40 text-[10px] text-slate-300">
-                                      <td className="p-2.5 pl-6 border-r border-slate-900 text-slate-500">{child.kode}</td>
-                                      <td className="p-2.5 pl-10 border-r border-slate-900 text-justify text-fuchsia-300/80 whitespace-normal leading-relaxed">
-                                        &bull; {child.nama}
-                                      </td>
-                                      <td className="p-2.5 text-right border-r border-slate-900 text-slate-400">{formatRupiah(child.anggaran)}</td>
-                                      <td className="p-2.5 text-right border-r border-slate-900 text-emerald-400/80">{formatRupiah(child.realisasi)}</td>
-                                      <td className="p-2.5 text-right border-r border-slate-900 text-slate-600">{formatRupiah(child.anggaran - child.realisasi)}</td>
-                                      <td className="p-2.5 text-center font-bold text-emerald-400">{hitungPersen(child.anggaran, child.realisasi)}</td>
-                                    </tr>
-                                  ))}
-                                </React.Fragment>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      )}
-                    </div>
-                  )}
-                </div>
+                </>
               )}
             </div>
           )}
