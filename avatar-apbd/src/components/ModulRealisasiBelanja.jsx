@@ -1782,7 +1782,7 @@ export default function ModulRealisasiBelanja() {
                                             </div>
                                             {hasMinus && (
                                               <span className="bg-red-600 text-white text-[9px] font-black px-2 py-0.5 rounded border border-red-300 animate-bounce flex items-center gap-1 shadow-[0_0_8px_rgba(239,68,68,0.8)]">
-                                                <AlertTriangle size={11} /> MINUS DETECTED
+                                                <AlertTriangle size={11} /> REKENING MINUS
                                               </span>
                                             )}
                                           </td>
