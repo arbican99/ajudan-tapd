@@ -7,7 +7,7 @@ import { saveAs } from 'file-saver';
 import { 
   BarChart2, Layers, Users, Map as MapIcon, 
   Cpu, Terminal, Calendar, ChevronDown, ChevronRight, TrendingUp, ShoppingBag, Building2,
-  Printer, Download, FileSpreadsheet, Settings, Search, AlertTriangle
+  Printer, Download, FileSpreadsheet, Settings
 } from 'lucide-react';
 
 const DINKES_KODE = '1.02.0.00.0.00.01.0000';
@@ -29,9 +29,6 @@ export default function ModulRealisasiBelanja() {
   const [expandedSubgiat, setExpandedSubgiat] = useState({});
   const [expandedPerdin, setExpandedPerdin] = useState({});
   const [expandedBarang, setExpandedBarang] = useState({});
-
-  // State Pencarian Tabel Subkegiatan
-  const [searchSubgiat, setSearchSubgiat] = useState('');
   
   // State Khusus Expand Dinas Kesehatan
   const [expandedSubunits, setExpandedSubunits] = useState({});
@@ -49,7 +46,6 @@ export default function ModulRealisasiBelanja() {
     setActivePage(1);
     setExpandedSubunits({});
     setExpandedDinkesSubgiat({});
-    setSearchSubgiat('');
   }, [selectedSkpd]);
 
   useEffect(() => {
@@ -169,8 +165,7 @@ export default function ModulRealisasiBelanja() {
 
     } catch (err) {
       console.error("Gagal memuat pipeline data:", err.message);
-    } 
-    finally {
+    } finally {
       setLoading(false);
     }
   };
@@ -304,20 +299,17 @@ export default function ModulRealisasiBelanja() {
     
     const arrPage2 = Array.from(mapPage2Tree.values()).map(node => {
       const sortedChildren = Array.from(node.children.values()).sort((a, b) => (a.kode || '').localeCompare(b.kode || ''));
-      const hasMinus = sortedChildren.some(child => (child.anggaran - child.realisasi) < 0);
-      return { ...node, children: sortedChildren, hasMinus };
+      return { ...node, children: sortedChildren };
     });
     
     const arrPage4 = Array.from(mapPage4Tree.values()).map(node => {
       const sortedChildren = Array.from(node.children.values()).sort((a, b) => (a.kode || '').localeCompare(b.kode || ''));
-      const hasMinus = sortedChildren.some(child => (child.anggaran - child.realisasi) < 0);
-      return { ...node, children: sortedChildren, hasMinus };
+      return { ...node, children: sortedChildren };
     });
 
     const arrPage5 = Array.from(mapPage5Tree.values()).map(node => {
       const sortedChildren = Array.from(node.children.values()).sort((a, b) => (a.kode || '').localeCompare(b.kode || ''));
-      const hasMinus = sortedChildren.some(child => (child.anggaran - child.realisasi) < 0);
-      return { ...node, children: sortedChildren, hasMinus };
+      return { ...node, children: sortedChildren };
     });
 
     return {
@@ -402,16 +394,13 @@ export default function ModulRealisasiBelanja() {
       rekNode.realisasi += rea;
     });
 
-    return Array.from(mapSubunits.values()).map(sub => {
-      const subgiatList = Array.from(sub.subgiatMap.values()).map(sg => {
-        const sortedChildren = Array.from(sg.childrenMap.values()).sort((a, b) => (a.kode || '').localeCompare(b.kode || ''));
-        const hasMinus = sortedChildren.some(ch => (ch.anggaran - ch.realisasi) < 0);
-        return { ...sg, children: sortedChildren, hasMinus };
-      }).sort((a, b) => (a.kode || '').localeCompare(b.kode || ''));
-
-      const hasMinusInSubunit = subgiatList.some(sg => sg.hasMinus);
-      return { ...sub, subgiatList, hasMinusInSubunit };
-    }).sort((a, b) => (a.kodeSubunit || '').localeCompare(b.kodeSubunit || ''));
+    return Array.from(mapSubunits.values()).map(sub => ({
+      ...sub,
+      subgiatList: Array.from(sub.subgiatMap.values()).map(sg => ({
+        ...sg,
+        children: Array.from(sg.childrenMap.values()).sort((a, b) => (a.kode || '').localeCompare(b.kode || ''))
+      })).sort((a, b) => (a.kode || '').localeCompare(b.kode || ''))
+    })).sort((a, b) => (a.kodeSubunit || '').localeCompare(b.kodeSubunit || ''));
   }, [rawRealData, selectedSkpd, activePage, mrekMap]);
 
   // --- 5. DATA UNTUK CETAK (SUPPORT MULTI-LEVEL DINKES SUBUNIT) ---
@@ -424,7 +413,7 @@ export default function ModulRealisasiBelanja() {
       const kodeSubunit = item.Kode_Subunit ? item.Kode_Subunit.trim() : kodeSkpd;
       const namaSubunit = item.Nama_Subunit ? item.Nama_Subunit.trim() : namaSkpd;
       const kodeSubgiat = item.Kode_Subgiat ? item.Kode_Subgiat.trim() : 'UNMAPPED_SUBGIAT';
-      const namaSubgiat = item.Nama_Subgiat || 'Tanpa Nama Subkegiatan';
+      const namaSubgiat = item.Nama_Subgiat ? item.Nama_Subgiat.trim() : 'Tanpa Nama Subkegiatan';
       const kodeRek = normalizeKodeRekening(item.Kode_Rekening);
       const namaRek = mrekMap.get(kodeRek) || item.Nama_Rekening || 'Tanpa Nama Rekening';
       
@@ -518,19 +507,13 @@ export default function ModulRealisasiBelanja() {
           totalAng: 0, totalReal: 0,
           pegawaiAng: 0, pegawaiReal: 0,
           perdinAng: 0, perdinReal: 0,
-          modalAng: 0, modalReal: 0,
-          hasMinus: false
+          modalAng: 0, modalReal: 0
         });
       }
 
       const row = skpdMap.get(targetKode);
       row.totalAng += ang;
       row.totalReal += rea;
-
-      // Cek apakah ada rekening yang minus
-      if ((ang - rea) < 0) {
-        row.hasMinus = true;
-      }
 
       if (kodeRek.startsWith('5.1.01')) { row.pegawaiAng += ang; row.pegawaiReal += rea; }
       if (kodeRek.startsWith('5.1.02.04')) { row.perdinAng += ang; row.perdinReal += rea; }
@@ -539,20 +522,6 @@ export default function ModulRealisasiBelanja() {
 
     return Array.from(skpdMap.values()).sort((a, b) => (a.kode || '').localeCompare(b.kode || ''));
   }, [rawRealData]);
-
-  // --- FILTERED PAGE 2 DATA BY SEARCH QUERY ---
-  const filteredPage2 = useMemo(() => {
-    if (!searchSubgiat.trim()) return processedData.page2;
-    const q = searchSubgiat.toLowerCase().trim();
-    return processedData.page2.filter(subgiat => {
-      const matchKode = (subgiat.kode || '').toLowerCase().includes(q);
-      const matchNama = (subgiat.nama || '').toLowerCase().includes(q);
-      const matchChild = subgiat.children.some(c => 
-        (c.kode || '').toLowerCase().includes(q) || (c.nama || '').toLowerCase().includes(q)
-      );
-      return matchKode || matchNama || matchChild;
-    });
-  }, [processedData.page2, searchSubgiat]);
 
   const toggleSubgiat = (id) => setExpandedSubgiat(prev => ({ ...prev, [id]: !prev[id] }));
   const togglePerdin = (id) => setExpandedPerdin(prev => ({ ...prev, [id]: !prev[id] }));
@@ -721,7 +690,7 @@ export default function ModulRealisasiBelanja() {
     }
   };
 
-  // --- HANDLER DOWNLOAD EXCEL NATIVE (.XLSX ASLI) ---
+  // --- HANDLER DOWNLOAD EXCEL NATIVE (.XLSX ASLI - SAMA PERSIS GAMBAR & BEBAS WARNING) ---
   const handleExportXLS = async () => {
     try {
       const workbook = new ExcelJS.Workbook();
@@ -764,7 +733,7 @@ export default function ModulRealisasiBelanja() {
       worksheet.mergeCells('E4:F4'); // Realisasi SPJ
       worksheet.mergeCells('G4:G5'); // Sisa APBD
 
-      // Row 6: Baris Penomoran Kolom
+      // Row 6: Baris Penomoran Kolom (1, 2, 3, 5, 7, 8 = 5 - 7)
       const h3 = worksheet.addRow(['1', '2', '3', '5', '7', '', '8 = 5 - 7']);
 
       // Style All Header Cells (Row 4, 5, 6)
@@ -773,7 +742,7 @@ export default function ModulRealisasiBelanja() {
           cell.fill = {
             type: 'pattern',
             pattern: 'solid',
-            fgColor: { argb: 'FFE2E8F0' }
+            fgColor: { argb: 'FFE2E8F0' } // Abu-abu terang khas form
           };
           cell.font = { name: 'Arial', size: 9, bold: true, color: { argb: 'FF000000' } };
           cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
@@ -861,15 +830,15 @@ export default function ModulRealisasiBelanja() {
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
       } else if (colNumber === 2) {
         cell.alignment = { horizontal: 'left', vertical: 'middle' };
-        cell.numFmt = '@';
+        cell.numFmt = '@'; // Format Kode sebagai Text murni
       } else if (colNumber === 3) {
         cell.alignment = { horizontal: 'left', vertical: 'middle' };
       } else if (colNumber === 4 || colNumber === 5 || colNumber === 7) {
         cell.alignment = { horizontal: 'right', vertical: 'middle' };
-        cell.numFmt = '#,##0.00';
+        cell.numFmt = '#,##0.00'; // Format Nominal Rupiah (e.g. 379.296.641.507,00)
       } else if (colNumber === 6) {
         cell.alignment = { horizontal: 'right', vertical: 'middle' };
-        cell.numFmt = '0.00';
+        cell.numFmt = '0.00'; // Format Persen (e.g. 38,03)
       }
     });
   };
@@ -995,19 +964,7 @@ export default function ModulRealisasiBelanja() {
   // --- RENDER DINKES EXPANDING SUBROWS COMPONENT ---
   const renderDinkesSubrowsView = () => {
     return (
-      <div className="overflow-x-auto space-y-4">
-        {/* PENCARIAN TUK DINAS KESEHATAN */}
-        <div className="flex items-center gap-2 bg-slate-900 border border-slate-700 rounded-xl p-2.5">
-          <Search size={16} className="text-cyan-400" />
-          <input
-            type="text"
-            placeholder="Cari Kode atau Nama Subkegiatan / Rekening Dinas Kesehatan..."
-            value={searchSubgiat}
-            onChange={(e) => setSearchSubgiat(e.target.value)}
-            className="w-full bg-transparent font-mono text-xs text-slate-100 placeholder-slate-500 focus:outline-none"
-          />
-        </div>
-
+      <div className="overflow-x-auto">
         <table className="w-full text-left font-mono text-[11px] border-collapse">
           <thead>
             <tr className="bg-slate-900/90 border-b-2 border-slate-800 text-slate-300 text-[10px] tracking-widest font-black uppercase">
@@ -1025,20 +982,6 @@ export default function ModulRealisasiBelanja() {
               const isSubunitExpanded = !!expandedSubunits[sub.kodeSubunit];
               const sisaSubunit = sub.totalAnggaran - sub.totalRealisasi;
 
-              // Filter subkegiatan berdasarkan pencarian
-              const filteredSubgiatList = sub.subgiatList.filter(sg => {
-                if (!searchSubgiat.trim()) return true;
-                const q = searchSubgiat.toLowerCase().trim();
-                const matchKode = (sg.kode || '').toLowerCase().includes(q);
-                const matchNama = (sg.nama || '').toLowerCase().includes(q);
-                const matchChild = sg.children.some(ch => 
-                  (ch.kode || '').toLowerCase().includes(q) || (ch.nama || '').toLowerCase().includes(q)
-                );
-                return matchKode || matchNama || matchChild;
-              });
-
-              if (searchSubgiat.trim() && filteredSubgiatList.length === 0) return null;
-
               return (
                 <React.Fragment key={sIdx}>
                   <tr 
@@ -1053,16 +996,9 @@ export default function ModulRealisasiBelanja() {
                       )}
                     </td>
                     <td className="p-3.5 border-r border-slate-900 font-mono text-cyan-400 font-black">{sub.kodeSubunit}</td>
-                    <td className="p-3.5 border-r border-slate-900 flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <Building2 size={14} className="text-cyan-400 flex-shrink-0" />
-                        <span className="text-slate-100 font-black tracking-wide uppercase">{sub.namaSubunit}</span>
-                      </div>
-                      {sub.hasMinusInSubunit && (
-                        <span className="bg-red-600/90 text-white text-[9px] px-2 py-0.5 rounded font-black border border-red-400 animate-pulse flex items-center gap-1 shadow-[0_0_8px_rgba(239,68,68,0.8)]">
-                          <AlertTriangle size={10} /> TERDAPAT MINUS
-                        </span>
-                      )}
+                    <td className="p-3.5 border-r border-slate-900 flex items-center gap-2">
+                      <Building2 size={14} className="text-cyan-400 flex-shrink-0" />
+                      <span className="text-slate-100 font-black tracking-wide uppercase">{sub.namaSubunit}</span>
                     </td>
                     <td className="p-3.5 text-right border-r border-slate-900 text-slate-300 font-bold">{formatRupiah(sub.totalAnggaran)}</td>
                     <td className="p-3.5 text-right border-r border-slate-900 text-emerald-400 font-black">{formatRupiah(sub.totalRealisasi)}</td>
@@ -1070,7 +1006,7 @@ export default function ModulRealisasiBelanja() {
                     <td className="p-3.5 text-center font-black text-cyan-300 bg-cyan-950/20">{hitungPersen(sub.totalAnggaran, sub.totalRealisasi)}</td>
                   </tr>
 
-                  {(isSubunitExpanded || searchSubgiat.trim().length > 0) && (
+                  {isSubunitExpanded && (
                     <tr>
                       <td colSpan={7} className="p-3 bg-slate-900/60 border-y border-cyan-900/50">
                         <div className="pl-4 pr-2 py-2 space-y-2">
@@ -1092,7 +1028,7 @@ export default function ModulRealisasiBelanja() {
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-900">
-                              {filteredSubgiatList.map((sg, sgIdx) => {
+                              {sub.subgiatList.map((sg, sgIdx) => {
                                 const sgKey = `${sub.kodeSubunit}_${sg.kode}`;
                                 const isSgExpanded = !!expandedDinkesSubgiat[sgKey];
 
@@ -1100,55 +1036,34 @@ export default function ModulRealisasiBelanja() {
                                   <React.Fragment key={sgIdx}>
                                     <tr 
                                       onClick={() => toggleDinkesSubgiat(sgKey)}
-                                      className={`cursor-pointer font-bold transition-all border-l-4 ${
-                                        sg.hasMinus 
-                                          ? 'bg-gradient-to-r from-red-950/90 via-red-900/60 to-slate-950 border-red-500 text-red-200 hover:from-red-900 shadow-[0_0_15px_rgba(239,68,68,0.4)]' 
-                                          : 'bg-slate-900/50 hover:bg-indigo-950/40 border-indigo-400 text-indigo-300'
-                                      }`}
+                                      className="bg-slate-900/50 hover:bg-indigo-950/40 cursor-pointer font-bold text-indigo-300 border-l-2 border-indigo-400 transition-all"
                                     >
                                       <td className="p-2 text-center border-r border-slate-800">
                                         {isSgExpanded ? (
-                                          <ChevronDown size={13} className={sg.hasMinus ? "text-red-400 inline-block" : "text-indigo-400 inline-block"} />
+                                          <ChevronDown size={13} className="text-indigo-400 inline-block" />
                                         ) : (
-                                          <ChevronRight size={13} className={sg.hasMinus ? "text-red-400 inline-block" : "text-indigo-400 inline-block"} />
+                                          <ChevronRight size={13} className="text-indigo-400 inline-block" />
                                         )}
                                       </td>
-                                      <td className={`p-2 border-r border-slate-800 font-black ${sg.hasMinus ? 'text-red-400' : 'text-indigo-400'}`}>{sg.kode}</td>
-                                      <td className="p-2 border-r border-slate-800 font-bold flex items-center justify-between gap-2">
-                                        <span>{sg.nama.toUpperCase()}</span>
-                                        {sg.hasMinus && (
-                                          <span className="bg-red-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded border border-red-300 animate-bounce">
-                                            Data Minus
-                                          </span>
-                                        )}
-                                      </td>
+                                      <td className="p-2 border-r border-slate-800 text-indigo-400 font-black">{sg.kode}</td>
+                                      <td className="p-2 border-r border-slate-800 font-bold">{sg.nama.toUpperCase()}</td>
                                       <td className="p-2 text-right border-r border-slate-800 text-slate-300">{formatRupiah(sg.anggaran)}</td>
                                       <td className="p-2 text-right border-r border-slate-800 text-emerald-400 font-bold">{formatRupiah(sg.realisasi)}</td>
-                                      <td className={`p-2 text-right border-r border-slate-800 font-black ${sg.hasMinus ? 'text-red-400 bg-red-950/40' : 'text-amber-500'}`}>
-                                        {formatRupiah(sg.anggaran - sg.realisasi)}
-                                      </td>
-                                      <td className={`p-2 text-center font-black ${sg.hasMinus ? 'text-red-300 bg-red-950/50' : 'text-cyan-400'}`}>{hitungPersen(sg.anggaran, sg.realisasi)}</td>
+                                      <td className="p-2 text-right border-r border-slate-800 text-amber-500">{formatRupiah(sg.anggaran - sg.realisasi)}</td>
+                                      <td className="p-2 text-center text-cyan-400 font-black">{hitungPersen(sg.anggaran, sg.realisasi)}</td>
                                     </tr>
 
-                                    {/* SUBROW REKENING ANAK DIPERBESAR & DIBUAT TERANG */}
-                                    {(isSgExpanded || searchSubgiat.trim().length > 0) && sg.children.map((ch, chIdx) => {
-                                      const isMinusChild = (ch.anggaran - ch.realisasi) < 0;
-                                      return (
-                                        <tr key={chIdx} className={`hover:bg-slate-800/80 text-[12px] font-semibold transition-colors ${
-                                          isMinusChild ? 'bg-red-950/40 text-red-100 font-bold' : 'bg-slate-900/90 text-slate-100'
-                                        }`}>
-                                          <td className="p-2.5 text-center border-r border-slate-800 text-cyan-400">&bull;</td>
-                                          <td className="p-2.5 pl-6 border-r border-slate-800 text-cyan-300 font-mono font-bold">{ch.kode}</td>
-                                          <td className="p-2.5 pl-6 border-r border-slate-800 text-slate-100 font-bold">&bull; {ch.nama}</td>
-                                          <td className="p-2.5 text-right border-r border-slate-800 text-slate-200 font-bold">{formatRupiah(ch.anggaran)}</td>
-                                          <td className="p-2.5 text-right border-r border-slate-800 text-emerald-300 font-black">{formatRupiah(ch.realisasi)}</td>
-                                          <td className={`p-2.5 text-right border-r border-slate-800 font-black ${isMinusChild ? 'text-red-400 bg-red-900/50' : 'text-amber-400'}`}>
-                                            {formatRupiah(ch.anggaran - ch.realisasi)}
-                                          </td>
-                                          <td className="p-2.5 text-center text-cyan-300 font-black">{hitungPersen(ch.anggaran, ch.realisasi)}</td>
-                                        </tr>
-                                      );
-                                    })}
+                                    {isSgExpanded && sg.children.map((ch, chIdx) => (
+                                      <tr key={chIdx} className="bg-slate-950 hover:bg-slate-900/80 text-slate-300 text-[9.5px]">
+                                        <td className="p-2 text-center border-r border-slate-800 text-slate-600">&bull;</td>
+                                        <td className="p-2 pl-6 border-r border-slate-800 text-slate-500 font-medium">{ch.kode}</td>
+                                        <td className="p-2 pl-6 border-r border-slate-800 text-slate-300 font-normal">&bull; {ch.nama}</td>
+                                        <td className="p-2 text-right border-r border-slate-800 text-slate-400">{formatRupiah(ch.anggaran)}</td>
+                                        <td className="p-2 text-right border-r border-slate-800 text-emerald-400/80">{formatRupiah(ch.realisasi)}</td>
+                                        <td className="p-2 text-right border-r border-slate-800 text-slate-500">{formatRupiah(ch.anggaran - ch.realisasi)}</td>
+                                        <td className="p-2 text-center text-cyan-400 font-bold">{hitungPersen(ch.anggaran, ch.realisasi)}</td>
+                                      </tr>
+                                    ))}
                                   </React.Fragment>
                                 );
                               })}
@@ -1242,7 +1157,7 @@ export default function ModulRealisasiBelanja() {
           .text-left { text-align: left; }
         `}</style>
 
-        {/* SETTINGS PANEL */}
+        {/* SETTINGS PANEL (Tidak ikut tercetak) */}
         <div className="no-print bg-slate-900 border-2 border-slate-700 rounded-2xl p-5 space-y-4 shadow-2xl">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800 pb-4">
             <div className="flex items-center gap-2">
@@ -1253,6 +1168,15 @@ export default function ModulRealisasiBelanja() {
             </div>
             
             <div className="flex flex-wrap gap-2 w-full md:w-auto">
+              
+              {/* <button
+                onClick={handlePrintPDF}
+                className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-mono text-xs font-black rounded-xl shadow-lg transition-all cursor-pointer"
+              >
+                <Printer size={15} />
+                <span>CETAK BROWSER</span>
+              </button> */}
+
               <button
                 onClick={handleDownloadPDF}
                 disabled={downloadingPdf}
@@ -1326,7 +1250,7 @@ export default function ModulRealisasiBelanja() {
           </div>
         </div>
 
-        {/* PREVIEW CONTAINER */}
+        {/* PREVIEW CONTAINER (Hanya ini yang tercetak) */}
         <div className="bg-slate-950 border-2 border-slate-800 rounded-2xl p-2 sm:p-4 overflow-x-auto shadow-2xl flex justify-center">
           <div 
             id="area-cetak-print"
@@ -1589,7 +1513,6 @@ export default function ModulRealisasiBelanja() {
                     <div>
                       {selectedSkpd === 'REKAP' && (
                         <div>
-                          {/* PAGE 1 REKAP: MATRIKS GRAFIK SKPD */}
                           {activePage === 1 && (
                             <div className="space-y-6 p-2 font-mono">
                               <div className="text-[14px] font-bold text-white tracking-wider mb-2 flex items-center gap-2">
@@ -1602,51 +1525,24 @@ export default function ModulRealisasiBelanja() {
                                   const pctRealisasi = skpd.totalAng > 0 ? (skpd.totalReal / skpd.totalAng) * 100 : 0;
                                   
                                   return (
-                                    <div 
-                                      key={idx} 
-                                      className={`p-4 rounded-xl border transition-all space-y-2 ${
-                                        skpd.hasMinus 
-                                          ? 'bg-gradient-to-r from-red-950/80 via-red-900/40 to-slate-950 border-red-500/80 shadow-[0_0_20px_rgba(239,68,68,0.3)]' 
-                                          : 'bg-slate-900/40 border-slate-800 hover:border-slate-700'
-                                      }`}
-                                    >
+                                    <div key={idx} className="bg-slate-900/40 p-4 rounded-xl border border-slate-800 hover:border-slate-700 transition-all space-y-2">
                                       <div className="flex justify-between items-end text-[10px] text-slate-300 font-bold">
-                                        <div className="flex items-center gap-2">
-                                          <span className={`font-black tracking-wide max-w-xs md:max-w-xl text-justify leading-normal block ${
-                                            skpd.hasMinus ? 'text-red-300 drop-shadow-[0_0_8px_rgba(239,68,68,0.8)]' : 'text-sky-400 drop-shadow-[0_0_6px_rgba(56,189,248,0.6)]'
-                                          }`}>
-                                            {skpd.kode} - {skpd.nama.toUpperCase()}
-                                          </span>
-                                          {skpd.hasMinus && (
-                                            <span className="bg-red-600 text-white text-[9px] px-2 py-0.5 rounded font-black border border-red-400 animate-pulse flex items-center gap-1 shadow-[0_0_8px_rgba(239,68,68,0.8)]">
-                                              <AlertTriangle size={10} /> REKENING MINUS
-                                            </span>
-                                          )}
-                                        </div>
-                                        <span className={`px-2 py-0.5 rounded border font-mono ${
-                                          skpd.hasMinus 
-                                            ? 'bg-red-950 text-red-200 border-red-600 font-bold' 
-                                            : 'bg-slate-950 text-slate-400 border-slate-800'
-                                        }`}>
-                                          CAPAIAN: <span className={skpd.hasMinus ? "text-red-400 font-black" : "text-emerald-400 font-black"}>{hitungPersen(skpd.totalAng, skpd.totalReal)}</span>
+                                        <span className="text-sky-400 font-black tracking-wide max-w-xs md:max-w-xl text-justify leading-normal block drop-shadow-[0_0_6px_rgba(56,189,248,0.6)]">
+                                          {skpd.kode} - {skpd.nama.toUpperCase()}
+                                        </span>
+                                        <span className="text-slate-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800 font-mono">
+                                          CAPAIAN: <span className="text-emerald-400 font-black">{hitungPersen(skpd.totalAng, skpd.totalReal)}</span>
                                         </span>
                                       </div>
                                       
                                       <div className="flex justify-between font-mono text-[9px] px-0.5">
                                         <div className="text-slate-400">PAGU: <span className="text-cyan-400 font-bold">{formatRupiah(skpd.totalAng)}</span></div>
-                                        <div className="text-slate-300">REALISASI: <span className={skpd.hasMinus ? "text-red-400 font-black" : "text-yellow-400 font-black"}>{formatRupiah(skpd.totalReal)}</span></div>
+                                        <div className="text-slate-300">REALISASI: <span className="text-yellow-400 font-black">{formatRupiah(skpd.totalReal)}</span></div>
                                       </div>
 
-                                      {/* GRAFIK WARNA MERAH GLOSSY APABILA SKPD ADALAH MINUS */}
-                                      <div className={`w-full h-5 rounded-lg overflow-hidden border p-0.5 relative shadow-[inset_0_0_10px_rgba(0,0,0,0.8)] ${
-                                        skpd.hasMinus ? 'bg-red-950/60 border-red-700/80' : 'bg-cyan-950/40 border-cyan-800/60'
-                                      }`}>
+                                      <div className="w-full bg-cyan-950/40 h-5 rounded-lg overflow-hidden border border-cyan-800/60 p-0.5 relative shadow-[inset_0_0_10px_rgba(0,0,0,0.8)]">
                                         <div 
-                                          className={`h-full rounded transition-all duration-1000 ${
-                                            skpd.hasMinus 
-                                              ? 'bg-gradient-to-r from-red-600 via-rose-500 to-red-400 shadow-[0_0_15px_rgba(239,68,68,0.9)]' 
-                                              : 'bg-gradient-to-r from-amber-500 via-yellow-400 to-yellow-300 shadow-[0_0_12px_rgba(234,179,8,0.6)]'
-                                          }`}
+                                          className="h-full bg-gradient-to-r from-amber-500 via-yellow-400 to-yellow-300 rounded shadow-[0_0_12px_rgba(234,179,8,0.6)] transition-all duration-1000"
                                           style={{ width: `${Math.min(pctRealisasi, 100)}%` }}
                                         />
                                       </div>
@@ -1729,99 +1625,54 @@ export default function ModulRealisasiBelanja() {
                             </table>
                           )}
 
-                          {/* PAGE 2: SUBKEGIATAN WITH SEARCH & GLOSSY RED MINUS HIGHLIGHT */}
                           {activePage === 2 && (
-                            <div className="space-y-4">
-                              {/* FASILITAS PENCARIAN SUBKEGIATAN */}
-                              <div className="flex items-center gap-2 bg-slate-900 border border-slate-700 rounded-xl p-2.5">
-                                <Search size={16} className="text-cyan-400" />
-                                <input
-                                  type="text"
-                                  placeholder="Cari Kode atau Nama Subkegiatan / Rekening Rincian..."
-                                  value={searchSubgiat}
-                                  onChange={(e) => setSearchSubgiat(e.target.value)}
-                                  className="w-full bg-transparent font-mono text-xs text-slate-100 placeholder-slate-500 focus:outline-none"
-                                />
-                              </div>
-
-                              <table className="w-full text-left font-mono text-[11px] border-collapse">
-                                <thead>
-                                  <tr className="bg-slate-900/80 border-b-2 border-slate-800 text-slate-300 text-[10px] tracking-widest font-black uppercase">
-                                    <th className="p-4 border-r border-slate-900 w-48 text-center">Kode Identifikasi</th>
-                                    <th className="p-4 border-r border-slate-900 text-center">Nomenklatur Kerja (Subkegiatan &rarr; Rekening)</th>
-                                    <th className="p-4 text-center border-r border-slate-900">Pagu Anggaran</th>
-                                    <th className="p-4 text-center border-r border-slate-900">Realisasi</th>
-                                    <th className="p-4 text-center border-r border-slate-900">Sisa Pagu</th>
-                                    <th className="p-4 text-center">Capaian</th>
-                                  </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-900/60">
-                                  {filteredPage2.map((subgiat, idx) => {
-                                    const isExpanded = !!expandedSubgiat[subgiat.kode];
-                                    const hasMinus = subgiat.hasMinus;
-
-                                    return (
-                                      <React.Fragment key={idx}>
-                                        <tr 
-                                          onClick={() => toggleSubgiat(subgiat.kode)}
-                                          className={`cursor-pointer font-bold transition-all border-l-4 ${
-                                            hasMinus 
-                                              ? 'bg-gradient-to-r from-red-950/90 via-red-900/60 to-slate-950 border-red-500 text-red-200 hover:from-red-900 shadow-[0_0_15px_rgba(239,68,68,0.4)]' 
-                                              : 'bg-slate-950/60 hover:bg-indigo-950/30 border-indigo-500 text-indigo-300'
-                                          }`}
-                                        >
-                                          <td className={`p-3 border-r border-slate-900 tracking-wide font-black ${hasMinus ? 'text-red-300' : ''}`}>{subgiat.kode}</td>
-                                          <td className="p-3 border-r border-slate-900 flex items-center justify-between gap-2 text-justify whitespace-normal leading-relaxed">
-                                            <div className="flex items-center gap-2">
-                                              {isExpanded ? (
-                                                <ChevronDown size={14} className={hasMinus ? "text-red-400 flex-shrink-0" : "text-indigo-400 flex-shrink-0"} />
-                                              ) : (
-                                                <ChevronRight size={14} className={hasMinus ? "text-red-400 flex-shrink-0" : "text-indigo-400 flex-shrink-0"} />
-                                              )}
-                                              <span className={hasMinus ? "text-red-100 font-black" : "text-slate-100"}>{subgiat.nama.toUpperCase()}</span>
-                                            </div>
-                                            {hasMinus && (
-                                              <span className="bg-red-600 text-white text-[9px] font-black px-2 py-0.5 rounded border border-red-300 animate-bounce flex items-center gap-1 shadow-[0_0_8px_rgba(239,68,68,0.8)]">
-                                                <AlertTriangle size={11} /> MINUS DETECTED
-                                              </span>
-                                            )}
+                            <table className="w-full text-left font-mono text-[11px] border-collapse">
+                              <thead>
+                                <tr className="bg-slate-900/80 border-b-2 border-slate-800 text-slate-300 text-[10px] tracking-widest font-black uppercase">
+                                  <th className="p-4 border-r border-slate-900 w-48 text-center">Kode Identifikasi</th>
+                                  <th className="p-4 border-r border-slate-900 text-center">Nomenklatur Kerja (Subkegiatan &rarr; Rekening)</th>
+                                  <th className="p-4 text-center border-r border-slate-900">Pagu Anggaran</th>
+                                  <th className="p-4 text-center border-r border-slate-900">Realisasi</th>
+                                  <th className="p-4 text-center border-r border-slate-900">Sisa Pagu</th>
+                                  <th className="p-4 text-center">Capaian</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-900/60">
+                                {processedData.page2.map((subgiat, idx) => {
+                                  const isExpanded = !!expandedSubgiat[subgiat.kode];
+                                  return (
+                                    <React.Fragment key={idx}>
+                                      <tr 
+                                        onClick={() => toggleSubgiat(subgiat.kode)}
+                                        className="bg-slate-950/60 hover:bg-indigo-950/30 border-l-4 border-indigo-500 cursor-pointer text-indigo-300 font-bold transition-all"
+                                      >
+                                        <td className="p-3 border-r border-slate-900 tracking-wide font-black">{subgiat.kode}</td>
+                                        <td className="p-3 border-r border-slate-900 flex items-center gap-2 text-justify text-slate-100 whitespace-normal leading-relaxed">
+                                          {isExpanded ? <ChevronDown size={14} className="text-indigo-400 flex-shrink-0" /> : <ChevronRight size={14} className="text-indigo-400 flex-shrink-0" />}
+                                          <span>{subgiat.nama.toUpperCase()}</span>
+                                        </td>
+                                        <td className="p-3 text-right border-r border-slate-900 text-slate-400">{formatRupiah(subgiat.anggaran)}</td>
+                                        <td className="p-3 text-right border-r border-slate-900 text-emerald-400 font-black">{formatRupiah(subgiat.realisasi)}</td>
+                                        <td className="p-3 text-right border-r border-slate-900 text-amber-500">{formatRupiah(subgiat.anggaran - subgiat.realisasi)}</td>
+                                        <td className="p-3 text-center font-black text-indigo-400 bg-indigo-950/10">{hitungPersen(subgiat.anggaran, subgiat.realisasi)}</td>
+                                      </tr>
+                                      {isExpanded && subgiat.children.map((child, cIdx) => (
+                                        <tr key={cIdx} className="bg-slate-900/20 hover:bg-slate-900/50 text-slate-300 text-[10px]">
+                                          <td className="p-2.5 pl-6 border-r border-slate-900 text-slate-500 font-medium">{child.kode}</td>
+                                          <td className="p-2.5 pl-10 border-r border-slate-900 text-justify text-slate-400 whitespace-normal leading-relaxed">
+                                            &bull; {child.nama}
                                           </td>
-                                          <td className="p-3 text-right border-r border-slate-900 text-slate-300">{formatRupiah(subgiat.anggaran)}</td>
-                                          <td className="p-3 text-right border-r border-slate-900 text-emerald-400 font-black">{formatRupiah(subgiat.realisasi)}</td>
-                                          <td className={`p-3 text-right border-r border-slate-900 font-black ${hasMinus ? 'text-red-400 bg-red-950/50' : 'text-amber-500'}`}>
-                                            {formatRupiah(subgiat.anggaran - subgiat.realisasi)}
-                                          </td>
-                                          <td className={`p-3 text-center font-black ${hasMinus ? 'text-red-300 bg-red-950/40' : 'text-indigo-400 bg-indigo-950/10'}`}>
-                                            {hitungPersen(subgiat.anggaran, subgiat.realisasi)}
-                                          </td>
+                                          <td className="p-2.5 text-right border-r border-slate-900 text-slate-400">{formatRupiah(child.anggaran)}</td>
+                                          <td className="p-2.5 text-right border-r border-slate-900 text-emerald-400/80">{formatRupiah(child.realisasi)}</td>
+                                          <td className="p-2.5 text-right border-r border-slate-900 text-slate-500">{formatRupiah(child.anggaran - child.realisasi)}</td>
+                                          <td className="p-2.5 text-center text-cyan-400 font-bold">{hitungPersen(child.anggaran, child.realisasi)}</td>
                                         </tr>
-
-                                        {/* SUBROW REKENING DIPERBESAR & TERANG */}
-                                        {(isExpanded || searchSubgiat.trim().length > 0) && subgiat.children.map((child, cIdx) => {
-                                          const isMinusChild = (child.anggaran - child.realisasi) < 0;
-                                          return (
-                                            <tr key={cIdx} className={`hover:bg-slate-800/80 text-[12px] font-semibold transition-colors ${
-                                              isMinusChild ? 'bg-red-950/40 text-red-100 font-bold' : 'bg-slate-900/90 text-slate-100'
-                                            }`}>
-                                              <td className="p-2.5 pl-6 border-r border-slate-900 text-cyan-400 font-mono font-bold">{child.kode}</td>
-                                              <td className="p-2.5 pl-10 border-r border-slate-900 text-justify text-slate-100 font-bold whitespace-normal leading-relaxed">
-                                                &bull; {child.nama}
-                                              </td>
-                                              <td className="p-2.5 text-right border-r border-slate-900 text-slate-200 font-bold">{formatRupiah(child.anggaran)}</td>
-                                              <td className="p-2.5 text-right border-r border-slate-900 text-emerald-300 font-black">{formatRupiah(child.realisasi)}</td>
-                                              <td className={`p-2.5 text-right border-r border-slate-900 font-black ${isMinusChild ? 'text-red-400 bg-red-900/50' : 'text-amber-400'}`}>
-                                                {formatRupiah(child.anggaran - child.realisasi)}
-                                              </td>
-                                              <td className="p-2.5 text-center text-cyan-300 font-black">{hitungPersen(child.anggaran, child.realisasi)}</td>
-                                            </tr>
-                                          );
-                                        })}
-                                      </React.Fragment>
-                                    );
-                                  })}
-                                </tbody>
-                              </table>
-                            </div>
+                                      ))}
+                                    </React.Fragment>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
                           )}
 
                           {activePage === 3 && (
@@ -1883,14 +1734,14 @@ export default function ModulRealisasiBelanja() {
                                         <td className="p-3 text-center font-black text-amber-400 bg-amber-950/10">{hitungPersen(perdin.anggaran, perdin.realisasi)}</td>
                                       </tr>
                                       {isExpanded && perdin.children && perdin.children.map((child, cIdx) => (
-                                        <tr key={cIdx} className="bg-slate-900/40 text-[12px] text-slate-100 font-semibold">
-                                          <td className="p-2.5 pl-6 border-r border-slate-900 text-cyan-400 font-mono font-bold">{child.kode}</td>
-                                          <td className="p-2.5 pl-10 border-r border-slate-900 text-justify text-amber-200 font-bold whitespace-normal leading-relaxed">
+                                        <tr key={cIdx} className="bg-slate-900/40 text-[10px] text-slate-300">
+                                          <td className="p-2.5 pl-6 border-r border-slate-900 text-slate-500">{child.kode}</td>
+                                          <td className="p-2.5 pl-10 border-r border-slate-900 text-justify text-amber-300/80 whitespace-normal leading-relaxed">
                                             &bull; {child.nama}
                                           </td>
-                                          <td className="p-2.5 text-right border-r border-slate-900 text-slate-200">{formatRupiah(child.anggaran)}</td>
-                                          <td className="p-2.5 text-right border-r border-slate-900 text-emerald-300 font-bold">{formatRupiah(child.realisasi)}</td>
-                                          <td className="p-2.5 text-right border-r border-slate-900 text-slate-300">{formatRupiah(child.anggaran - child.realisasi)}</td>
+                                          <td className="p-2.5 text-right border-r border-slate-900 text-slate-400">{formatRupiah(child.anggaran)}</td>
+                                          <td className="p-2.5 text-right border-r border-slate-900 text-emerald-400/80">{formatRupiah(child.realisasi)}</td>
+                                          <td className="p-2.5 text-right border-r border-slate-900 text-slate-600">{formatRupiah(child.anggaran - child.realisasi)}</td>
                                           <td className="p-2.5 text-center font-bold text-emerald-400">{hitungPersen(child.anggaran, child.realisasi)}</td>
                                         </tr>
                                       ))}
@@ -1933,14 +1784,14 @@ export default function ModulRealisasiBelanja() {
                                         <td className="p-3 text-center font-black text-fuchsia-400 bg-fuchsia-950/10">{hitungPersen(barang.anggaran, barang.realisasi)}</td>
                                       </tr>
                                       {isExpanded && barang.children && barang.children.map((child, cIdx) => (
-                                        <tr key={cIdx} className="bg-slate-900/40 text-[12px] text-slate-100 font-semibold">
-                                          <td className="p-2.5 pl-6 border-r border-slate-900 text-cyan-400 font-mono font-bold">{child.kode}</td>
-                                          <td className="p-2.5 pl-10 border-r border-slate-900 text-justify text-fuchsia-200 font-bold whitespace-normal leading-relaxed">
+                                        <tr key={cIdx} className="bg-slate-900/40 text-[10px] text-slate-300">
+                                          <td className="p-2.5 pl-6 border-r border-slate-900 text-slate-500">{child.kode}</td>
+                                          <td className="p-2.5 pl-10 border-r border-slate-900 text-justify text-fuchsia-300/80 whitespace-normal leading-relaxed">
                                             &bull; {child.nama}
                                           </td>
-                                          <td className="p-2.5 text-right border-r border-slate-900 text-slate-200">{formatRupiah(child.anggaran)}</td>
-                                          <td className="p-2.5 text-right border-r border-slate-900 text-emerald-300 font-bold">{formatRupiah(child.realisasi)}</td>
-                                          <td className="p-2.5 text-right border-r border-slate-900 text-slate-300">{formatRupiah(child.anggaran - child.realisasi)}</td>
+                                          <td className="p-2.5 text-right border-r border-slate-900 text-slate-400">{formatRupiah(child.anggaran)}</td>
+                                          <td className="p-2.5 text-right border-r border-slate-900 text-emerald-400/80">{formatRupiah(child.realisasi)}</td>
+                                          <td className="p-2.5 text-right border-r border-slate-900 text-slate-600">{formatRupiah(child.anggaran - child.realisasi)}</td>
                                           <td className="p-2.5 text-center font-bold text-emerald-400">{hitungPersen(child.anggaran, child.realisasi)}</td>
                                         </tr>
                                       ))}

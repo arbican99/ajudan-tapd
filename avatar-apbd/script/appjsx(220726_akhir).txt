@@ -4,7 +4,7 @@ import {
   FileSpreadsheet, LogOut, Radio, Activity, CheckCircle, Users, 
   Layers, ChevronDown, Folder, ShieldCheck, ToggleLeft,
   Menu, HelpCircle, Sliders, Database, BookOpen,
-  ClipboardCheck, TrendingUp, DollarSign, ListTree, CheckCircle2
+  ClipboardCheck, TrendingUp, DollarSign, ListTree
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 
@@ -18,7 +18,6 @@ import ModulTahapanApbd from './components/ModulTahapanApbd';
 import ModulTematik from './components/ModulTematik'; 
 import ModulRka from './components/ModulRka';
 import ModulRealisasiBelanja from './components/ModulRealisasiBelanja';
-import ModulAsistensi from './components/ModulAsistensi';
 
 export default function App() {
   const [email, setEmail] = useState('');
@@ -73,7 +72,6 @@ export default function App() {
       case 'verifikasi-rka': return 'Sistem Validasi RKA';
       case 'verifikasi-realisasi': return 'Audit Komparatif Realisasi';
       case 'asistensi-usulan': return 'Asistensi Usulan APBD';
-      case 'hasil-asistensi': return 'Hasil Asistensi APBD';
       case 'realisasi-pendapatan': return 'Data Realisasi Pendapatan';
       case 'realisasi-belanja': return 'Data Realisasi Belanja';
       default: return 'Console Workspace';
@@ -366,18 +364,6 @@ export default function App() {
                       <ArrowRight size={13} className={activeTab === 'asistensi-usulan' ? 'text-cyan-400' : 'text-slate-600'} />
                       <span className="truncate">Asistensi Usulan APBD</span>
                     </button>
-
-                    <button 
-                      onClick={() => setActiveTab('hasil-asistensi')}
-                      className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-md text-left text-[11px] font-bold tracking-wide transition-all border active:scale-98 cursor-pointer ${
-                        activeTab === 'hasil-asistensi' 
-                          ? 'bg-cyan-950/40 border-cyan-500/50 text-cyan-300 shadow-[inset_0_0_8px_rgba(6,182,212,0.2)]' 
-                          : 'border-transparent text-white/90 hover:bg-slate-900/60 hover:text-slate-300'
-                      }`}
-                    >
-                      <CheckCircle2 size={13} className={activeTab === 'hasil-asistensi' ? 'text-cyan-400' : 'text-slate-600'} />
-                      <span className="truncate">Hasil Asistensi APBD</span>
-                    </button>
                   </div>
                 )}
               </div>
@@ -534,15 +520,6 @@ export default function App() {
                 </div>
               )}
 
-              {activeTab === 'hasil-asistensi' && (
-                <div className="bg-slate-950/60 border-2 border-cyan-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(6,182,212,0.04)] animate-fadeIn">
-                  <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
-                    <ShieldCheck size={12} /> PROCESS INTEGRATION // HASIL ASISTENSI APBD
-                  </div>
-                  <ModulAsistensi />
-                </div>
-              )}
-
               {activeTab === 'realisasi-pendapatan' && (
                 <div className="bg-slate-950/60 border-2 border-cyan-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(6,182,212,0.04)] animate-fadeIn">
                   <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
@@ -564,7 +541,6 @@ export default function App() {
             </div>
           </main>
         </div>
-
       </div>
     );
   }

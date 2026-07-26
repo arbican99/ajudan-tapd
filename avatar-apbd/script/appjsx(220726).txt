@@ -2,23 +2,21 @@ import React, { useState } from 'react';
 import { 
   ArrowRight, Lock, Mail, Eye, EyeOff, 
   FileSpreadsheet, LogOut, Radio, Activity, CheckCircle, Users, 
-  Layers, ChevronDown, Folder, ShieldCheck, ToggleLeft,
-  Menu, HelpCircle, Sliders, Database, BookOpen,
-  ClipboardCheck, TrendingUp, DollarSign, ListTree, CheckCircle2
+  Layers, ChevronDown, ChevronRight, Folder, ShieldCheck, ToggleLeft,
+  Menu, ChevronLeft, HelpCircle, LayoutGrid, Sliders, Database, BookOpen,
+  ClipboardCheck, TrendingUp, DollarSign
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 
 // --- IMPOR MODUL DARI FOLDER COMPONENTS ---
 import ModulMasterSkpd from './components/ModulMasterSkpd';
-import ModulMasterRekening from './components/ModulMasterRekening';
 import ModulVerifikasiRka from './components/ModulVerifikasiRka';
 import ModulVerifikasiRealisasi from './components/ModulVerifikasiRealisasi';
 import ModulCekRealisasi from './components/ModulCekRealisasi';
 import ModulTahapanApbd from './components/ModulTahapanApbd'; 
 import ModulTematik from './components/ModulTematik'; 
-import ModulRka from './components/ModulRka';
+import ModulRka from './components/ModulRka'; // Terimpor dengan benar
 import ModulRealisasiBelanja from './components/ModulRealisasiBelanja';
-import ModulAsistensi from './components/ModulAsistensi';
 
 export default function App() {
   const [email, setEmail] = useState('');
@@ -33,7 +31,7 @@ export default function App() {
   // State tab aktif
   const [activeTab, setActiveTab] = useState('master-skpd');
   
-  // ACCORDION STATE
+  // ⚡ ACCORDION STATE
   const [openAccordion, setOpenAccordion] = useState('master');
 
   // State kontrol kempis/lebar sidebar
@@ -41,7 +39,7 @@ export default function App() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setLoading(true); // 🌟 PERBAIKAN: Menggunakan fungsi setter setLoading
     
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     
@@ -51,7 +49,7 @@ export default function App() {
       setUserEmail(data.user.email);
       setIsLoggedIn(true);
     }
-    setLoading(false);
+    setLoading(false); // 🌟 PERBAIKAN: Menggunakan fungsi setter setLoading
   };
 
   const handleLogout = async () => {
@@ -65,15 +63,14 @@ export default function App() {
   const dapatkanLabelTab = () => {
     switch (activeTab) {
       case 'master-skpd': return 'Master Perangkat Daerah (SKPD)';
-      case 'master-rekening': return 'Master Kode Rekening / Akun';
       case 'tahapan-apbd': return 'Konfigurasi Tahapan APBD';
       case 'master-rka': return 'Master Arsip Dokumen RKA SKPD';
       case 'data-realisasi': return 'Repository Data Realisasi';
       case 'tematik': return 'Master Kelompok Laporan Tematik APBD';
       case 'verifikasi-rka': return 'Sistem Validasi RKA';
       case 'verifikasi-realisasi': return 'Audit Komparatif Realisasi';
+      // Label untuk menu baru
       case 'asistensi-usulan': return 'Asistensi Usulan APBD';
-      case 'hasil-asistensi': return 'Hasil Asistensi APBD';
       case 'realisasi-pendapatan': return 'Data Realisasi Pendapatan';
       case 'realisasi-belanja': return 'Data Realisasi Belanja';
       default: return 'Console Workspace';
@@ -173,7 +170,7 @@ export default function App() {
                 </span>
               )}
               
-              {/* ACCORDION GROUP 1: DATA MASTER */}
+              {/* ⚡ ACCORDION GROUP 1: DATA CONTEXT MANAGEMENT */}
               <div className="flex flex-col gap-1 bg-slate-900/30 p-1 rounded-xl border border-slate-900">
                 <button 
                   onClick={() => {
@@ -201,9 +198,11 @@ export default function App() {
                   )}
                 </button>
 
+                {/* ACCORDION CONTENT: SLOT MASTER SUBMENU */}
                 {openAccordion === 'master' && !sidebarCollapsed && (
                   <div className="mt-1.5 p-1.5 bg-slate-950/80 border border-slate-800/60 rounded-lg flex flex-col gap-1 animate-fadeIn">
                     
+                    {/* SUBMENU 1: MASTER SKPD */}
                     <button 
                       onClick={() => setActiveTab('master-skpd')}
                       className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-md text-left text-[11px] font-bold tracking-wide transition-all border active:scale-98 cursor-pointer ${
@@ -216,18 +215,7 @@ export default function App() {
                       <span className="truncate">Master SKPD</span>
                     </button>
 
-                    <button 
-                      onClick={() => setActiveTab('master-rekening')}
-                      className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-md text-left text-[11px] font-bold tracking-wide transition-all border active:scale-98 cursor-pointer ${
-                        activeTab === 'master-rekening' 
-                          ? 'bg-cyan-950/40 border-cyan-500/50 text-cyan-300 shadow-[inset_0_0_8px_rgba(6,182,212,0.2)]' 
-                          : 'border-transparent text-white/90 hover:bg-slate-900/60 hover:text-slate-300'
-                      }`}
-                    >
-                      <ListTree size={13} className={activeTab === 'master-rekening' ? 'text-cyan-400 animate-pulse' : 'text-slate-400'} />
-                      <span className="truncate">Master Rekening</span>
-                    </button>
-
+                    {/* SUBMENU 2: TAHAPAN APBD */}
                     <button 
                       onClick={() => setActiveTab('tahapan-apbd')}
                       className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-md text-left text-[11px] font-bold tracking-wide transition-all border active:scale-98 cursor-pointer ${
@@ -240,6 +228,7 @@ export default function App() {
                       <span className="truncate">Tahapan APBD</span>
                     </button>
 
+                    {/* 🌟 SUBMENU BARU: MASTER RKA */}
                     <button 
                       onClick={() => setActiveTab('master-rka')}
                       className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-md text-left text-[11px] font-bold tracking-wide transition-all border active:scale-98 cursor-pointer ${
@@ -252,6 +241,7 @@ export default function App() {
                       <span className="truncate">Master RKA</span>
                     </button>
 
+                    {/* SUBMENU 3: DATA REALISASI */}
                     <button 
                       onClick={() => setActiveTab('data-realisasi')}
                       className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-md text-left text-[11px] font-bold tracking-wide transition-all border active:scale-98 cursor-pointer ${
@@ -264,6 +254,7 @@ export default function App() {
                       <span className="truncate">Data Realisasi</span>
                     </button>
 
+                    {/* 🌟 SUBMENU: TEMATIK */}
                     <button 
                       onClick={() => setActiveTab('tematik')}
                       className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-md text-left text-[11px] font-bold tracking-wide transition-all border active:scale-98 cursor-pointer ${
@@ -280,7 +271,7 @@ export default function App() {
                 )}
               </div>
 
-              {/* ACCORDION GROUP 2: PROSES VERIFIKASI */}
+              {/* ⚡ ACCORDION GROUP 2: VALIDATION & AUDIT CONSOLE */}
               <div className="flex flex-col gap-1 bg-slate-900/30 p-1 rounded-xl border border-slate-900">
                 <button 
                   onClick={() => {
@@ -308,8 +299,11 @@ export default function App() {
                   )}
                 </button>
 
+                {/* ACCORDION CONTENT: SLOT VERIFIKASI SUBMENU */}
                 {openAccordion === 'verifikasi' && !sidebarCollapsed && (
                   <div className="mt-1.5 p-1.5 bg-slate-950/80 border border-slate-800/60 rounded-lg flex flex-col gap-1 animate-fadeIn">
+                    
+                    {/* SUBMENU 1: VERIFIKASI RKA */}
                     <button 
                       onClick={() => setActiveTab('verifikasi-rka')}
                       className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-md text-left text-[11px] font-bold tracking-wide transition-all border active:scale-98 cursor-pointer ${
@@ -325,7 +319,7 @@ export default function App() {
                 )}
               </div>
 
-              {/* ACCORDION GROUP 3: PROSES ASISTENSI */}
+              {/* 🌟 ⚡ ACCORDION GROUP 3: PROSES ASISTENSI (MENU BARU) */}
               <div className="flex flex-col gap-1 bg-slate-900/30 p-1 rounded-xl border border-slate-900">
                 <button 
                   onClick={() => {
@@ -366,23 +360,11 @@ export default function App() {
                       <ArrowRight size={13} className={activeTab === 'asistensi-usulan' ? 'text-cyan-400' : 'text-slate-600'} />
                       <span className="truncate">Asistensi Usulan APBD</span>
                     </button>
-
-                    <button 
-                      onClick={() => setActiveTab('hasil-asistensi')}
-                      className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-md text-left text-[11px] font-bold tracking-wide transition-all border active:scale-98 cursor-pointer ${
-                        activeTab === 'hasil-asistensi' 
-                          ? 'bg-cyan-950/40 border-cyan-500/50 text-cyan-300 shadow-[inset_0_0_8px_rgba(6,182,212,0.2)]' 
-                          : 'border-transparent text-white/90 hover:bg-slate-900/60 hover:text-slate-300'
-                      }`}
-                    >
-                      <CheckCircle2 size={13} className={activeTab === 'hasil-asistensi' ? 'text-cyan-400' : 'text-slate-600'} />
-                      <span className="truncate">Hasil Asistensi APBD</span>
-                    </button>
                   </div>
                 )}
               </div>
 
-              {/* ACCORDION GROUP 4: DATA REALISASI */}
+              {/* 🌟 ⚡ ACCORDION GROUP 4: DATA REALISASI (MENU BARU) */}
               <div className="flex flex-col gap-1 bg-slate-900/30 p-1 rounded-xl border border-slate-900">
                 <button 
                   onClick={() => {
@@ -462,15 +444,6 @@ export default function App() {
                 </div>
               )}
 
-              {activeTab === 'master-rekening' && (
-                <div className="bg-slate-950/60 border-2 border-cyan-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(6,182,212,0.04)] animate-fadeIn">
-                  <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
-                    <ShieldCheck size={12} /> CORE INTEGRATION // MODUL MASTER REKENING
-                  </div>
-                  <ModulMasterRekening />
-                </div>
-              )}
-
               {activeTab === 'tahapan-apbd' && (
                 <div className="bg-slate-950/60 border-2 border-fuchsia-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(217,70,239,0.04)] animate-fadeIn">
                   <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-fuchsia-400/80 font-bold uppercase tracking-wider">
@@ -480,6 +453,7 @@ export default function App() {
                 </div>
               )}
 
+              {/* ROUTE VIEW BARU: MERENDER MODUL MASTER RKA */}
               {activeTab === 'master-rka' && (
                 <div className="bg-slate-950/60 border-2 border-cyan-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(6,182,212,0.04)] animate-fadeIn">
                   <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
@@ -498,6 +472,7 @@ export default function App() {
                 </div>
               )}
 
+              {/* RENDERING ROUTE UNTUK TAB TEMATIK */}
               {activeTab === 'tematik' && (
                 <div className="bg-slate-950/60 border-2 border-cyan-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(6,182,212,0.04)] animate-fadeIn">
                   <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
@@ -525,21 +500,13 @@ export default function App() {
                 </div>
               )}
 
+              {/* 🌟 ROUTE VIEW BARU: MERENDER SUBMENU MENU 03 & MENU 04 */}
               {activeTab === 'asistensi-usulan' && (
                 <div className="bg-slate-950/60 border-2 border-cyan-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(6,182,212,0.04)] animate-fadeIn">
                   <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
                     <ShieldCheck size={12} /> PROCESS INTEGRATION // ASISTENSI USULAN APBD
                   </div>
                   <div className="text-slate-400 font-mono text-sm">Modul Asistensi Usulan APBD siap dikembangkan di sini.</div>
-                </div>
-              )}
-
-              {activeTab === 'hasil-asistensi' && (
-                <div className="bg-slate-950/60 border-2 border-cyan-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(6,182,212,0.04)] animate-fadeIn">
-                  <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
-                    <ShieldCheck size={12} /> PROCESS INTEGRATION // HASIL ASISTENSI APBD
-                  </div>
-                  <ModulAsistensi />
                 </div>
               )}
 
@@ -552,6 +519,7 @@ export default function App() {
                 </div>
               )}
 
+              {/* 🌟 PERBAIKAN: Kode yang sempat terpotong kini tersusun utuh merender ModulRealisasiBelanja */}
               {activeTab === 'realisasi-belanja' && (
                 <div className="bg-slate-950/60 border-2 border-cyan-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(6,182,212,0.04)] animate-fadeIn">
                   <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
@@ -564,13 +532,12 @@ export default function App() {
             </div>
           </main>
         </div>
-
       </div>
     );
   }
 
   // =========================================================
-  // 2. TAMPILAN LOCK SCREEN / MODUL LOGIN
+  // 2. TAMPILAN LOCK SCREEN / MODUL LOGIN (Dipertahankan Utuh)
   // =========================================================
   return (
     <div className="min-h-screen bg-[#020617] text-slate-100 flex flex-col justify-center items-center p-4 font-sans relative overflow-hidden select-none">
