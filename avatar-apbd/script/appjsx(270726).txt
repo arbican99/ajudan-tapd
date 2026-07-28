@@ -4,8 +4,7 @@ import {
   FileSpreadsheet, LogOut, Radio, Activity, CheckCircle, Users, 
   Layers, ChevronDown, Folder, ShieldCheck, ToggleLeft,
   Menu, HelpCircle, Sliders, Database, BookOpen,
-  ClipboardCheck, TrendingUp, DollarSign, ListTree, CheckCircle2,
-  Edit3, MessageSquare, LayoutDashboard
+  ClipboardCheck, TrendingUp, DollarSign, ListTree, CheckCircle2
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 
@@ -73,9 +72,8 @@ export default function App() {
       case 'tematik': return 'Master Kelompok Laporan Tematik APBD';
       case 'verifikasi-rka': return 'Sistem Validasi RKA';
       case 'verifikasi-realisasi': return 'Audit Komparatif Realisasi';
-      case 'input-hasil-asistensi': return 'Input Hasil Asistensi';
-      case 'pembahasan-hasil-asistensi': return 'Pembahasan Hasil Asistensi';
-      case 'dashboard-asistensi': return 'Dashboard Asistensi';
+      case 'asistensi-usulan': return 'Asistensi Usulan APBD';
+      case 'hasil-asistensi': return 'Hasil Asistensi APBD';
       case 'realisasi-pendapatan': return 'Data Realisasi Pendapatan';
       case 'realisasi-belanja': return 'Data Realisasi Belanja';
       default: return 'Console Workspace';
@@ -358,39 +356,27 @@ export default function App() {
                 {openAccordion === 'asistensi' && !sidebarCollapsed && (
                   <div className="mt-1.5 p-1.5 bg-slate-950/80 border border-slate-800/60 rounded-lg flex flex-col gap-1 animate-fadeIn">
                     <button 
-                      onClick={() => setActiveTab('input-hasil-asistensi')}
+                      onClick={() => setActiveTab('asistensi-usulan')}
                       className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-md text-left text-[11px] font-bold tracking-wide transition-all border active:scale-98 cursor-pointer ${
-                        activeTab === 'input-hasil-asistensi' 
+                        activeTab === 'asistensi-usulan' 
                           ? 'bg-cyan-950/40 border-cyan-500/50 text-cyan-300 shadow-[inset_0_0_8px_rgba(6,182,212,0.2)]' 
                           : 'border-transparent text-white/90 hover:bg-slate-900/60 hover:text-slate-300'
                       }`}
                     >
-                      <Edit3 size={13} className={activeTab === 'input-hasil-asistensi' ? 'text-cyan-400' : 'text-slate-600'} />
-                      <span className="truncate">Input Hasil Asistensi</span>
+                      <ArrowRight size={13} className={activeTab === 'asistensi-usulan' ? 'text-cyan-400' : 'text-slate-600'} />
+                      <span className="truncate">Asistensi Usulan APBD</span>
                     </button>
 
                     <button 
-                      onClick={() => setActiveTab('pembahasan-hasil-asistensi')}
+                      onClick={() => setActiveTab('hasil-asistensi')}
                       className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-md text-left text-[11px] font-bold tracking-wide transition-all border active:scale-98 cursor-pointer ${
-                        activeTab === 'pembahasan-hasil-asistensi' 
+                        activeTab === 'hasil-asistensi' 
                           ? 'bg-cyan-950/40 border-cyan-500/50 text-cyan-300 shadow-[inset_0_0_8px_rgba(6,182,212,0.2)]' 
                           : 'border-transparent text-white/90 hover:bg-slate-900/60 hover:text-slate-300'
                       }`}
                     >
-                      <MessageSquare size={13} className={activeTab === 'pembahasan-hasil-asistensi' ? 'text-cyan-400' : 'text-slate-600'} />
-                      <span className="truncate">Pembahasan Hasil Asistensi</span>
-                    </button>
-
-                    <button 
-                      onClick={() => setActiveTab('dashboard-asistensi')}
-                      className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-md text-left text-[11px] font-bold tracking-wide transition-all border active:scale-98 cursor-pointer ${
-                        activeTab === 'dashboard-asistensi' 
-                          ? 'bg-cyan-950/40 border-cyan-500/50 text-cyan-300 shadow-[inset_0_0_8px_rgba(6,182,212,0.2)]' 
-                          : 'border-transparent text-white/90 hover:bg-slate-900/60 hover:text-slate-300'
-                      }`}
-                    >
-                      <LayoutDashboard size={13} className={activeTab === 'dashboard-asistensi' ? 'text-cyan-400' : 'text-slate-600'} />
-                      <span className="truncate">Dashboard Asistensi</span>
+                      <CheckCircle2 size={13} className={activeTab === 'hasil-asistensi' ? 'text-cyan-400' : 'text-slate-600'} />
+                      <span className="truncate">Hasil Asistensi APBD</span>
                     </button>
                   </div>
                 )}
@@ -539,29 +525,19 @@ export default function App() {
                 </div>
               )}
 
-              {/* MAPPING PROSES ASISTENSI KE MODUL ASISTENSI */}
-              {activeTab === 'input-hasil-asistensi' && (
+              {activeTab === 'asistensi-usulan' && (
                 <div className="bg-slate-950/60 border-2 border-cyan-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(6,182,212,0.04)] animate-fadeIn">
                   <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
-                    <ShieldCheck size={12} /> PROCESS INTEGRATION // INPUT HASIL ASISTENSI
+                    <ShieldCheck size={12} /> PROCESS INTEGRATION // ASISTENSI USULAN APBD
                   </div>
-                  <ModulAsistensi />
+                  <div className="text-slate-400 font-mono text-sm">Modul Asistensi Usulan APBD siap dikembangkan di sini.</div>
                 </div>
               )}
 
-              {activeTab === 'pembahasan-hasil-asistensi' && (
+              {activeTab === 'hasil-asistensi' && (
                 <div className="bg-slate-950/60 border-2 border-cyan-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(6,182,212,0.04)] animate-fadeIn">
                   <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
-                    <ShieldCheck size={12} /> PROCESS INTEGRATION // PEMBAHASAN HASIL ASISTENSI
-                  </div>
-                  <ModulAsistensi />
-                </div>
-              )}
-
-              {activeTab === 'dashboard-asistensi' && (
-                <div className="bg-slate-950/60 border-2 border-cyan-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(6,182,212,0.04)] animate-fadeIn">
-                  <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
-                    <ShieldCheck size={12} /> PROCESS INTEGRATION // DASHBOARD ASISTENSI
+                    <ShieldCheck size={12} /> PROCESS INTEGRATION // HASIL ASISTENSI APBD
                   </div>
                   <ModulAsistensi />
                 </div>
