@@ -1,0 +1,1417 @@
+import React, { useState, useMemo, useEffect } from 'react';
+import { supabase } from '../supabaseClient';
+import { 
+  Save, Trash2, Search, FileText, 
+  ShoppingBag, CreditCard, AlertCircle, RefreshCw,
+  Cpu, Database, Sparkles, Download, PlusCircle
+} from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
+const DINKES_KODE = '1.02.0.00.0.00.01.0000';
+
+export default function ModulAsistensi() {
+  // === STATE DATA SUPABASE ===
+  const [listStatus, setListStatus] = useState([]);
+  const [listSkpd, setListSkpd] = useState([]);
+  const [listRekening, setListRekening] = useState([]);
+  const [listRka, setListRka] = useState([]);
+  const [dbAsistensi, setDbAsistensi] = useState([]);
+  const [loadingDb, setLoadingDb] = useState(true);
+
+  // STATE SUBUNIT DINAS KESEHATAN
+  const [listSubunitDinkes, setListSubunitDinkes] = useState([]);
+  const [loadingSubunit, setLoadingSubunit] = useState(false);
+
+  // === FILTER STATES ===
+  const [tahun, setTahun] = useState('2026');
+  const [kdStatus, setKdStatus] = useState('');
+  const [kdSkpd, setKdSkpd] = useState('');
+  const [selectedSubunit, setSelectedSubunit] = useState(null);
+
+  // === TAB STATE ===
+  const [activeTab, setActiveTab] = useState('pendapatan');
+
+  useEffect(() => {
+    fetchSupabaseData();
+  }, []);
+
+  // Fetch Data RKA Tanpa Batas Record (Pagination Loop)
+  const fetchAllRkaData = async () => {
+    let allData = [];
+    let page = 0;
+    const pageSize = 1000;
+    let fetchMore = true;
+
+    while (fetchMore) {
+      const from = page * pageSize;
+      const to = from + pageSize - 1;
+
+      const { data, error } = await supabase
+        .from('rka')
+        .select('*')
+        .range(from, to);
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        allData = [...allData, ...data];
+        page++;
+        if (data.length < pageSize) fetchMore = false;
+      } else {
+        fetchMore = false;
+      }
+    }
+    return allData;
+  };
+
+  // Fetch Data Asistensi Tanpa Batas Record
+  const fetchAllAsistensiData = async () => {
+    let allData = [];
+    let page = 0;
+    const pageSize = 1000;
+    let fetchMore = true;
+
+    while (fetchMore) {
+      const from = page * pageSize;
+      const to = from + pageSize - 1;
+
+      const { data, error } = await supabase
+        .from('asistensi')
+        .select('*')
+        .order('id', { ascending: false })
+        .range(from, to);
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        allData = [...allData, ...data];
+        page++;
+        if (data.length < pageSize) fetchMore = false;
+      } else {
+        fetchMore = false;
+      }
+    }
+    return allData;
+  };
+
+  const fetchSupabaseData = async () => {
+    setLoadingDb(true);
+    try {
+      const { data: statusData, error: errStatus } = await supabase.from('tblstatus').select('*');
+      if (errStatus) throw errStatus;
+
+      const { data: skpdData, error: errSkpd } = await supabase.from('tblskpd').select('*');
+      if (errSkpd) throw errSkpd;
+
+      const { data: rekData, error: errRek } = await supabase.from('mrek').select('*');
+      if (errRek) throw errRek;
+
+      const rkaData = await fetchAllRkaData();
+      const asistensiData = await fetchAllAsistensiData();
+
+      setListStatus(statusData || []);
+      setListSkpd(skpdData || []);
+      setListRekening(rekData || []);
+      setListRka(rkaData || []);
+      setDbAsistensi(asistensiData || []);
+    } catch (error) {
+      console.error('Error loading Supabase:', error.message);
+      alert('Gagal memuat data dari Supabase: ' + error.message);
+    } finally {
+      setLoadingDb(false);
+    }
+  };
+
+  const fetchAsistensiData = async () => {
+    try {
+      const asistensiData = await fetchAllAsistensiData();
+      setDbAsistensi(asistensiData || []);
+    } catch (err) {
+      console.error('Error fetching asistensi:', err);
+    }
+  };
+
+  // Subunit Dinkes Listener
+  useEffect(() => {
+    setSelectedSubunit(null);
+    if (kdSkpd === DINKES_KODE) {
+      const fetchSubunits = async () => {
+        setLoadingSubunit(true);
+        try {
+          const { data, error } = await supabase
+            .from('tblskpd')
+            .select('kd_subunit, nm_subunit')
+            .eq('kd_skpd', DINKES_KODE);
+
+          if (error) throw error;
+          setListSubunitDinkes(data || []);
+        } catch (err) {
+          console.error('Error fetching subunit:', err.message);
+        } finally {
+          setLoadingSubunit(false);
+        }
+      };
+      fetchSubunits();
+    } else {
+      setListSubunitDinkes([]);
+    }
+  }, [kdSkpd]);
+
+  const listSkpdUtama = useMemo(() => {
+    const map = new Map();
+    listSkpd.forEach(s => {
+      const kd = String(s.kd_skpd || s.kdskpd || s.id || '').trim();
+      if (!map.has(kd)) map.set(kd, s);
+    });
+    return Array.from(map.values());
+  }, [listSkpd]);
+
+  const isFilterComplete = useMemo(() => {
+    if (!tahun || !kdStatus || !kdSkpd) return false;
+    if (kdSkpd === DINKES_KODE && !selectedSubunit) return false;
+    return true;
+  }, [tahun, kdStatus, kdSkpd, selectedSubunit]);
+
+  const selectedSkpdObj = useMemo(() => {
+    return listSkpdUtama.find(s => String(s.kd_skpd || s.kdskpd) === String(kdSkpd));
+  }, [listSkpdUtama, kdSkpd]);
+
+  const selectedStatusObj = useMemo(() => {
+    return listStatus.find(s => String(s.kd_status || s.kdstatus || s.id) === String(kdStatus));
+  }, [listStatus, kdStatus]);
+
+  const isSubRincianObjek = (r) => {
+    const nmlevel = String(r.nmlevel || r.nm_level || '').trim().toUpperCase();
+    const level = String(r.level || '').trim();
+    return nmlevel === 'SUB RINCIAN OBJEK' || level === '8';
+  };
+
+  const rekPendapatanOptions = useMemo(() => {
+    return listRekening.filter(r => String(r.kd_rek || r.kdrek || '').startsWith('4') && isSubRincianObjek(r));
+  }, [listRekening]);
+
+  const rekBelanjaOptions = useMemo(() => {
+    return listRekening.filter(r => String(r.kd_rek || r.kdrek || '').startsWith('5') && isSubRincianObjek(r));
+  }, [listRekening]);
+
+  const rekPembiayaanOptions = useMemo(() => {
+    return listRekening.filter(r => String(r.kd_rek || r.kdrek || '').startsWith('6') && isSubRincianObjek(r));
+  }, [listRekening]);
+
+  // Filter RKA Sub Kegiatan
+  const rkaSubgiatOptions = useMemo(() => {
+    if (!listRka || listRka.length === 0) return [];
+    const uniqueMap = new Map();
+    const normalize = (val) => String(val || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+    const cleanRaw = (val) => String(val || '').trim();
+
+    const targetStatusName = selectedStatusObj 
+      ? cleanRaw(selectedStatusObj.nmstatus || selectedStatusObj.nm_status || selectedStatusObj.status)
+      : cleanRaw(kdStatus);
+
+    listRka.forEach((r) => {
+      const fitTahun = !tahun || cleanRaw(r.tahun) === cleanRaw(tahun);
+      const rkaStatusVal = cleanRaw(r.kdstatus || r.status);
+      const fitStatus = !kdStatus || rkaStatusVal === cleanRaw(kdStatus) || rkaStatusVal === targetStatusName;
+      const fitSkpd = !kdSkpd || normalize(r.kdskpd) === normalize(kdSkpd);
+
+      let fitSubunit = true;
+      if (normalize(kdSkpd) === normalize(DINKES_KODE) && selectedSubunit) {
+        const targetSub = normalize(selectedSubunit.kd_subunit || selectedSubunit.kdsubunit);
+        fitSubunit = normalize(r.kdsubunit) === targetSub;
+      }
+
+      if (fitTahun && fitStatus && fitSkpd && fitSubunit && r.kdsubgiat) {
+        const key = cleanRaw(r.kdsubgiat);
+        if (!uniqueMap.has(key)) uniqueMap.set(key, r);
+      }
+    });
+
+    return Array.from(uniqueMap.values());
+  }, [listRka, tahun, kdStatus, kdSkpd, selectedSubunit, selectedStatusObj]);
+
+  const filteredDbAsistensi = useMemo(() => {
+    if (!kdSkpd) return [];
+    const normalize = (val) => String(val || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+
+    return dbAsistensi.filter((item) => {
+      const fitSkpd = normalize(item.kdskpd) === normalize(kdSkpd);
+      const fitTahun = !tahun || String(item.tahun) === String(tahun);
+      const fitStatus = !kdStatus || String(item.kdstatus) === String(kdStatus);
+
+      if (!fitSkpd || !fitTahun || !fitStatus) return false;
+
+      if (normalize(kdSkpd) === normalize(DINKES_KODE) && selectedSubunit) {
+        const subKode = normalize(selectedSubunit.kd_subunit || selectedSubunit.kdsubunit);
+        return normalize(item.kdsubunit) === subKode;
+      }
+
+      return true;
+    });
+  }, [dbAsistensi, kdSkpd, tahun, kdStatus, selectedSubunit]);
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 lg:p-8 font-sans space-y-6">
+      {/* HEADER BAR BIRU GELAP */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900 border border-slate-800 px-6 py-4 rounded-xl shadow-lg">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-blue-500/10 text-blue-400 rounded-lg border border-blue-500/20">
+            <Cpu size={24} />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-bold text-white tracking-wide uppercase">
+                Modul Pembahasan Hasil Asistensi APBD
+              </h1>
+            </div>
+            <p className="text-xs text-slate-400 font-medium flex items-center gap-1 mt-0.5">
+              <Database size={12} className="text-blue-400" /> Sistem Pembahasan & Penetapan Hasil Asistensi
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={fetchSupabaseData}
+          disabled={loadingDb}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
+        >
+          <RefreshCw size={14} className={loadingDb ? 'animate-spin' : ''} />
+          {loadingDb ? 'Memuat Data...' : 'Reload DB'}
+        </button>
+      </div>
+
+      {/* FILTER PANEL BIRU GELAP */}
+      <div className="bg-slate-900 p-5 rounded-xl border border-slate-800 shadow-lg space-y-4">
+        <div className="flex items-center gap-2 pb-2 border-b border-slate-800 text-xs font-bold text-blue-400 uppercase tracking-wider">
+          <Sparkles size={14} /> Filter Utama Data
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-slate-300">1. Tahun Anggaran</label>
+            <select
+              value={tahun}
+              onChange={(e) => setTahun(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-700 focus:border-blue-500 rounded-lg px-3 py-2 text-xs font-medium text-white focus:outline-none"
+            >
+              <option value="2025">2025</option>
+              <option value="2026">2026</option>
+              <option value="2027">2027</option>
+            </select>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-slate-300">2. Tahapan APBD</label>
+            <select
+              value={kdStatus}
+              onChange={(e) => setKdStatus(e.target.value)}
+              disabled={loadingDb}
+              className="w-full bg-slate-950 border border-slate-700 focus:border-blue-500 rounded-lg px-3 py-2 text-xs font-medium text-white focus:outline-none disabled:opacity-50"
+            >
+              <option value="">-- PILIH TAHAPAN APBD --</option>
+              {listStatus.map((s, idx) => {
+                const valKode = String(s.kdstatus || s.kd_status || s.id || '').trim();
+                const valNama = s.nmstatus || s.nm_status || s.status || valKode;
+                return (
+                  <option key={idx} value={valKode}>[{valKode}] {valNama}</option>
+                );
+              })}
+            </select>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-slate-300">3. Perangkat Daerah (SKPD)</label>
+            <select
+              value={kdSkpd}
+              onChange={(e) => setKdSkpd(e.target.value)}
+              disabled={loadingDb}
+              className="w-full bg-slate-950 border border-slate-700 focus:border-blue-500 rounded-lg px-3 py-2 text-xs font-medium text-white focus:outline-none disabled:opacity-50"
+            >
+              <option value="">-- PILIH SKPD / PERANGKAT DAERAH --</option>
+              {listSkpdUtama.map((skpd, idx) => {
+                const kdS = skpd.kdskpd || skpd.kd_skpd || skpd.id;
+                const nmS = skpd.nmskpd || skpd.nm_skpd || skpd.nama_skpd;
+                return (
+                  <option key={idx} value={kdS}>[{kdS}] {nmS}</option>
+                );
+              })}
+            </select>
+          </div>
+        </div>
+
+        {kdSkpd === DINKES_KODE && (
+          <div className="mt-2 space-y-1 pt-3 border-t border-slate-800">
+            <label className="text-xs font-bold text-blue-400 uppercase flex items-center gap-1.5">
+              4. Subunit Dinas Kesehatan (Wajib Dipilih)
+            </label>
+            <select
+              value={selectedSubunit ? (selectedSubunit.kd_subunit || selectedSubunit.kdsubunit) : ''}
+              onChange={(e) => {
+                const val = e.target.value;
+                const found = listSubunitDinkes.find(sub => String(sub.kd_subunit || sub.kdsubunit) === String(val));
+                setSelectedSubunit(found || null);
+              }}
+              disabled={loadingSubunit}
+              className="w-full bg-slate-950 border border-blue-500/50 focus:border-blue-400 rounded-lg px-3 py-2 text-xs font-medium text-white focus:outline-none"
+            >
+              <option value="">-- PILIH SUBUNIT DINAS KESEHATAN --</option>
+              {listSubunitDinkes.map((sub, idx) => {
+                const kodeSub = sub.kd_subunit || sub.kdsubunit;
+                const namaSub = sub.nm_subunit || sub.nmsubunit;
+                return (
+                  <option key={idx} value={kodeSub}>
+                    [{kodeSub}] {namaSub}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+        )}
+      </div>
+
+      {/* FRAME CONTENT BIRU GELAP */}
+      {!isFilterComplete ? (
+        <div className="p-10 text-center bg-slate-900 rounded-xl border border-slate-800 space-y-2 shadow-lg">
+          <AlertCircle size={36} className="mx-auto text-amber-400" />
+          <h3 className="text-sm font-bold text-slate-200 uppercase">Filter Belum Lengkap</h3>
+          <p className="text-xs text-slate-400 max-w-md mx-auto">
+            Silakan pilih Tahun Anggaran, Tahapan APBD, dan SKPD untuk mengaktifkan lembar input asistensi.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex flex-wrap gap-2 border-b border-slate-800 pb-2">
+            {[
+              { id: 'pendapatan', label: 'PENDAPATAN DAERAH', icon: ShoppingBag },
+              { id: 'belanja', label: 'BELANJA DAERAH', icon: ShoppingBag },
+              { id: 'pembiayaan', label: 'PEMBIAYAAN DAERAH', icon: CreditCard },
+              { id: 'laporan', label: 'LAPORAN ASISTENSI', icon: FileText },
+            ].map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    isActive
+                      ? 'bg-blue-600 text-white shadow-lg'
+                      : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800'
+                  }`}
+                >
+                  <Icon size={14} />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 shadow-lg">
+            {activeTab === 'pendapatan' && (
+              <AsistensiFormTableFrame
+                title="Input Asistensi Pendapatan"
+                rekOptions={rekPendapatanOptions}
+                listRka={listRka}
+                dbAsistensi={filteredDbAsistensi.filter(d => String(d.kdrek || '').startsWith('4'))}
+                fetchAsistensiData={fetchAsistensiData}
+                filterParams={{ tahun, kdStatus, kdSkpd, selectedSkpdObj, selectedStatusObj, selectedSubunit }}
+                hasSubgiat={false}
+              />
+            )}
+
+            {activeTab === 'belanja' && (
+              <AsistensiFormTableFrame
+                title="Input Asistensi Belanja"
+                rekOptions={rekBelanjaOptions}
+                rkaSubgiatOptions={rkaSubgiatOptions}
+                listRka={listRka}
+                dbAsistensi={filteredDbAsistensi.filter(d => String(d.kdrek || '').startsWith('5'))}
+                fetchAsistensiData={fetchAsistensiData}
+                filterParams={{ tahun, kdStatus, kdSkpd, selectedSkpdObj, selectedStatusObj, selectedSubunit }}
+                hasSubgiat={true}
+              />
+            )}
+
+            {activeTab === 'pembiayaan' && (
+              <AsistensiFormTableFrame
+                title="Input Asistensi Pembiayaan"
+                rekOptions={rekPembiayaanOptions}
+                listRka={listRka}
+                dbAsistensi={filteredDbAsistensi.filter(d => String(d.kdrek || '').startsWith('6'))}
+                fetchAsistensiData={fetchAsistensiData}
+                filterParams={{ tahun, kdStatus, kdSkpd, selectedSkpdObj, selectedStatusObj, selectedSubunit }}
+                hasSubgiat={false}
+              />
+            )}
+
+            {activeTab === 'laporan' && (
+              <LaporanFrame 
+                dbAsistensi={dbAsistensi} 
+                selectedKdSkpd={kdSkpd}
+                selectedSkpdObj={selectedSkpdObj}
+                selectedStatusObj={selectedStatusObj}
+                selectedSubunit={selectedSubunit}
+                listSubunitDinkes={listSubunitDinkes}
+                tahun={tahun}
+                kdStatus={kdStatus}
+              />
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// === COMBOBOX REKENING PEMBAHASAN SEARCHABLE (BIRU GELAP) ===
+function SelectRekeningBhsSearchable({ rekOptions, value, onChange }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchRek, setSearchRek] = useState('');
+
+  const selectedRek = useMemo(() => {
+    return rekOptions.find(r => String(r.kdrek || r.kd_rek) === String(value));
+  }, [rekOptions, value]);
+
+  const filteredOptions = useMemo(() => {
+    if (!searchRek.trim()) return rekOptions;
+    const term = searchRek.toLowerCase();
+    return rekOptions.filter(r => {
+      const kd = String(r.kdrek || r.kd_rek || '').toLowerCase();
+      const nm = String(r.nmrek || r.nm_rek || r.nama_rekening || r.uraian || '').toLowerCase();
+      return kd.includes(term) || nm.includes(term);
+    });
+  }, [rekOptions, searchRek]);
+
+  return (
+    <div className="relative w-full">
+      <div
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full bg-slate-950 border border-slate-700 focus-within:border-blue-400 rounded-lg px-3 py-1.5 text-xs font-mono text-white flex items-center justify-between cursor-pointer hover:border-slate-600 min-h-[34px]"
+      >
+        <div className="truncate pr-2">
+          {selectedRek ? (
+            <span>
+              <strong className="text-blue-400">[{selectedRek.kdrek || selectedRek.kd_rek}]</strong>{' '}
+              {selectedRek.nmrek || selectedRek.nm_rek || selectedRek.nama_rekening || selectedRek.uraian}
+            </span>
+          ) : (
+            <span className="text-slate-400 font-sans">-- Cari & Pilih Rekening Pembahasan --</span>
+          )}
+        </div>
+        <Search size={13} className="text-slate-400 shrink-0" />
+      </div>
+
+      {isOpen && (
+        <div className="absolute z-50 left-0 top-full mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2 space-y-2 max-h-60 overflow-hidden flex flex-col">
+          <input
+            type="text"
+            placeholder="Cari kode/nama rekening..."
+            value={searchRek}
+            onChange={(e) => setSearchRek(e.target.value)}
+            className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 font-mono"
+            autoFocus
+          />
+
+          <div className="overflow-y-auto max-h-44 space-y-1 pr-1">
+            {filteredOptions.length === 0 ? (
+              <div className="p-2 text-center text-xs text-slate-400 font-sans">
+                Rekening tidak ditemukan.
+              </div>
+            ) : (
+              filteredOptions.map((r, idx) => {
+                const kdR = r.kdrek || r.kd_rek;
+                const nmR = r.nmrek || r.nm_rek || r.nama_rekening || r.uraian || '';
+                const isSelected = String(value) === String(kdR);
+
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => {
+                      onChange(kdR, nmR);
+                      setIsOpen(false);
+                      setSearchRek('');
+                    }}
+                    className={`p-1.5 rounded-md cursor-pointer text-xs font-mono flex items-center gap-2 ${
+                      isSelected ? 'bg-blue-600/30 text-blue-300 font-bold border border-blue-500/40' : 'hover:bg-slate-800 text-slate-200'
+                    }`}
+                  >
+                    <span className="text-blue-400 text-[11px] shrink-0">[{kdR}]</span>
+                    <span className="text-slate-200 text-[11px] font-sans truncate">{nmR}</span>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// === FORM & TABEL ASISTENSI (FORM BIRU GELAP & TABEL WARNA TERANG) ===
+function AsistensiFormTableFrame({ 
+  title, 
+  rekOptions, 
+  rkaSubgiatOptions = [], 
+  listRka,
+  dbAsistensi, 
+  fetchAsistensiData, 
+  filterParams, 
+  hasSubgiat 
+}) {
+  const [localAsistensi, setLocalAsistensi] = useState([]);
+  const [saving, setSaving] = useState(false);
+
+  // STATE CHECKBOX DAN SUBKEGIATAN
+  const [isAddNewSubgiat, setIsAddNewSubgiat] = useState(false);
+  const [selectedSubgiat, setSelectedSubgiat] = useState('');
+  const [selectedSubgiatNama, setSelectedSubgiatNama] = useState('');
+
+  // State Form Pembahasan (Biru Gelap)
+  const [formBhs, setFormBhs] = useState({
+    kdrekbhs: '',
+    nmrekbhs: '',
+    usulanbhs: 'Penambahan',
+    jumlahbhs: '',
+    ketbhs: '',
+    stbhs: 'Disetujui'
+  });
+
+  useEffect(() => {
+    setLocalAsistensi(dbAsistensi);
+  }, [dbAsistensi]);
+
+  const formatRupiah = (val) => {
+    if (!val && val !== 0) return '';
+    const cleanNum = String(val).replace(/\D/g, '');
+    return cleanNum ? Number(cleanNum).toLocaleString('id-ID') : '';
+  };
+
+  // Subkegiatan unik yang sudah ada di tabel Asistensi
+  const existingSubgiatInAsistensi = useMemo(() => {
+    if (!hasSubgiat) return [];
+    const map = new Map();
+    localAsistensi.forEach(item => {
+      if (item.kdsubgiat && item.kdsubgiat !== '-') {
+        if (!map.has(item.kdsubgiat)) {
+          map.set(item.kdsubgiat, item.nmsubgiat || item.kdsubgiat);
+        }
+      }
+    });
+    return Array.from(map.entries()).map(([kd, nm]) => ({ kdsubgiat: kd, nmsubgiat: nm }));
+  }, [localAsistensi, hasSubgiat]);
+
+  // Handler Sinkronisasi Dua Combo Subkegiatan (Asistensi <-> RKA)
+  const handleSelectSubgiat = (val) => {
+    setSelectedSubgiat(val);
+    if (!val) {
+      setSelectedSubgiatNama('');
+      return;
+    }
+    const foundAsis = existingSubgiatInAsistensi.find(s => String(s.kdsubgiat) === String(val));
+    if (foundAsis) {
+      setSelectedSubgiatNama(foundAsis.nmsubgiat);
+      return;
+    }
+    const foundRka = rkaSubgiatOptions.find(s => String(s.kdsubgiat || s.kd_subgiat) === String(val));
+    if (foundRka) {
+      setSelectedSubgiatNama(foundRka.nmsubgiat || foundRka.nm_subgiat || '');
+    }
+  };
+
+  // Toggle Checkbox Subkegiatan Baru RKA
+  const handleCheckboxToggle = (checked) => {
+    setIsAddNewSubgiat(checked);
+    setSelectedSubgiat('');
+    setSelectedSubgiatNama('');
+  };
+
+  // Cari nilai Anggaran RKA untuk baris tertentu
+  const getAnggaranRka = (kdsubgiat, kdrek) => {
+    const normalize = (val) => String(val || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+    const found = listRka.find(r => 
+      normalize(r.kdskpd) === normalize(filterParams.kdSkpd) &&
+      String(r.tahun) === String(filterParams.tahun) &&
+      (!hasSubgiat || normalize(r.kdsubgiat) === normalize(kdsubgiat)) &&
+      normalize(r.kdrek) === normalize(kdrek)
+    );
+    return found ? Number(found.anggaran || found.nilai || found.jumlah || 0) : 0;
+  };
+
+  const resetFormBhs = () => {
+    setFormBhs({
+      kdrekbhs: '',
+      nmrekbhs: '',
+      usulanbhs: 'Penambahan',
+      jumlahbhs: '',
+      ketbhs: '',
+      stbhs: 'Disetujui'
+    });
+  };
+
+  // Tambah Item Baru Ke Tabel Lokal
+  const handleSaveToTable = () => {
+    if (!formBhs.kdrekbhs) {
+      alert('Pilih Rekening Pembahasan terlebih dahulu!');
+      return;
+    }
+    if (hasSubgiat && !selectedSubgiat) {
+      alert('Pilih Sub Kegiatan terlebih dahulu!');
+      return;
+    }
+
+    const { tahun, kdStatus, kdSkpd, selectedSkpdObj, selectedStatusObj, selectedSubunit } = filterParams;
+    const kdSubunitVal = selectedSubunit ? (selectedSubunit.kd_subunit || selectedSubunit.kdsubunit) : '-';
+    const nmSubunitVal = selectedSubunit ? (selectedSubunit.nm_subunit || selectedSubunit.nmsubunit) : '-';
+
+    const newRecord = {
+      id: `temp_${Date.now()}`,
+      tahapan: '1',
+      tahun: String(tahun),
+      status: selectedStatusObj?.nm_status || selectedStatusObj?.status || selectedStatusObj?.nmstatus || '',
+      kdstatus: String(kdStatus),
+      kdskpd: String(kdSkpd),
+      nmskpd: selectedSkpdObj?.nm_skpd || selectedSkpdObj?.nmskpd || '',
+      kdsubunit: kdSubunitVal,
+      nmsubunit: nmSubunitVal,
+      kdsubgiat: hasSubgiat ? selectedSubgiat : '-',
+      nmsubgiat: hasSubgiat ? selectedSubgiatNama : '-',
+      kdrek: formBhs.kdrekbhs,
+      nmrek: formBhs.nmrekbhs,
+      usulan: formBhs.usulanbhs,
+      keterangan: formBhs.ketbhs || '-',
+      jumlah: Number(formBhs.jumlahbhs) || 0,
+      setuju: formBhs.stbhs || 'Disetujui',
+      kdrekbhs: formBhs.kdrekbhs,
+      nmrekbhs: formBhs.nmrekbhs,
+      usulanbhs: formBhs.usulanbhs,
+      jumlahbhs: Number(formBhs.jumlahbhs) || 0,
+      ketbhs: formBhs.ketbhs || '-',
+      stbhs: formBhs.stbhs || 'Disetujui'
+    };
+
+    setLocalAsistensi(prev => [newRecord, ...prev]);
+    resetFormBhs();
+  };
+
+  // Update Status Pembahasan secara Massal (Bulk Update stbhs)
+  const handleBulkUpdateStbhs = (statusVal) => {
+    if (localAsistensi.length === 0) {
+      alert('Tidak ada data di tabel asistensi untuk diupdate!');
+      return;
+    }
+    setLocalAsistensi(prev => prev.map(item => ({
+      ...item,
+      stbhs: statusVal
+    })));
+  };
+
+  // Simpan Seluruh Data Tabel Asistensi Ke Supabase
+  const handleSyncToSupabase = async () => {
+    if (localAsistensi.length === 0) {
+      alert('Tabel asistensi masih kosong! Tambahkan data terlebih dahulu.');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      for (const item of localAsistensi) {
+        const payload = {
+          tahapan: item.tahapan,
+          tahun: item.tahun,
+          status: item.status,
+          kdstatus: item.kdstatus,
+          kdskpd: item.kdskpd,
+          nmskpd: item.nmskpd,
+          kdsubunit: item.kdsubunit,
+          nmsubunit: item.nmsubunit,
+          kdsubgiat: item.kdsubgiat,
+          nmsubgiat: item.nmsubgiat,
+          kdrek: item.kdrek,
+          nmrek: item.nmrek,
+          usulan: item.usulan,
+          keterangan: item.keterangan,
+          jumlah: item.jumlah,
+          setuju: item.setuju,
+          kdrekbhs: item.kdrekbhs || item.kdrek,
+          nmrekbhs: item.nmrekbhs || item.nmrek,
+          usulanbhs: item.usulanbhs || item.usulan,
+          jumlahbhs: item.jumlahbhs !== undefined ? item.jumlahbhs : item.jumlah,
+          ketbhs: item.ketbhs || item.keterangan,
+          stbhs: item.stbhs || item.setuju || 'Disetujui'
+        };
+
+        if (typeof item.id === 'number') {
+          const { error } = await supabase.from('asistensi').update(payload).eq('id', item.id);
+          if (error) throw error;
+        } else {
+          const { error: insertErr } = await supabase.from('asistensi').insert([payload]);
+          if (insertErr) throw insertErr;
+        }
+      }
+
+      alert('Berhasil mengupdate seluruh data tabel asistensi ke Supabase!');
+      await fetchAsistensiData();
+    } catch (err) {
+      console.error('Gagal simpan ke Supabase:', err);
+      alert('Error sinkronisasi database: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Hapus Data
+  const handleDeleteItem = async (item) => {
+    if (!confirm('Apakah Anda yakin ingin menghapus data asistensi ini?')) return;
+
+    if (typeof item.id === 'number') {
+      try {
+        const payloadHapus = {
+          kdrekbhs: item.kdrek,
+          nmrekbhs: item.nmrek,
+          usulanbhs: item.usulan,
+          ketbhs: item.keterangan,
+          jumlahbhs: item.jumlah,
+          stbhs: ''
+        };
+
+        const { error } = await supabase.from('asistensi').update(payloadHapus).eq('id', item.id);
+        if (error) throw error;
+
+        await fetchAsistensiData();
+      } catch (err) {
+        alert('Gagal memproses hapus data di Supabase: ' + err.message);
+      }
+    } else {
+      setLocalAsistensi(prev => prev.filter(i => i.id !== item.id));
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h2 className="text-sm font-bold text-white uppercase tracking-wide flex items-center gap-2">
+          {title}
+        </h2>
+
+        {/* BULK UPDATE STBHS */}
+        <div className="flex items-center gap-2 bg-slate-950 p-1.5 rounded-lg border border-slate-800">
+          <span className="text-[11px] font-bold text-slate-300 px-1">Update Massal Status:</span>
+          <button
+            type="button"
+            onClick={() => handleBulkUpdateStbhs('Disetujui')}
+            className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] transition-colors cursor-pointer"
+          >
+            Setujui Semua
+          </button>
+          <button
+            type="button"
+            onClick={() => handleBulkUpdateStbhs('Tidak Disetujui')}
+            className="px-2.5 py-1 rounded bg-rose-600 hover:bg-rose-500 text-white font-bold text-[11px] transition-colors cursor-pointer"
+          >
+            Tolak Semua
+          </button>
+        </div>
+      </div>
+
+      {/* SINKRONISASI SUBKEGIATAN KHUSUS FRAME BELANJA */}
+      {hasSubgiat && (
+        <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
+          <div className="text-xs font-bold text-blue-400 uppercase flex items-center gap-1.5">
+            <PlusCircle size={15} /> Pilih / Tambah Subkegiatan
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className={`text-[11px] font-bold transition-colors ${!isAddNewSubgiat ? 'text-slate-300' : 'text-slate-500'}`}>
+                Subkegiatan Yang Ada di Asistensi
+              </label>
+              <select
+                value={selectedSubgiat}
+                onChange={(e) => handleSelectSubgiat(e.target.value)}
+                disabled={isAddNewSubgiat}
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-medium text-white focus:outline-none focus:border-blue-500 disabled:opacity-40 disabled:bg-slate-950 cursor-pointer disabled:cursor-not-allowed"
+              >
+                <option value="">-- Pilih Subkegiatan Asistensi --</option>
+                {existingSubgiatInAsistensi.map((s, idx) => (
+                  <option key={idx} value={s.kdsubgiat}>[{s.kdsubgiat}] {s.nmsubgiat}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="chkNewSubgiat"
+                  checked={isAddNewSubgiat}
+                  onChange={(e) => handleCheckboxToggle(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 bg-slate-900 border-slate-700 rounded focus:ring-blue-500 cursor-pointer"
+                />
+                <label 
+                  htmlFor="chkNewSubgiat" 
+                  className={`text-[11px] font-bold cursor-pointer transition-colors ${isAddNewSubgiat ? 'text-blue-400' : 'text-slate-300 hover:text-white'}`}
+                >
+                  Tambah Subkegiatan Baru dari RKA
+                </label>
+              </div>
+              <select
+                value={selectedSubgiat}
+                onChange={(e) => handleSelectSubgiat(e.target.value)}
+                disabled={!isAddNewSubgiat}
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-medium text-white focus:outline-none focus:border-blue-500 disabled:opacity-40 disabled:bg-slate-950 cursor-pointer disabled:cursor-not-allowed"
+              >
+                <option value="">-- Pilih & Tambah Subkegiatan (Tabel RKA) --</option>
+                {rkaSubgiatOptions.map((s, idx) => {
+                  const kd = s.kdsubgiat || s.kd_subgiat;
+                  const nm = s.nmsubgiat || s.nm_subgiat;
+                  return (
+                    <option key={idx} value={kd}>[{kd}] {nm}</option>
+                  );
+                })}
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FORM INPUTAN TEMA BIRU GELAP */}
+      {(!hasSubgiat || selectedSubgiat) && (
+        <div className="bg-slate-950 p-5 rounded-xl border border-slate-800 shadow-lg space-y-4 text-white">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+            <span className="text-xs font-extrabold text-blue-400 uppercase tracking-wide flex items-center gap-1.5">
+              <PlusCircle size={15} /> Form Input Pembahasan Asistensi {hasSubgiat ? `[Subgiat: ${selectedSubgiat}]` : ''}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="md:col-span-2 space-y-1">
+              <label className="text-[11px] font-bold text-slate-300 uppercase">Rekening Pembahasan</label>
+              <SelectRekeningBhsSearchable
+                rekOptions={rekOptions}
+                value={formBhs.kdrekbhs}
+                onChange={(kd, nm) => setFormBhs(prev => ({ ...prev, kdrekbhs: kd, nmrekbhs: nm }))}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-slate-300 uppercase">Usulan Pembahasan</label>
+              <select
+                value={formBhs.usulanbhs}
+                onChange={(e) => setFormBhs({ ...formBhs, usulanbhs: e.target.value })}
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-medium text-white focus:outline-none focus:border-blue-500"
+              >
+                <option value="Penambahan">Penambahan</option>
+                <option value="Pengurangan">Pengurangan</option>
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-slate-300 uppercase">Jumlah Pembahasan (Rp)</label>
+              <input
+                type="text"
+                value={formatRupiah(formBhs.jumlahbhs)}
+                onChange={(e) => setFormBhs({ ...formBhs, jumlahbhs: e.target.value.replace(/\D/g, '') })}
+                placeholder="0"
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-blue-500"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-slate-300 uppercase">Status Pembahasan (stbhs)</label>
+              <select
+                value={formBhs.stbhs}
+                onChange={(e) => setFormBhs({ ...formBhs, stbhs: e.target.value })}
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-blue-500"
+              >
+                <option value="Disetujui">Disetujui</option>
+                <option value="Tidak Disetujui">Tidak Disetujui</option>
+              </select>
+            </div>
+
+            <div className="md:col-span-2 space-y-1">
+              <label className="text-[11px] font-bold text-slate-300 uppercase">Keterangan Pembahasan</label>
+              <input
+                type="text"
+                value={formBhs.ketbhs}
+                onChange={(e) => setFormBhs({ ...formBhs, ketbhs: e.target.value })}
+                placeholder="Catatan hasil pembahasan..."
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
+              />
+            </div>
+
+            <div className="flex items-end">
+              <button
+                type="button"
+                onClick={handleSaveToTable}
+                className="w-full py-2 px-4 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-md flex items-center justify-center gap-1.5"
+              >
+                <PlusCircle size={15} /> Tambah ke Tabel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TABEL HASIL ASISTENSI */}
+      <div className="space-y-3">
+        <div className="overflow-x-auto rounded-xl border border-slate-300 shadow-md">
+          <table className="w-full text-left text-xs bg-white text-slate-800">
+            <thead className="bg-slate-100 text-slate-800 font-bold uppercase border-b border-slate-300 text-[11px]">
+              <tr>
+                <th className="p-3 border-r border-slate-200 min-w-[220px]">Kode & Nama Rekening</th>
+                <th className="p-3 text-right border-r border-slate-200 min-w-[110px]">Anggaran</th>
+                <th className="p-3 border-r border-slate-200 min-w-[100px]">Usulan</th>
+                <th className="p-3 text-right border-r border-slate-200 min-w-[110px]">Jumlah</th>
+                <th className="p-3 border-r border-slate-200 min-w-[150px]">Keterangan</th>
+                <th className="p-3 bg-blue-50 text-blue-900 border-r border-slate-200 min-w-[280px]">KdRek & NmRek Pembahasan</th>
+                <th className="p-3 bg-blue-50 text-blue-900 border-r border-slate-200 min-w-[130px]">Usulan Bhs</th>
+                <th className="p-3 text-right bg-blue-50 text-blue-900 border-r border-slate-200 min-w-[150px]">Jumlah Bhs</th>
+                <th className="p-3 bg-blue-50 text-blue-900 border-r border-slate-200 min-w-[200px]">Ket Bhs</th>
+                <th className="p-3 text-center bg-blue-50 text-blue-900 border-r border-slate-200 min-w-[140px]">Status</th>
+                <th className="p-3 text-center min-w-[80px]">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 font-sans">
+              {localAsistensi.length === 0 ? (
+                <tr>
+                  <td colSpan={11} className="p-6 text-center text-slate-400 italic text-xs">
+                    -- Belum Ada Data Asistensi --
+                  </td>
+                </tr>
+              ) : (
+                localAsistensi.map((item, idx) => {
+                  const anggaranRka = getAnggaranRka(item.kdsubgiat, item.kdrek);
+
+                  return (
+                    <tr key={item.id || idx} className="hover:bg-slate-50 transition-colors">
+                      <td className="p-3 border-r border-slate-200">
+                        <div className="font-mono font-bold text-slate-700 text-[11px]">{item.kdrek}</div>
+                        <div className="text-slate-900 font-semibold">{item.nmrek}</div>
+                      </td>
+
+                      <td className="p-3 text-right font-mono font-bold text-slate-700 border-r border-slate-200">
+                        {anggaranRka ? anggaranRka.toLocaleString('id-ID') : '0'}
+                      </td>
+
+                      <td className="p-3 border-r border-slate-200 font-semibold text-slate-700">{item.usulan}</td>
+                      <td className="p-3 text-right font-mono font-bold text-slate-800 border-r border-slate-200">
+                        {Number(item.jumlah || 0).toLocaleString('id-ID')}
+                      </td>
+                      <td className="p-3 text-slate-600 border-r border-slate-200 max-w-xs truncate">{item.keterangan || '-'}</td>
+
+                      {/* AREA DATA PEMBAHASAN */}
+                      <td className="p-3 border-r border-slate-200 bg-blue-50/30 font-medium">
+                        <div className="font-mono text-blue-700 font-bold text-[11px]">{item.kdrekbhs || item.kdrek}</div>
+                        <div>{item.nmrekbhs || item.nmrek}</div>
+                      </td>
+                      <td className="p-3 border-r border-slate-200 bg-blue-50/30 font-semibold">{item.usulanbhs || item.usulan}</td>
+                      <td className="p-3 text-right font-mono font-bold text-blue-900 border-r border-slate-200 bg-blue-50/30">
+                        {Number(item.jumlahbhs !== undefined ? item.jumlahbhs : item.jumlah).toLocaleString('id-ID')}
+                      </td>
+                      <td className="p-3 border-r border-slate-200 bg-blue-50/30 text-slate-700">{item.ketbhs || item.keterangan || '-'}</td>
+                      <td className="p-3 text-center border-r border-slate-200 bg-blue-50/30 font-bold">
+                        <span className={`px-2 py-1 rounded text-[11px] inline-block w-full ${
+                          (item.stbhs || item.setuju) === 'Disetujui' 
+                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' 
+                            : 'bg-rose-100 text-rose-800 border border-rose-300'
+                        }`}>
+                          {item.stbhs || item.setuju || 'Disetujui'}
+                        </span>
+                      </td>
+
+                      <td className="p-3 text-center">
+                        <button
+                          onClick={() => handleDeleteItem(item)}
+                          className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-800 rounded-lg transition-colors cursor-pointer"
+                          title="Hapus Data Asistensi"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* TOMBOL SIMPAN KE SUPABASE */}
+        <div className="pt-2">
+          <button
+            type="button"
+            onClick={handleSyncToSupabase}
+            disabled={saving || localAsistensi.length === 0}
+            className="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg disabled:opacity-50"
+          >
+            <Save size={16} />
+            {saving ? 'Menyimpan Ke Database Supabase...' : 'Simpan Seluruh Data Tabel Asistensi Ke Supabase'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// === PAGE FRAME LAPORAN (MEMPROSES DATA BHS + ALWAYS SHOW REK 1, 2, 3) ===
+function LaporanFrame({ dbAsistensi, selectedKdSkpd, selectedSkpdObj, selectedStatusObj, listSubunitDinkes, tahun, kdStatus }) {
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+
+  const normalize = (val) => String(val || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+
+  const formatAngkaIndo = (val) => {
+    if (!val && val !== 0) return '0,00';
+    return Number(val).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const filteredData = useMemo(() => {
+    if (!selectedKdSkpd) return [];
+    return dbAsistensi.filter(d => 
+      normalize(d.kdskpd) === normalize(selectedKdSkpd) &&
+      (!tahun || String(d.tahun) === String(tahun)) &&
+      (!kdStatus || String(d.kdstatus) === String(kdStatus))
+    );
+  }, [dbAsistensi, selectedKdSkpd, tahun, kdStatus]);
+
+  // Structuring data asistensi + penjaminan tersedianya header 1, 2, 3
+  const buildReportStructure = (dataItems) => {
+    const getItemKdRek = (item) => item.kdrekbhs || item.kdrek;
+    const getItemNmRek = (item) => item.nmrekbhs || item.nmrek;
+    const getItemUsulan = (item) => item.usulanbhs || item.usulan;
+    const getItemJumlah = (item) => item.jumlahbhs !== undefined ? Number(item.jumlahbhs) : Number(item.jumlah || 0);
+    const getItemKet = (item) => item.ketbhs || item.keterangan || '-';
+    const getItemSt = (item) => item.stbhs || item.setuju || 'Disetujui';
+
+    const pendapatan = dataItems.filter(d => String(getItemKdRek(d)).startsWith('4'));
+    const belanja = dataItems.filter(d => String(getItemKdRek(d)).startsWith('5'));
+    const pembiayaan = dataItems.filter(d => String(getItemKdRek(d)).startsWith('6'));
+
+    const subgiatMap = new Map();
+    belanja.forEach(item => {
+      const subKey = item.kdsubgiat || 'LAINNYA';
+      if (!subgiatMap.has(subKey)) {
+        subgiatMap.set(subKey, {
+          kdsubgiat: subKey,
+          nmsubgiat: item.nmsubgiat || '-',
+          items: []
+        });
+      }
+      subgiatMap.get(subKey).items.push(item);
+    });
+
+    const totalPenambahan = dataItems.reduce((acc, curr) => acc + (getItemUsulan(curr) === 'Penambahan' ? getItemJumlah(curr) : 0), 0);
+    const totalPengurangan = dataItems.reduce((acc, curr) => acc + (getItemUsulan(curr) === 'Pengurangan' ? getItemJumlah(curr) : 0), 0);
+
+    return {
+      pendapatan,
+      belanjaSubgiat: Array.from(subgiatMap.values()),
+      pembiayaan,
+      totalPenambahan,
+      totalPengurangan,
+      helpers: { getItemKdRek, getItemNmRek, getItemUsulan, getItemJumlah, getItemKet, getItemSt }
+    };
+  };
+
+  // === FUNGSI DOWNLOAD PDF DISESUAIKAN PERSIS DENGAN FORMAT TAMPILAN FORM ===
+  const handleDownloadPDF = async () => {
+    setDownloadingPdf(true);
+    try {
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageWidth = doc.internal.pageSize.getWidth();
+
+      // Judul Laporan PDF
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text('LAPORAN HASIL ASISTENSI APBD', pageWidth / 2, 12, { align: 'center' });
+      
+      doc.setFontSize(8);
+      const namaSkpd = (selectedSkpdObj?.nm_skpd || selectedSkpdObj?.nmskpd || '-').toUpperCase();
+      const namaStatus = (selectedStatusObj?.nm_status || selectedStatusObj?.status || selectedStatusObj?.nmstatus || '-').toUpperCase();
+      
+      doc.text(`SKPD: ${namaSkpd}`, 10, 18);
+      doc.text(`STATUS: ${namaStatus} - TAHUN ${tahun}`, 10, 22);
+
+      const tableRows = [];
+
+      const appendStructureToRows = (struct) => {
+        const { getItemKdRek, getItemNmRek, getItemUsulan, getItemJumlah, getItemKet, getItemSt } = struct.helpers;
+
+        // 1. PENDAPATAN DAERAH (SELALU DITAMPILKAN)
+        const totPenPend = struct.pendapatan.reduce((a, c) => a + (getItemUsulan(c) === 'Penambahan' ? getItemJumlah(c) : 0), 0);
+        const totPengPend = struct.pendapatan.reduce((a, c) => a + (getItemUsulan(c) === 'Pengurangan' ? getItemJumlah(c) : 0), 0);
+        
+        tableRows.push([
+          '1', '1', 'PENDAPATAN DAERAH', '',
+          totPenPend ? formatAngkaIndo(totPenPend) : '',
+          totPengPend ? formatAngkaIndo(totPengPend) : '',
+          ''
+        ]);
+
+        struct.pendapatan.forEach(p => {
+          tableRows.push([
+            '', getItemKdRek(p), getItemNmRek(p), getItemKet(p),
+            getItemUsulan(p) === 'Penambahan' ? formatAngkaIndo(getItemJumlah(p)) : '',
+            getItemUsulan(p) === 'Pengurangan' ? formatAngkaIndo(getItemJumlah(p)) : '',
+            getItemSt(p)
+          ]);
+        });
+
+        // 2. BELANJA DAERAH (SELALU DITAMPILKAN)
+        tableRows.push([
+          '2', '2', 'BELANJA DAERAH', '',
+          struct.totalPenambahan ? formatAngkaIndo(struct.totalPenambahan) : '0,00',
+          struct.totalPengurangan ? formatAngkaIndo(struct.totalPengurangan) : '0,00',
+          ''
+        ]);
+
+        struct.belanjaSubgiat.forEach((sg, idx) => {
+          // Baris Subkegiatan Menggunakan colSpan Agar Sama Dengan Form (TableReportView)
+          tableRows.push([
+            `2.${idx + 1}`, 
+            sg.kdsubgiat, 
+            { content: sg.nmsubgiat, colSpan: 5 }
+          ]);
+
+          sg.items.forEach(b => {
+            tableRows.push([
+              '', getItemKdRek(b), getItemNmRek(b), getItemKet(b),
+              getItemUsulan(b) === 'Penambahan' ? formatAngkaIndo(getItemJumlah(b)) : '',
+              getItemUsulan(b) === 'Pengurangan' ? formatAngkaIndo(getItemJumlah(b)) : '',
+              getItemSt(b)
+            ]);
+          });
+        });
+
+        // 3. PEMBIAYAAN DAERAH (SELALU DITAMPILKAN)
+        const totPenPemb = struct.pembiayaan.reduce((a, c) => a + (getItemUsulan(c) === 'Penambahan' ? getItemJumlah(c) : 0), 0);
+        const totPengPemb = struct.pembiayaan.reduce((a, c) => a + (getItemUsulan(c) === 'Pengurangan' ? getItemJumlah(c) : 0), 0);
+        
+        tableRows.push([
+          '3', '3', 'PEMBIAYAAN DAERAH', '',
+          totPenPemb ? formatAngkaIndo(totPenPemb) : '',
+          totPengPemb ? formatAngkaIndo(totPengPemb) : '',
+          ''
+        ]);
+
+        struct.pembiayaan.forEach(pb => {
+          tableRows.push([
+            '', getItemKdRek(pb), getItemNmRek(pb), getItemKet(pb),
+            getItemUsulan(pb) === 'Penambahan' ? formatAngkaIndo(getItemJumlah(pb)) : '',
+            getItemUsulan(pb) === 'Pengurangan' ? formatAngkaIndo(getItemJumlah(pb)) : '',
+            getItemSt(pb)
+          ]);
+        });
+      };
+
+      if (selectedKdSkpd === DINKES_KODE) {
+        const totalSkpdStruct = buildReportStructure(filteredData);
+        tableRows.push([
+          '', 
+          '', 
+          { content: 'REKAPITULASI SKPD DINAS KESEHATAN (TOTAL GABUNGAN)', colSpan: 5 }
+        ]);
+        appendStructureToRows(totalSkpdStruct);
+
+        listSubunitDinkes.forEach((sub, sIdx) => {
+          const kodeSub = sub.kd_subunit || sub.kdsubunit;
+          const namaSub = sub.nm_subunit || sub.nmsubunit;
+          const subItems = filteredData.filter(d => normalize(d.kdsubunit) === normalize(kodeSub));
+          
+          tableRows.push(['', '', '', '', '', '', '']);
+          tableRows.push([
+            `SUB ${sIdx + 1}`, 
+            kodeSub, 
+            { content: `SUBUNIT: ${namaSub.toUpperCase()}`, colSpan: 5 }
+          ]);
+          appendStructureToRows(buildReportStructure(subItems));
+        });
+      } else {
+        appendStructureToRows(buildReportStructure(filteredData));
+      }
+
+      autoTable(doc, {
+        startY: 26,
+        head: [['No', 'KODE', 'URAIAN', 'KETERANGAN', 'PENAMBAHAN', 'PENGURANGAN', 'STATUS']],
+        body: tableRows,
+        theme: 'grid',
+        styles: { fontSize: 7, cellPadding: 1.2, font: 'helvetica', textColor: [0, 0, 0] },
+        headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center', valign: 'middle' },
+        columnStyles: {
+          0: { halign: 'center', cellWidth: 10 },
+          1: { cellWidth: 32 },
+          2: { cellWidth: 'auto' },
+          3: { cellWidth: 32 },
+          4: { halign: 'right', cellWidth: 28 },
+          5: { halign: 'right', cellWidth: 28 },
+          6: { halign: 'center', cellWidth: 18 }
+        },
+        // Penyesuaian Style Otomatis: Membuat baris utama & subkegiatan bercetak tebal dan latar abu-abu persis seperti form
+        didParseCell: function (data) {
+          if (data.section === 'body') {
+            const rowNo = String(data.row.cells[0]?.raw || '').trim();
+            const rowKode = String(data.row.cells[1]?.raw || '').trim();
+            const rowUraian = String(data.row.cells[2]?.raw || '').trim();
+
+            const isHeaderRow = 
+              rowNo === '1' || 
+              rowNo === '2' || 
+              rowNo === '3' || 
+              rowNo.startsWith('2.') || 
+              rowNo.startsWith('SUB') || 
+              rowKode === '1' || 
+              rowKode === '2' || 
+              rowKode === '3' ||
+              rowUraian.includes('REKAPITULASI');
+
+            if (isHeaderRow) {
+              data.cell.styles.fontStyle = 'bold';
+              data.cell.styles.fillColor = [240, 240, 240];
+            }
+          }
+        }
+      });
+
+      doc.save(`LAPORAN_ASISTENSI_${selectedKdSkpd}.pdf`);
+    } catch (err) {
+      console.error(err);
+      alert("Terjadi kesalahan pembuatan PDF.");
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between bg-slate-950 p-3.5 rounded-xl border border-slate-800">
+        <div className="text-xs font-bold text-white uppercase flex items-center gap-2">
+          <FileText size={16} className="text-blue-400" /> Frame Laporan Hasil Pembahasan Asistensi
+        </div>
+        <button
+          onClick={handleDownloadPDF}
+          disabled={downloadingPdf}
+          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition-all cursor-pointer shadow disabled:opacity-50"
+        >
+          <Download size={13} /> {downloadingPdf ? 'Generating...' : 'Download PDF'}
+        </button>
+      </div>
+
+      <div className="bg-white text-black p-6 rounded-xl border border-slate-300 text-xs space-y-4 overflow-x-auto shadow-md">
+        <div className="text-center font-bold text-sm tracking-wide border-b border-black pb-2 uppercase">
+          LAPORAN HASIL ASISTENSI APBD
+        </div>
+        <TableReportView struct={buildReportStructure(filteredData)} />
+      </div>
+    </div>
+  );
+}
+
+// === TAMPILAN TABEL LAPORAN APBD DENGAN PASTIAN ADA PENDAPATAN, BELANJA, & PEMBIAYAAN ===
+function TableReportView({ struct }) {
+  const formatRupiah = (val) => {
+    if (!val && val !== 0) return '';
+    return Number(val).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const { getItemKdRek, getItemNmRek, getItemUsulan, getItemJumlah, getItemKet, getItemSt } = struct.helpers;
+
+  const totPenPend = struct.pendapatan.reduce((a, c) => a + (getItemUsulan(c) === 'Penambahan' ? getItemJumlah(c) : 0), 0);
+  const totPengPend = struct.pendapatan.reduce((a, c) => a + (getItemUsulan(c) === 'Pengurangan' ? getItemJumlah(c) : 0), 0);
+
+  const totPenPemb = struct.pembiayaan.reduce((a, c) => a + (getItemUsulan(c) === 'Penambahan' ? getItemJumlah(c) : 0), 0);
+  const totPengPemb = struct.pembiayaan.reduce((a, c) => a + (getItemUsulan(c) === 'Pengurangan' ? getItemJumlah(c) : 0), 0);
+
+  return (
+    <table className="w-full border-collapse border border-black text-left text-[11px]">
+      <thead>
+        <tr className="bg-slate-100 border-b border-black text-center font-bold">
+          <th className="border border-black p-1.5 w-8">No</th>
+          <th className="border border-black p-1.5 w-36">KODE</th>
+          <th className="border border-black p-1.5">URAIAN</th>
+          <th className="border border-black p-1.5">KETERANGAN</th>
+          <th className="border border-black p-1.5 w-32 text-right">PENAMBAHAN</th>
+          <th className="border border-black p-1.5 w-32 text-right">PENGURANGAN</th>
+          <th className="border border-black p-1.5 w-24 text-center">STATUS</th>
+        </tr>
+      </thead>
+      <tbody>
+        {/* 1. PENDAPATAN DAERAH (SELALU DIPAPARKAN) */}
+        <tr className="font-bold bg-slate-100/70">
+          <td className="border border-black p-1 text-center">1</td>
+          <td className="border border-black p-1 font-mono">1</td>
+          <td className="border border-black p-1">PENDAPATAN DAERAH</td>
+          <td className="border border-black p-1"></td>
+          <td className="border border-black p-1 text-right">{totPenPend ? formatRupiah(totPenPend) : ''}</td>
+          <td className="border border-black p-1 text-right">{totPengPend ? formatRupiah(totPengPend) : ''}</td>
+          <td className="border border-black p-1 text-center"></td>
+        </tr>
+        {struct.pendapatan.map((item, idx) => (
+          <tr key={`pend-${idx}`}>
+            <td className="border border-black p-1 text-center"></td>
+            <td className="border border-black p-1 font-mono">{getItemKdRek(item)}</td>
+            <td className="border border-black p-1">{getItemNmRek(item)}</td>
+            <td className="border border-black p-1">{getItemKet(item)}</td>
+            <td className="border border-black p-1 text-right">{getItemUsulan(item) === 'Penambahan' ? formatRupiah(getItemJumlah(item)) : ''}</td>
+            <td className="border border-black p-1 text-right">{getItemUsulan(item) === 'Pengurangan' ? formatRupiah(getItemJumlah(item)) : ''}</td>
+            <td className="border border-black p-1 text-center">{getItemSt(item)}</td>
+          </tr>
+        ))}
+
+        {/* 2. BELANJA DAERAH (SELALU DIPAPARKAN) */}
+        <tr className="font-bold bg-slate-100/70">
+          <td className="border border-black p-1 text-center">2</td>
+          <td className="border border-black p-1 font-mono">2</td>
+          <td className="border border-black p-1">BELANJA DAERAH</td>
+          <td className="border border-black p-1"></td>
+          <td className="border border-black p-1 text-right">{struct.totalPenambahan ? formatRupiah(struct.totalPenambahan) : '0,00'}</td>
+          <td className="border border-black p-1 text-right">{struct.totalPengurangan ? formatRupiah(struct.totalPengurangan) : '0,00'}</td>
+          <td className="border border-black p-1 text-center"></td>
+        </tr>
+        {struct.belanjaSubgiat.map((sg, sIdx) => (
+          <React.Fragment key={`sg-${sIdx}`}>
+            <tr className="font-bold bg-slate-50">
+              <td className="border border-black p-1 text-center">2.{sIdx + 1}</td>
+              <td className="border border-black p-1 font-mono">{sg.kdsubgiat}</td>
+              <td className="border border-black p-1" colSpan={5}>{sg.nmsubgiat}</td>
+            </tr>
+            {sg.items.map((b, bIdx) => (
+              <tr key={`bel-${bIdx}`}>
+                <td className="border border-black p-1 text-center"></td>
+                <td className="border border-black p-1 font-mono">{getItemKdRek(b)}</td>
+                <td className="border border-black p-1">{getItemNmRek(b)}</td>
+                <td className="border border-black p-1">{getItemKet(b)}</td>
+                <td className="border border-black p-1 text-right">{getItemUsulan(b) === 'Penambahan' ? formatRupiah(getItemJumlah(b)) : ''}</td>
+                <td className="border border-black p-1 text-right">{getItemUsulan(b) === 'Pengurangan' ? formatRupiah(getItemJumlah(b)) : ''}</td>
+                <td className="border border-black p-1 text-center">{getItemSt(b)}</td>
+              </tr>
+            ))}
+          </React.Fragment>
+        ))}
+
+        {/* 3. PEMBIAYAAN DAERAH (SELALU DIPAPARKAN) */}
+        <tr className="font-bold bg-slate-100/70">
+          <td className="border border-black p-1 text-center">3</td>
+          <td className="border border-black p-1 font-mono">3</td>
+          <td className="border border-black p-1">PEMBIAYAAN DAERAH</td>
+          <td className="border border-black p-1"></td>
+          <td className="border border-black p-1 text-right">{totPenPemb ? formatRupiah(totPenPemb) : ''}</td>
+          <td className="border border-black p-1 text-right">{totPengPemb ? formatRupiah(totPengPemb) : ''}</td>
+          <td className="border border-black p-1 text-center"></td>
+        </tr>
+        {struct.pembiayaan.map((pb, pIdx) => (
+          <tr key={`pemb-${pIdx}`}>
+            <td className="border border-black p-1 text-center"></td>
+            <td className="border border-black p-1 font-mono">{getItemKdRek(pb)}</td>
+            <td className="border border-black p-1">{getItemNmRek(pb)}</td>
+            <td className="border border-black p-1">{getItemKet(pb)}</td>
+            <td className="border border-black p-1 text-right">{getItemUsulan(pb) === 'Penambahan' ? formatRupiah(getItemJumlah(pb)) : ''}</td>
+            <td className="border border-black p-1 text-right">{getItemUsulan(pb) === 'Pengurangan' ? formatRupiah(getItemJumlah(pb)) : ''}</td>
+            <td className="border border-black p-1 text-center">{getItemSt(pb)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}

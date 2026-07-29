@@ -768,7 +768,7 @@ function InputTableFrame({ title, rekPrefix, rekOptions, rkaSubgiatOptions = [],
       }
     }
 
-    //resetForm();
+    resetForm();
   };
 
   // 2. Simpan Seluruh Data Tabel Ke Supabase
@@ -797,13 +797,7 @@ function InputTableFrame({ title, rekPrefix, rekOptions, rkaSubgiatOptions = [],
           usulan: item.usulan,
           keterangan: item.keterangan,
           setuju: item.setuju,
-          jumlah: item.jumlah,
-          kdrekbhs: item.kdrek,
-          nmrekbhs: item.nmrek,
-          usulanbhs: item.usulan,
-          ketbhs: item.keterangan,
-          jumlahbhs: item.jumlah
-         
+          jumlah: item.jumlah
         };
 
         if (typeof item.id === 'number') {

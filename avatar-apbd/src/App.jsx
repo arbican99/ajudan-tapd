@@ -20,6 +20,8 @@ import ModulTematik from './components/ModulTematik';
 import ModulRka from './components/ModulRka';
 import ModulRealisasiBelanja from './components/ModulRealisasiBelanja';
 import ModulAsistensi from './components/ModulAsistensi';
+import ModulPembahasan from './components/ModulPembahasan';
+import ModulDashboard from './components/ModulDashboard';
 
 export default function App() {
   const [email, setEmail] = useState('');
@@ -554,7 +556,7 @@ export default function App() {
                   <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
                     <ShieldCheck size={12} /> PROCESS INTEGRATION // PEMBAHASAN HASIL ASISTENSI
                   </div>
-                  <ModulAsistensi />
+                  <ModulPembahasan />
                 </div>
               )}
 
@@ -563,7 +565,7 @@ export default function App() {
                   <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
                     <ShieldCheck size={12} /> PROCESS INTEGRATION // DASHBOARD ASISTENSI
                   </div>
-                  <ModulAsistensi />
+                  <ModulDashboard />
                 </div>
               )}
 
@@ -667,3 +669,4 @@ export default function App() {
     </div>
   );
 }
+
