@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../supabaseClient';
 import { 
   Layers, Calendar, RefreshCw, 
-  TrendingDown, DollarSign, Building2, TrendingUp, BarChart3,
+  TrendingDown, DollarSign, Building2,
   FileText, PieChart, CreditCard, CheckCircle2, Terminal, Filter
 } from 'lucide-react';
 
@@ -172,12 +172,10 @@ export default function DashboardAPBD() {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
+      maximumFractionDigits: 0
     }).format(num);
   };
 
-{/*
   const formatSingkat = (val) => {
     const num = parseAngkaReal(val);
     const absVal = Math.abs(num);
@@ -187,11 +185,6 @@ export default function DashboardAPBD() {
     if (absVal >= 1e6) return `${prefix}${(absVal / 1e6).toFixed(2)} Jt`;
     return formatRupiah(num);
   };
-  */}
-
-  const formatSingkat = (val) => {
-    return formatRupiah(val);
-  };  
 
   // --- AKUMULASI DATA DASHBOARD ---
   const summaryData = useMemo(() => {
@@ -365,7 +358,7 @@ export default function DashboardAPBD() {
           <div className="flex items-center gap-2">
             <Layers className="w-7 h-7 text-cyan-400 animate-pulse" />
             <h1 className="text-lg md:text-xl font-extrabold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-cyan-300 via-amber-300 to-amber-500 uppercase">
-              REKAPITULASI APBD  (Penetapan Hasil Asistensi Usulan SKPD)
+              REKAP BELANJA DAERAH (Regional Expenditure Recap)
             </h1>
           </div>
           <p className="text-xs text-cyan-300/80 mt-1 flex items-center gap-1.5">
@@ -398,7 +391,7 @@ export default function DashboardAPBD() {
               onChange={(e) => setSelectedSkpd(e.target.value)}
               className="w-full bg-[#030712] text-cyan-100 border border-slate-700 rounded-lg px-4 py-2 text-xs md:text-sm font-bold focus:outline-none focus:border-cyan-400 cursor-pointer appearance-none truncate shadow-inner"
             >
-              <option value="REKAP">» REKAPITULASI SKPD</option>
+              <option value="REKAP">» REKAPITULASI BELANJA DAERAH</option>
               {skpdList.map((skpd) => (
                 <option key={skpd.kdskpd} value={skpd.kdskpd}>
                   » {skpd.kdskpd} - {skpd.nmskpd}
@@ -618,7 +611,7 @@ export default function DashboardAPBD() {
             <div className="border-b border-slate-800 pb-2 flex items-center justify-between">
               <h2 className="text-xs md:text-sm font-black text-red-400 uppercase tracking-wider flex items-center gap-2">
                 <TrendingDown className="w-5 h-5 text-red-500 animate-pulse" />
-                SURPLUS / (DEFISIT)
+                DEFISIT (PENDAPATAN - BELANJA)
               </h2>
               <span className="text-[10px] text-slate-400 font-bold">
                 {isApbdOnly ? 'Tampilan Data APBD' : 'Awal (Initial) vs Akhir (Revised)'}
@@ -627,7 +620,7 @@ export default function DashboardAPBD() {
 
             <div className="space-y-1">
               <div className="flex justify-between text-xs font-extrabold text-slate-200">
-                <span className="text-red-400">SURPLUS / (DEFISIT) DAERAH</span>
+                <span className="text-red-400">REKAP DEFISIT REGIONAL</span>
                 <span className="text-red-300">
                   {isApbdOnly 
                     ? `Jumlah: ${formatSingkat(summaryData.defisitAwal)}` 
@@ -650,7 +643,7 @@ export default function DashboardAPBD() {
             <div className="border-b border-slate-800 pb-2 flex items-center justify-between">
               <h2 className="text-xs md:text-sm font-black text-emerald-400 uppercase tracking-wider flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5 text-emerald-400 animate-pulse" />
-                PEMBIAYAAN DAERAH
+                PEMBIAYAAN BERSIH (PENERIMAAN - PENGELUARAN)
               </h2>
               <span className="text-[10px] text-slate-400 font-bold">
                 {isApbdOnly ? 'Tampilan Data APBD' : 'Awal (Initial) vs Akhir (Revised)'}
@@ -659,7 +652,7 @@ export default function DashboardAPBD() {
 
             <div className="space-y-1">
               <div className="flex justify-between text-xs font-extrabold text-slate-200">
-                <span className="text-emerald-400">PEMBIAYAAN DAERAH</span>
+                <span className="text-emerald-400">REKAP PEMBIAYAAN BERSIH</span>
                 <span className="text-emerald-300">
                   {isApbdOnly 
                     ? `Jumlah: ${formatSingkat(summaryData.pembiayaanBersihAwal)}` 
@@ -681,8 +674,8 @@ export default function DashboardAPBD() {
           <div className="bg-[#0a0f1d] border border-slate-800 rounded-xl p-4 shadow-md space-y-3.5">
             <div className="border-b border-slate-800 pb-2 flex items-center justify-between">
               <h2 className="text-xs md:text-sm font-black text-amber-400 uppercase tracking-wider flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-amber-400" />
-                PENDAPATAN DAERAH
+                <DollarSign className="w-5 h-5 text-amber-400" />
+                PENDAPATAN DAERAH (REGIONAL REVENUE)
               </h2>
               <span className="text-[10px] text-slate-400 font-bold">
                 {isApbdOnly ? 'Tampilan Data APBD' : 'Awal (Initial) vs Akhir (Revised)'}
@@ -694,7 +687,7 @@ export default function DashboardAPBD() {
               {/* 0. REKAP PENDAPATAN DAERAH */}
               <div className="space-y-1">
                 <div className="flex justify-between text-xs font-extrabold text-amber-300">
-                  <span>PENDAPATAN DAERAH</span>
+                  <span>0. REKAP PENDAPATAN DAERAH</span>
                   <span>{isApbdOnly ? `Jumlah: ${formatSingkat(summaryData.totalAwalPendapatan)}` : `Awal: ${formatSingkat(summaryData.totalAwalPendapatan)} / Akhir: ${formatSingkat(summaryData.totalAkhirPendapatan)}`}</span>
                 </div>
                 <div className="w-full h-6 bg-[#030712] rounded-lg overflow-hidden border border-slate-800 flex p-0.5 shadow-inner">
@@ -707,7 +700,7 @@ export default function DashboardAPBD() {
                 </div>
               </div>
 
-              {/* PENDAPATAN ASLI DAERAH (PAD) */}
+              {/* 1. PENDAPATAN ASLI DAERAH (PAD) */}
               <div className="space-y-1 pl-2">
                 <div className="flex justify-between text-[11px] text-amber-200 font-bold">
                   <span>1. PENDAPATAN ASLI DAERAH (PAD)</span>
@@ -721,7 +714,7 @@ export default function DashboardAPBD() {
                 </div>
               </div>
 
-              {/* DANA ALOKASI UMUM (DAU) */}
+              {/* 2. DANA ALOKASI UMUM (DAU) */}
               <div className="space-y-1 pl-4">
                 <div className="flex justify-between text-[11px] text-amber-200/90 font-bold">
                   <span>2. DANA ALOKASI UMUM (DAU)</span>
@@ -735,7 +728,7 @@ export default function DashboardAPBD() {
                 </div>
               </div>
 
-              {/* DANA ALOKASI KHUSUS (DAK) */}
+              {/* 3. DANA ALOKASI KHUSUS (DAK) */}
               <div className="space-y-1 pl-6">
                 <div className="flex justify-between text-[11px] text-amber-200/90 font-bold">
                   <span>3. DANA ALOKASI KHUSUS (DAK)</span>
@@ -749,7 +742,7 @@ export default function DashboardAPBD() {
                 </div>
               </div>
 
-              {/* DANA BAGI HASIL (DBH) */}
+              {/* 4. DANA BAGI HASIL (DBH) */}
               <div className="space-y-1 pl-8">
                 <div className="flex justify-between text-[11px] text-amber-200/80 font-bold">
                   <span>4. DANA BAGI HASIL (DBH)</span>
@@ -763,7 +756,7 @@ export default function DashboardAPBD() {
                 </div>
               </div>
 
-              {/* LAIN-LAIN PENDAPATAN SAH */}
+              {/* 5. LAIN-LAIN PENDAPATAN SAH */}
               <div className="space-y-1 pl-10">
                 <div className="flex justify-between text-[11px] text-amber-200/80 font-bold">
                   <span>5. LAIN-LAIN PENDAPATAN SAH</span>

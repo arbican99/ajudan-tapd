@@ -53,61 +53,39 @@ export default function App() {
     e.preventDefault();
     setLoading(true);
     
-    // 1. Login via Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ 
-      email: email.trim(), 
-      password 
-    });
+    // Login Supabase Auth
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     
-    if (authError) {
-      alert(`Akses Ditolak: ${authError.message}`);
-      setLoading(false);
-      return;
-    }
-
-    const authEmail = authData.user.email.trim();
-    setUserEmail(authEmail);
-
-    // 2. Ambil status spesifik dari tbluser
-    const { data: userData, error: userErr } = await supabase
-      .from('tbluser')
-      .select('status')
-      .ilike('email', authEmail)
-      .maybeSingle();
-
-    console.log("DEBUG - RESPONSE SUPABASE TBLUSER:", userData);
-
-    let currentStatus = '';
-
-    if (userData && userData.status) {
-      currentStatus = String(userData.status).trim().toUpperCase();
+    if (error) {
+      alert(`Akses Ditolak: ${error.message}`);
     } else {
-      // PENGAMAN UTAMA: Jika Supabase return null, cek apakah email diawali 'admin'
-      if (authEmail.toLowerCase().includes('admin')) {
-        currentStatus = 'ADMIN';
+      const authEmail = data.user.email;
+      setUserEmail(authEmail);
+
+      // Ambil data status user dari tbluser berdasarkan email (atau kd_skpd)
+      const { data: userData, error: userErr } = await supabase
+        .from('tbluser')
+        .select('status')
+        .eq('nama', authEmail) // Sesuaikan field pencarian jika menggunakan kd_skpd atau id
+        .single();
+
+      let currentStatus = 'SKPD'; // Default fallback
+      if (userData && userData.status) {
+        currentStatus = userData.status.toUpperCase();
+      }
+
+      setUserStatus(currentStatus);
+      setIsLoggedIn(true);
+
+      // Pengaturan Tab Awal berdasarkan Status
+      if (currentStatus === 'SKPD') {
+        setActiveTab('laporan-hasil-asistensi');
+        setOpenAccordion('asistensi');
       } else {
-        currentStatus = 'SKPD';
+        setActiveTab('master-skpd');
+        setOpenAccordion('master');
       }
     }
-
-    console.log("DEBUG - STATUS FINAL YANG DIGUNAKAN:", currentStatus);
-
-    // 3. Simpan state status & aktifkan login
-    setUserStatus(currentStatus);
-    setIsLoggedIn(true);
-
-    // 4. Pengaturan Tab & Accordion berdasarkan status
-    if (currentStatus === 'ADMIN') {
-      setActiveTab('master-skpd');
-      setOpenAccordion('master');
-    } else if (currentStatus === 'TAPD') {
-      setActiveTab('verifikasi-rka');
-      setOpenAccordion('verifikasi');
-    } else {
-      setActiveTab('laporan-hasil-asistensi');
-      setOpenAccordion('asistensi');
-    }
-
     setLoading(false);
   };
 
@@ -343,8 +321,8 @@ export default function App() {
                 </div>
               )}
 
-              {/* ACCORDION GROUP 2: PROSES VERIFIKASI (ADMIN & TAPD) */}
-              {(userStatus === 'ADMIN' || userStatus === 'TAPD') && (
+              {/* ACCORDION GROUP 2: PROSES VERIFIKASI (ADMIN ONLY) */}
+              {userStatus === 'ADMIN' && (
                 <div className="flex flex-col gap-1 bg-slate-900/30 p-1 rounded-xl border border-slate-900">
                   <button 
                     onClick={() => {
@@ -390,7 +368,7 @@ export default function App() {
                 </div>
               )}
 
-              {/* ACCORDION GROUP 3: PROSES ASISTENSI (ADMIN, TAPD, & SKPD) */}
+              {/* ACCORDION GROUP 3: PROSES ASISTENSI (ADMIN & SKPD) */}
               <div className="flex flex-col gap-1 bg-slate-900/30 p-1 rounded-xl border border-slate-900">
                 <button 
                   onClick={() => {
@@ -421,7 +399,7 @@ export default function App() {
                 {openAccordion === 'asistensi' && !sidebarCollapsed && (
                   <div className="mt-1.5 p-1.5 bg-slate-950/80 border border-slate-800/60 rounded-lg flex flex-col gap-1 animate-fadeIn">
                     
-                    {(userStatus === 'ADMIN' || userStatus === 'TAPD') && (
+                    {userStatus === 'ADMIN' && (
                       <>
                         <button 
                           onClick={() => setActiveTab('input-hasil-asistensi')}
@@ -461,7 +439,7 @@ export default function App() {
                       </>
                     )}
 
-                    {/* Laporan Hasil Asistensi (ADMIN, TAPD, & SKPD) */}
+                    {/* Laporan Hasil Asistensi (Dapat Diakses Oleh ADMIN & SKPD) */}
                     <button 
                       onClick={() => setActiveTab('laporan-hasil-asistensi')}
                       className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-md text-left text-[11px] font-bold tracking-wide transition-all border active:scale-98 cursor-pointer ${
@@ -478,8 +456,8 @@ export default function App() {
                 )}
               </div>
 
-              {/* ACCORDION GROUP 4: DATA REALISASI (ADMIN & TAPD) */}
-              {(userStatus === 'ADMIN' || userStatus === 'TAPD') && (
+              {/* ACCORDION GROUP 4: DATA REALISASI (ADMIN ONLY) */}
+              {userStatus === 'ADMIN' && (
                 <div className="flex flex-col gap-1 bg-slate-900/30 p-1 rounded-xl border border-slate-900">
                   <button 
                     onClick={() => {
@@ -652,8 +630,7 @@ export default function App() {
                 </div>
               )}
 
-              {/* VERIFIKASI RKA (ADMIN & TAPD) */}
-              {activeTab === 'verifikasi-rka' && (userStatus === 'ADMIN' || userStatus === 'TAPD') && (
+              {activeTab === 'verifikasi-rka' && userStatus === 'ADMIN' && (
                 <div className="bg-slate-950/60 border-2 border-cyan-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(6,182,212,0.04)] animate-fadeIn">
                   <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
                     <ShieldCheck size={12} /> CORE INTEGRATION // MODUL VERIFIKASI RKA
@@ -671,8 +648,7 @@ export default function App() {
                 </div>
               )}
 
-              {/* INPUT HASIL ASISTENSI (ADMIN & TAPD) */}
-              {activeTab === 'input-hasil-asistensi' && (userStatus === 'ADMIN' || userStatus === 'TAPD') && (
+              {activeTab === 'input-hasil-asistensi' && userStatus === 'ADMIN' && (
                 <div className="bg-slate-950/60 border-2 border-cyan-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(6,182,212,0.04)] animate-fadeIn">
                   <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
                     <ShieldCheck size={12} /> PROCESS INTEGRATION // INPUT HASIL ASISTENSI
@@ -681,8 +657,7 @@ export default function App() {
                 </div>
               )}
 
-              {/* PEMBAHASAN HASIL ASISTENSI (ADMIN & TAPD) */}
-              {activeTab === 'pembahasan-hasil-asistensi' && (userStatus === 'ADMIN' || userStatus === 'TAPD') && (
+              {activeTab === 'pembahasan-hasil-asistensi' && userStatus === 'ADMIN' && (
                 <div className="bg-slate-950/60 border-2 border-cyan-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(6,182,212,0.04)] animate-fadeIn">
                   <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
                     <ShieldCheck size={12} /> PROCESS INTEGRATION // PEMBAHASAN HASIL ASISTENSI
@@ -691,8 +666,7 @@ export default function App() {
                 </div>
               )}
 
-              {/* DASHBOARD ASISTENSI (ADMIN & TAPD) */}
-              {activeTab === 'dashboard-asistensi' && (userStatus === 'ADMIN' || userStatus === 'TAPD') && (
+              {activeTab === 'dashboard-asistensi' && userStatus === 'ADMIN' && (
                 <div className="bg-slate-950/60 border-2 border-cyan-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(6,182,212,0.04)] animate-fadeIn">
                   <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
                     <ShieldCheck size={12} /> PROCESS INTEGRATION // DASHBOARD ASISTENSI
@@ -701,7 +675,7 @@ export default function App() {
                 </div>
               )}
 
-              {/* LAPORAN HASIL ASISTENSI (ADMIN, TAPD, & SKPD) */}
+              {/* TAMPILAN LAPORAN HASIL ASISTENSI (ADMIN & SKPD) */}
               {activeTab === 'laporan-hasil-asistensi' && (
                 <div className="bg-slate-950/60 border-2 border-cyan-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(6,182,212,0.04)] animate-fadeIn">
                   <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
@@ -711,8 +685,7 @@ export default function App() {
                 </div>
               )}
 
-              {/* REALISASI PENDAPATAN (ADMIN & TAPD) */}
-              {activeTab === 'realisasi-pendapatan' && (userStatus === 'ADMIN' || userStatus === 'TAPD') && (
+              {activeTab === 'realisasi-pendapatan' && userStatus === 'ADMIN' && (
                 <div className="bg-slate-950/60 border-2 border-cyan-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(6,182,212,0.04)] animate-fadeIn">
                   <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
                     <ShieldCheck size={12} /> DATA INTEGRATION // REALISASI PENDAPATAN
@@ -721,8 +694,7 @@ export default function App() {
                 </div>
               )}
 
-              {/* REALISASI BELANJA (ADMIN & TAPD) */}
-              {activeTab === 'realisasi-belanja' && (userStatus === 'ADMIN' || userStatus === 'TAPD') && (
+              {activeTab === 'realisasi-belanja' && userStatus === 'ADMIN' && (
                 <div className="bg-slate-950/60 border-2 border-cyan-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(6,182,212,0.04)] animate-fadeIn">
                   <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
                     <ShieldCheck size={12} /> DATA INTEGRATION // REALISASI BELANJA
@@ -731,7 +703,7 @@ export default function App() {
                 </div>
               )}
 
-              {/* USER APLIKASI (ADMIN ONLY) */}
+              {/* TAMPILAN USER APLIKASI (ADMIN ONLY) */}
               {activeTab === 'user-aplikasi' && userStatus === 'ADMIN' && (
                 <div className="bg-slate-950/60 border-2 border-cyan-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(6,182,212,0.04)] animate-fadeIn">
                   <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
@@ -750,7 +722,7 @@ export default function App() {
   }
 
   // =========================================================
-  // TAMPILAN LOCK SCREEN / LOGIN
+  // TAMPILAN LOCK SCREEN / MODUL LOGIN
   // =========================================================
   return (
     <div className="min-h-screen bg-[#020617] text-slate-100 flex flex-col justify-center items-center p-4 font-sans relative overflow-hidden select-none">
