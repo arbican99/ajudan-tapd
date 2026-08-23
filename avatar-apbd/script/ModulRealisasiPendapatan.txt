@@ -1,0 +1,806 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { supabase } from '../supabaseClient';
+import { 
+  Layers, Calendar, RefreshCw, 
+  Building2, FileText, ChevronRight, ChevronDown, Filter
+} from 'lucide-react';
+
+export default function DashboardPendapatan() {
+  // --- STATE MANAGEMENT ---
+  const [skpdList, setSkpdList] = useState([]);
+  const [tahunList, setTahunList] = useState([]);
+  
+  const [selectedSkpd, setSelectedSkpd] = useState('REKAP'); 
+  const [selectedTahun, setSelectedTahun] = useState('ALL');
+  
+  const [activeTab, setActiveTab] = useState(1); // 1: Rekap Rekening (Flat List), 2: Rekap SKPD (Treeview)
+  const [loading, setLoading] = useState(false);
+  const [rawApbdData, setRawApbdData] = useState([]);
+  const [mrekMap, setMrekMap] = useState(new Map());
+  
+  // State Toggle Expansion khusus untuk Page 2 (Treeview SKPD)
+  const [expandedNodes, setExpandedNodes] = useState({});
+
+  useEffect(() => {
+    ambilDataFilter();
+    fetchMrekData();
+  }, []);
+
+  useEffect(() => {
+    fetchMainData();
+  }, [selectedSkpd, selectedTahun]);
+
+  useEffect(() => {
+    if (selectedSkpd !== 'REKAP') {
+      setActiveTab(1);
+    }
+  }, [selectedSkpd]);
+
+  const toggleNode = (nodeId) => {
+    setExpandedNodes(prev => ({
+      ...prev,
+      [nodeId]: !prev[nodeId]
+    }));
+  };
+
+  // --- HELPER UNTUK MEMBENTUK BADGE WARNA PERSEN ---
+  const renderBadgePersen = (persen) => {
+    let colorClass = 'bg-rose-500/20 text-rose-400 border-rose-500/40';
+    if (persen >= 100) {
+      colorClass = 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40';
+    } else if (persen >= 50) {
+      colorClass = 'bg-amber-500/20 text-amber-300 border-amber-500/40';
+    }
+
+    return (
+      <span className={`inline-block px-2 py-0.5 rounded text-[11px] border font-bold ${colorClass}`}>
+        {persen.toFixed(2)}%
+      </span>
+    );
+  };
+
+  // --- 0. AMBIL DATA REFERENSI DARI TABEL MREK ---
+  const fetchMrekData = async () => {
+    try {
+      let semuaMrek = [];
+      let page = 0;
+      const tumpukanPerQuery = 1000;
+      let masihAdaData = true;
+
+      while (masihAdaData) {
+        const dariBaris = page * tumpukanPerQuery;
+        const sampaiBaris = dariBaris + tumpukanPerQuery - 1;
+
+        const { data, error } = await supabase
+          .from('mrek')
+          .select('kdrek, nmrek, level')
+          .range(dariBaris, sampaiBaris);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          semuaMrek = [...semuaMrek, ...data];
+          if (data.length < tumpukanPerQuery) {
+            masihAdaData = false;
+          } else {
+            page++;
+          }
+        } else {
+          masihAdaData = false;
+        }
+      }
+
+      const map = new Map();
+      semuaMrek.forEach(item => {
+        if (item.kdrek) {
+          map.set(String(item.kdrek).trim(), {
+            nmrek: item.nmrek ? String(item.nmrek).trim() : '',
+            level: item.level !== null && item.level !== undefined ? Number(item.level) : null
+          });
+        }
+      });
+      setMrekMap(map);
+    } catch (err) {
+      console.error("Gagal mengambil data dari tabel mrek:", err.message);
+    }
+  };
+
+  // --- 1. AMBIL DATA FILTER (SKPD & TAHUN) ---
+  const ambilDataFilter = async () => {
+    try {
+      let semuaData = [];
+      let page = 0;
+      const tumpukanPerQuery = 1000;
+      let masihAdaData = true;
+
+      while (masihAdaData) {
+        const dariBaris = page * tumpukanPerQuery;
+        const sampaiBaris = dariBaris + tumpukanPerQuery - 1;
+
+        const { data, error } = await supabase
+          .from('apbd')
+          .select('kdskpd, nmskpd, tahun')
+          .range(dariBaris, sampaiBaris);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          semuaData = [...semuaData, ...data];
+          if (data.length < tumpukanPerQuery) {
+            masihAdaData = false;
+          } else {
+            page++;
+          }
+        } else {
+          masihAdaData = false;
+        }
+      }
+
+      if (semuaData.length > 0) {
+        const uniqueSkpd = [];
+        const mapSkpd = new Map();
+        const uniqueTahun = new Set();
+
+        semuaData.forEach(item => {
+          const kodeClean = item.kdskpd ? String(item.kdskpd).trim() : '';
+
+          if (kodeClean && !mapSkpd.has(kodeClean)) {
+            mapSkpd.set(kodeClean, true);
+            uniqueSkpd.push({
+              kdskpd: kodeClean,
+              nmskpd: item.nmskpd || 'Tanpa Nama SKPD'
+            });
+          }
+          if (item.tahun) uniqueTahun.add(String(item.tahun));
+        });
+
+        uniqueSkpd.sort((a, b) => (a.kdskpd || '').localeCompare(b.kdskpd || '', undefined, { numeric: true, sensitivity: 'base' }));
+        setSkpdList(uniqueSkpd);
+
+        const sortedTahun = Array.from(uniqueTahun).sort();
+        setTahunList(sortedTahun);
+
+        if (sortedTahun.length > 0) {
+          setSelectedTahun(sortedTahun[sortedTahun.length - 1]);
+        }
+      }
+    } catch (err) {
+      console.error("Gagal mengambil filter:", err.message);
+    }
+  };
+
+  // --- 2. FETCH DATA UTAMA DARI SUPABASE ---
+  const fetchMainData = async () => {
+    setLoading(true);
+    try {
+      let semuaData = [];
+      let page = 0;
+      const tumpukanPerQuery = 1000;
+      let masihAdaData = true;
+
+      while (masihAdaData) {
+        const dariBaris = page * tumpukanPerQuery;
+        const sampaiBaris = dariBaris + tumpukanPerQuery - 1;
+
+        let query = supabase.from('apbd').select('*').like('kdrek', '4%');
+
+        if (selectedSkpd !== 'REKAP') {
+          query = query.eq('kdskpd', selectedSkpd);
+        }
+        if (selectedTahun !== 'ALL') {
+          query = query.eq('tahun', String(selectedTahun));
+        }
+
+        const { data, error } = await query.range(dariBaris, sampaiBaris);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          semuaData = [...semuaData, ...data];
+          if (data.length < tumpukanPerQuery) {
+            masihAdaData = false;
+          } else {
+            page++;
+          }
+        } else {
+          masihAdaData = false;
+        }
+      }
+
+      setRawApbdData(semuaData);
+    } catch (err) {
+      console.error("Gagal memuat data Pendapatan:", err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- HELPER PARSE & FORMAT ANGKA ---
+  const parseAngkaReal = (val) => {
+    if (val === null || val === undefined) return 0;
+    if (typeof val === 'number') return val;
+    const cleaned = String(val).replace(/[^0-9.-]/g, '');
+    const parsed = parseFloat(cleaned);
+    return isNaN(parsed) ? 0 : parsed;
+  };
+
+  const formatRupiah = (val) => {
+    const num = parseAngkaReal(val);
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(num);
+  };
+
+  const defaultNames = {
+    '4': 'PENDAPATAN DAERAH',
+    '4.1': 'PENDAPATAN ASLI DAERAH (PAD)',
+    '4.2': 'PENDAPATAN TRANSFER',
+    '4.3': 'LAIN-LAIN PENDAPATAN DAERAH YANG SAH'
+  };
+
+  // --- AKUMULASI DAN STRUKTURISASI DATA PENDAPATAN ---
+  const processedData = useMemo(() => {
+    let totalAnggaran = 0;
+    let totalRealisasi = 0;
+
+    const rincianPAD = { anggaran: 0, realisasi: 0 };
+    const rincianPusat = { anggaran: 0, realisasi: 0 };
+    const rincianDaerah = { anggaran: 0, realisasi: 0 };
+
+    const rekeningFlatMap = new Map();
+    const skpdTree = {};
+
+    rawApbdData.forEach(item => {
+      const kdrek = item.kdrek ? String(item.kdrek).trim() : '';
+      if (!kdrek.startsWith('4')) return;
+
+      const anggaran = parseAngkaReal(item.akhir !== null && item.akhir !== undefined ? item.akhir : item.awal);
+      const realisasi = parseAngkaReal(item.real);
+      
+      const mrekInfo = mrekMap.get(kdrek);
+      const nmrek = (mrekInfo && mrekInfo.nmrek) ? mrekInfo.nmrek : (item.nmrek || 'Tanpa Nama Rekening');
+
+      const kdskpd = item.kdskpd ? String(item.kdskpd).trim() : 'LAINNYA';
+      const nmskpd = item.nmskpd || 'SKPD Tidak Teridentifikasi';
+
+      const kdsubunit = item.kdsubunit ? String(item.kdsubunit).trim() : (item.kdsubskpd ? String(item.kdsubskpd).trim() : '');
+      const nmsubunit = item.nmsubunit || item.nmsubskpd || 'Dinas Kesehatan Utama / Sub Unit Teknis';
+
+      totalAnggaran += anggaran;
+      totalRealisasi += realisasi;
+
+      if (kdrek.startsWith('4.1') || kdrek.startsWith('41')) {
+        rincianPAD.anggaran += anggaran;
+        rincianPAD.realisasi += realisasi;
+      } else if (kdrek.startsWith('4.2.01') || kdrek.startsWith('4201')) {
+        rincianPusat.anggaran += anggaran;
+        rincianPusat.realisasi += realisasi;
+      } else if (kdrek.startsWith('4.2.02') || kdrek.startsWith('4202') || kdrek.startsWith('4.2') || kdrek.startsWith('42')) {
+        rincianDaerah.anggaran += anggaran;
+        rincianDaerah.realisasi += realisasi;
+      }
+
+      const parts = kdrek.split('.');
+      let pathKode = '';
+
+      parts.forEach((part, index) => {
+        pathKode = index === 0 ? part : `${pathKode}.${part}`;
+
+        if (!rekeningFlatMap.has(pathKode)) {
+          const pathMrekInfo = mrekMap.get(pathKode);
+          const namaDariMrek = pathMrekInfo ? pathMrekInfo.nmrek : null;
+
+          rekeningFlatMap.set(pathKode, {
+            kdrek: pathKode,
+            nmrek: namaDariMrek || defaultNames[pathKode] || (index === parts.length - 1 ? nmrek : `Rekening ${pathKode}`),
+            anggaran: 0,
+            realisasi: 0,
+            level: index
+          });
+        }
+
+        const rekEntry = rekeningFlatMap.get(pathKode);
+        rekEntry.anggaran += anggaran;
+        rekEntry.realisasi += realisasi;
+
+        if (index === parts.length - 1) {
+          rekEntry.nmrek = nmrek;
+        }
+      });
+
+      if (!skpdTree[kdskpd]) {
+        skpdTree[kdskpd] = {
+          kdskpd,
+          nmskpd,
+          anggaran: 0,
+          realisasi: 0,
+          subUnits: {},
+          rekening: {}
+        };
+      }
+      skpdTree[kdskpd].anggaran += anggaran;
+      skpdTree[kdskpd].realisasi += realisasi;
+
+      const isDinasKesehatan = nmskpd.toLowerCase().includes('kesehatan');
+
+      if (isDinasKesehatan) {
+        const subKey = kdsubunit || `${kdskpd}-UTAMA`;
+        if (!skpdTree[kdskpd].subUnits[subKey]) {
+          skpdTree[kdskpd].subUnits[subKey] = {
+            kdsubunit: subKey,
+            nmsubunit: nmsubunit,
+            anggaran: 0,
+            realisasi: 0,
+            rekening: {}
+          };
+        }
+        skpdTree[kdskpd].subUnits[subKey].anggaran += anggaran;
+        skpdTree[kdskpd].subUnits[subKey].realisasi += realisasi;
+
+        if (!skpdTree[kdskpd].subUnits[subKey].rekening[kdrek]) {
+          skpdTree[kdskpd].subUnits[subKey].rekening[kdrek] = {
+            kdrek,
+            nmrek,
+            anggaran: 0,
+            realisasi: 0
+          };
+        }
+        skpdTree[kdskpd].subUnits[subKey].rekening[kdrek].anggaran += anggaran;
+        skpdTree[kdskpd].subUnits[subKey].rekening[kdrek].realisasi += realisasi;
+
+      } else {
+        if (!skpdTree[kdskpd].rekening[kdrek]) {
+          skpdTree[kdskpd].rekening[kdrek] = {
+            kdrek,
+            nmrek,
+            anggaran: 0,
+            realisasi: 0
+          };
+        }
+        skpdTree[kdskpd].rekening[kdrek].anggaran += anggaran;
+        skpdTree[kdskpd].rekening[kdrek].realisasi += realisasi;
+      }
+    });
+
+    const flatRekeningList = Array.from(rekeningFlatMap.values()).sort((a, b) => 
+      a.kdrek.localeCompare(b.kdrek, undefined, { numeric: true, sensitivity: 'base' })
+    );
+
+    const sortedSkpdTreeList = Object.values(skpdTree).sort((a, b) => 
+      a.kdskpd.localeCompare(b.kdskpd, undefined, { numeric: true, sensitivity: 'base' })
+    );
+
+    return {
+      totalAnggaran,
+      totalRealisasi,
+      sisaTarget: totalAnggaran - totalRealisasi,
+      rincianPAD,
+      rincianPusat,
+      rincianDaerah,
+      flatRekeningList,
+      sortedSkpdTreeList
+    };
+  }, [rawApbdData, mrekMap]);
+
+  const currentSkpdName = useMemo(() => {
+    if (selectedSkpd === 'REKAP') return 'REKAPITULASI SELURUH SKPD';
+    const found = skpdList.find(s => s.kdskpd === selectedSkpd);
+    return found ? `${found.kdskpd} - ${found.nmskpd}` : selectedSkpd;
+  }, [selectedSkpd, skpdList]);
+
+  return (
+    <div className="min-h-screen bg-[#030712] text-slate-100 font-mono p-4 md:p-6 select-none">
+      
+      {/* HEADER DASHBOARD */}
+      <header className="mb-5 border-b border-amber-500/30 pb-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <Layers className="w-7 h-7 text-amber-400 animate-pulse" />
+            <h1 className="text-lg md:text-xl font-extrabold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-amber-300 via-amber-400 to-yellow-500 uppercase">
+              DASHBOARD REALISASI PENDAPATAN
+            </h1>
+          </div>
+          <p className="text-xs text-amber-300/80 mt-1 flex items-center gap-1.5">
+            <Building2 className="w-3.5 h-3.5 text-amber-400" /> Mode Tampilan: <span className="text-white font-bold">{currentSkpdName}</span>
+          </p>
+        </div>
+
+        <button
+          onClick={fetchMainData}
+          disabled={loading}
+          className="self-start md:self-auto px-3 py-2 bg-amber-950/80 hover:bg-amber-900 border border-amber-500/40 rounded-lg text-amber-200 transition-all cursor-pointer flex items-center gap-1.5 text-xs shadow-[0_0_10px_rgba(245,158,11,0.2)]"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 text-amber-300 ${loading ? 'animate-spin' : ''}`} />
+          <span className="font-bold">Sync Data</span>
+        </button>
+      </header>
+
+      {/* FILTER BOX */}
+      <div className="mb-6 bg-[#0a0f1d] border border-slate-800 rounded-xl p-3 md:p-4 shadow-lg flex flex-col md:flex-row items-center justify-between gap-4">
+        
+        {/* FILTER SKPD */}
+        <div className="w-full md:flex-1 space-y-1">
+          <label className="text-[10px] md:text-xs text-amber-400 font-bold uppercase tracking-wider flex items-center gap-1">
+            <Building2 className="w-3.5 h-3.5 text-amber-400" /> FILTER SKPD
+          </label>
+          <div className="relative w-full">
+            <select
+              value={selectedSkpd}
+              onChange={(e) => setSelectedSkpd(e.target.value)}
+              className="w-full bg-[#030712] text-amber-100 border border-slate-700 rounded-lg px-4 py-2 text-xs md:text-sm font-bold focus:outline-none focus:border-amber-400 cursor-pointer appearance-none truncate shadow-inner"
+            >
+              <option value="REKAP">» REKAPITULASI SELURUH SKPD</option>
+              {skpdList.map((skpd) => (
+                <option key={skpd.kdskpd} value={skpd.kdskpd}>
+                  » {skpd.kdskpd} - {skpd.nmskpd}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* FILTER TAHUN */}
+        <div className="w-full md:w-64 space-y-1">
+          <label className="text-[10px] md:text-xs text-amber-400 font-bold uppercase tracking-wider flex items-center gap-1">
+            <Calendar className="w-3.5 h-3.5 text-amber-400" /> TAHUN ANGGARAN
+          </label>
+          <div className="relative w-full">
+            <select
+              value={selectedTahun}
+              onChange={(e) => setSelectedTahun(e.target.value)}
+              className="w-full bg-[#030712] text-amber-100 border border-slate-700 rounded-lg px-3 py-2 text-xs md:text-sm font-bold focus:outline-none focus:border-amber-400 cursor-pointer appearance-none shadow-inner"
+            >
+              <option value="ALL">» SEMUA TAHUN</option>
+              {tahunList.map((th) => (
+                <option key={th} value={th}>
+                  » TAHUN {th}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+      </div>
+
+      {/* MAIN CONTENT AREA */}
+      {loading ? (
+        <div className="h-80 flex flex-col items-center justify-center gap-3">
+          <div className="w-10 h-10 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-amber-300 text-xs font-bold animate-pulse">Memproses Data Pendapatan APBD...</p>
+        </div>
+      ) : (
+        <div className="space-y-5">
+          
+          {/* GRAFIK RINGKASAN PENDAPATAN DAERAH */}
+          <div className="bg-[#0a0f1d] border border-slate-800 rounded-xl p-4 shadow-md space-y-3.5">
+            <div className="border-b border-slate-800 pb-2 flex items-center justify-between">
+              <h2 className="text-xs md:text-sm font-black text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                <Filter className="w-5 h-5 text-amber-400" />
+                GRAFIK REKAPITULASI PENDAPATAN DAERAH
+              </h2>
+            </div>
+
+            <div className="space-y-3">
+              {/* TOTAL PENDAPATAN */}
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs font-extrabold text-amber-300">
+                  <span>TOTAL PENDAPATAN DAERAH</span>
+                  <span>Anggaran: {formatRupiah(processedData.totalAnggaran)} | Realisasi: {formatRupiah(processedData.totalRealisasi)}</span>
+                </div>
+                <div className="w-full h-6 bg-[#030712] rounded-lg overflow-hidden border border-slate-800 flex p-0.5 shadow-inner">
+                  <div 
+                    className="h-full bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-300 rounded transition-all duration-500 flex items-center justify-end pr-2 text-[10px] font-black text-slate-950 shadow-[0_0_15px_rgba(251,191,36,0.8)]"
+                    style={{ width: `${Math.min(100, processedData.totalAnggaran > 0 ? (processedData.totalRealisasi / processedData.totalAnggaran) * 100 : 0)}%` }}
+                  >
+                    {processedData.totalAnggaran > 0 ? ((processedData.totalRealisasi / processedData.totalAnggaran) * 100).toFixed(2) : 0}%
+                  </div>
+                </div>
+              </div>
+
+              {/* 1. PAD */}
+              <div className="space-y-1 pl-2">
+                <div className="flex justify-between text-[11px] text-amber-200 font-bold">
+                  <span>1. PENDAPATAN ASLI DAERAH (PAD)</span>
+                  <span>Anggaran: {formatRupiah(processedData.rincianPAD.anggaran)} | Realisasi: {formatRupiah(processedData.rincianPAD.realisasi)}</span>
+                </div>
+                <div className="w-full h-4 bg-[#030712] rounded-lg overflow-hidden border border-slate-800 flex p-0.5">
+                  <div 
+                    className="h-full bg-gradient-to-r from-amber-600 to-amber-400 rounded transition-all duration-500"
+                    style={{ width: `${Math.min(100, processedData.rincianPAD.anggaran > 0 ? (processedData.rincianPAD.realisasi / processedData.rincianPAD.anggaran) * 100 : 0)}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              {/* 2. TRANSFER PUSAT */}
+              <div className="space-y-1 pl-4">
+                <div className="flex justify-between text-[11px] text-amber-200/90 font-bold">
+                  <span>2. PENDAPATAN TRANSFER PEMERINTAH PUSAT</span>
+                  <span>Anggaran: {formatRupiah(processedData.rincianPusat.anggaran)} | Realisasi: {formatRupiah(processedData.rincianPusat.realisasi)}</span>
+                </div>
+                <div className="w-full h-4 bg-[#030712] rounded-lg overflow-hidden border border-slate-800 flex p-0.5">
+                  <div 
+                    className="h-full bg-gradient-to-r from-yellow-600 to-yellow-400 rounded transition-all duration-500"
+                    style={{ width: `${Math.min(100, processedData.rincianPusat.anggaran > 0 ? (processedData.rincianPusat.realisasi / processedData.rincianPusat.anggaran) * 100 : 0)}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              {/* 3. TRANSFER DAERAH */}
+              <div className="space-y-1 pl-6">
+                <div className="flex justify-between text-[11px] text-amber-200/90 font-bold">
+                  <span>3. PENDAPATAN TRANSFER ANTAR DAERAH</span>
+                  <span>Anggaran: {formatRupiah(processedData.rincianDaerah.anggaran)} | Realisasi: {formatRupiah(processedData.rincianDaerah.realisasi)}</span>
+                </div>
+                <div className="w-full h-4 bg-[#030712] rounded-lg overflow-hidden border border-slate-800 flex p-0.5">
+                  <div 
+                    className="h-full bg-amber-500/80 rounded transition-all duration-500"
+                    style={{ width: `${Math.min(100, processedData.rincianDaerah.anggaran > 0 ? (processedData.rincianDaerah.realisasi / processedData.rincianDaerah.anggaran) * 100 : 0)}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* PAGE FRAME & NAVIGATION TAB */}
+          <div className="bg-[#0a0f1d] border border-slate-800 rounded-xl p-4 shadow-md space-y-4">
+            
+            {/* TAMPILKAN TAB HANYA PADA MODE REKAP */}
+            {selectedSkpd === 'REKAP' ? (
+              <div className="flex flex-wrap items-center gap-2 border-b border-slate-800 pb-3">
+                <button
+                  onClick={() => setActiveTab(1)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer border ${
+                    activeTab === 1 
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/60 shadow-[0_0_10px_rgba(245,158,11,0.3)]' 
+                      : 'bg-[#030712] text-slate-400 border-slate-800 hover:text-white'
+                  }`}
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>REKAP REKENING</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab(2)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer border ${
+                    activeTab === 2 
+                      ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/60 shadow-[0_0_10px_rgba(6,182,212,0.3)]' 
+                      : 'bg-[#030712] text-slate-400 border-slate-800 hover:text-white'
+                  }`}
+                >
+                  <Building2 className="w-4 h-4" />
+                  <span>REKAP SKPD</span>
+                </button>
+              </div>
+            ) : (
+              <div className="border-b border-slate-800 pb-2 text-xs font-bold text-amber-400">
+                PAGE REKAP REKENING PENDAPATAN - {currentSkpdName}
+              </div>
+            )}
+
+            {/* TABEL HASIL */}
+            <div className="overflow-x-auto rounded-lg border border-slate-800 shadow-md">
+              <table className="w-full text-left text-xs text-slate-200 border-collapse">
+                <thead>
+                  <tr className="bg-[#030712] border-b border-slate-800 text-slate-300 uppercase text-xs md:text-sm tracking-wider text-center">
+                    <th className="p-3 font-extrabold border-r border-slate-800 w-48">
+                      {activeTab === 2 ? 'KODE SKPD / SUB UNIT' : 'KODE REKENING'}
+                    </th>
+                    <th className="p-3 font-extrabold border-r border-slate-800 text-left">
+                      {activeTab === 2 ? 'NAMA SKPD / SUB UNIT / REKENING' : 'URAIAN / NAMA REKENING'}
+                    </th>
+                    <th className="p-3 font-extrabold border-r border-slate-800 w-40">ANGGARAN</th>
+                    <th className="p-3 font-extrabold border-r border-slate-800 w-40">REALISASI</th>
+                    <th className="p-3 font-extrabold border-r border-slate-800 w-40">SISA TARGET</th>
+                    <th className="p-3 font-extrabold w-28">REALISASI %</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60 bg-[#070b16]">
+                  
+                  {/* --- PAGE 1: REKAP REKENING FLAT --- */}
+                  {(activeTab === 1 || selectedSkpd !== 'REKAP') && (
+                    processedData.flatRekeningList.length === 0 ? (
+                      <tr>
+                        <td colSpan="6" className="p-4 text-center text-slate-400 italic">Tidak ada data rekening pendapatan.</td>
+                      </tr>
+                    ) : (
+                      processedData.flatRekeningList.map((row) => {
+                        const sisa = row.anggaran - row.realisasi;
+                        const persen = row.anggaran > 0 ? (row.realisasi / row.anggaran) * 100 : 0;
+                        const isLevel0 = row.level === 0;
+                        const isLevel1 = row.level === 1;
+
+                        return (
+                          <tr 
+                            key={row.kdrek} 
+                            className={`border-b border-slate-800/60 transition-colors ${
+                              isLevel0 
+                                ? 'bg-amber-500/20 font-black text-amber-200 uppercase text-sm' 
+                                : isLevel1 
+                                ? 'bg-amber-500/10 font-bold text-amber-300 text-xs' 
+                                : 'hover:bg-slate-800/40 text-xs text-slate-200'
+                            }`}
+                          >
+                            <td className="p-2.5 font-mono border-r border-slate-800 whitespace-nowrap">
+                              <span className={isLevel0 || isLevel1 ? 'font-black text-amber-400' : 'text-cyan-300 font-semibold'}>
+                                {row.kdrek}
+                              </span>
+                            </td>
+
+                            <td className="p-2.5 border-r border-slate-800 text-left">
+                              <span className={isLevel0 || isLevel1 ? 'font-black uppercase tracking-wide' : 'font-medium'}>
+                                {row.nmrek}
+                              </span>
+                            </td>
+
+                            <td className="p-2.5 text-right font-bold border-r border-slate-800 whitespace-nowrap">
+                              {formatRupiah(row.anggaran)}
+                            </td>
+
+                            <td className="p-2.5 text-right font-bold text-amber-300 border-r border-slate-800 bg-amber-500/5 whitespace-nowrap">
+                              {formatRupiah(row.realisasi)}
+                            </td>
+
+                            <td className={`p-2.5 text-right font-bold border-r border-slate-800 whitespace-nowrap ${sisa >= 0 ? 'text-cyan-300' : 'text-rose-400'}`}>
+                              {formatRupiah(sisa)}
+                            </td>
+
+                            <td className="p-2.5 text-center font-bold whitespace-nowrap">
+                              {renderBadgePersen(persen)}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )
+                  )}
+
+                  {/* --- PAGE 2: REKAP SKPD TREEVIEW --- */}
+                  {selectedSkpd === 'REKAP' && activeTab === 2 && (
+                    processedData.sortedSkpdTreeList.length === 0 ? (
+                      <tr>
+                        <td colSpan="6" className="p-4 text-center text-slate-400 italic">Tidak ada data SKPD.</td>
+                      </tr>
+                    ) : (
+                      processedData.sortedSkpdTreeList.map((skpd) => {
+                        const isSkpdExpanded = !!expandedNodes[skpd.kdskpd];
+                        const sisaSkpd = skpd.anggaran - skpd.realisasi;
+                        const persenSkpd = skpd.anggaran > 0 ? (skpd.realisasi / skpd.anggaran) * 100 : 0;
+                        const isDinasKesehatan = skpd.nmskpd.toLowerCase().includes('kesehatan');
+
+                        const sortedSubUnits = Object.values(skpd.subUnits || {}).sort((a, b) => 
+                          a.kdsubunit.localeCompare(b.kdsubunit, undefined, { numeric: true, sensitivity: 'base' })
+                        );
+
+                        const sortedRekeningSkpd = Object.values(skpd.rekening || {}).sort((a, b) => 
+                          a.kdrek.localeCompare(b.kdrek, undefined, { numeric: true, sensitivity: 'base' })
+                        );
+
+                        return (
+                          <React.Fragment key={skpd.kdskpd}>
+                            {/* INDUK TREEVIEW: LEVEL SKPD */}
+                            <tr className="bg-slate-900/90 font-bold border-b border-slate-800 hover:bg-slate-800/60 transition-colors">
+                              <td className="p-2.5 border-r border-slate-800 whitespace-nowrap">
+                                <div className="flex items-center gap-2">
+                                  <button 
+                                    onClick={() => toggleNode(skpd.kdskpd)}
+                                    className="p-0.5 hover:bg-slate-700 rounded text-cyan-400 focus:outline-none cursor-pointer"
+                                  >
+                                    {isSkpdExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                                  </button>
+                                  <span className="text-cyan-300 font-mono font-bold">{skpd.kdskpd}</span>
+                                </div>
+                              </td>
+                              <td className="p-2.5 border-r border-slate-800 font-bold text-slate-100 text-left">
+                                {skpd.nmskpd}
+                              </td>
+                              <td className="p-2.5 text-right font-extrabold border-r border-slate-800 whitespace-nowrap">{formatRupiah(skpd.anggaran)}</td>
+                              <td className="p-2.5 text-right font-extrabold text-amber-300 border-r border-slate-800 bg-amber-500/5 whitespace-nowrap">{formatRupiah(skpd.realisasi)}</td>
+                              <td className={`p-2.5 text-right font-extrabold border-r border-slate-800 whitespace-nowrap ${sisaSkpd >= 0 ? 'text-cyan-300' : 'text-rose-400'}`}>{formatRupiah(sisaSkpd)}</td>
+                              <td className="p-2.5 text-center font-bold whitespace-nowrap">
+                                {renderBadgePersen(persenSkpd)}
+                              </td>
+                            </tr>
+
+                            {/* TREEVIEW LEVEL 2 DINAS KESEHATAN (SUB UNIT) */}
+                            {isSkpdExpanded && isDinasKesehatan && sortedSubUnits.map((sub) => {
+                              const subNodeId = `${skpd.kdskpd}-${sub.kdsubunit}`;
+                              const isSubExpanded = !!expandedNodes[subNodeId];
+                              const sisaSub = sub.anggaran - sub.realisasi;
+                              const persenSub = sub.anggaran > 0 ? (sub.realisasi / sub.anggaran) * 100 : 0;
+
+                              const sortedRekeningSub = Object.values(sub.rekening || {}).sort((a, b) => 
+                                a.kdrek.localeCompare(b.kdrek, undefined, { numeric: true, sensitivity: 'base' })
+                              );
+
+                              return (
+                                <React.Fragment key={subNodeId}>
+                                  <tr className="bg-slate-800/50 font-bold border-b border-slate-800/80 hover:bg-slate-800/80 transition-colors">
+                                    <td className="p-2 pl-6 border-r border-slate-800 whitespace-nowrap">
+                                      <div className="flex items-center gap-2">
+                                        <button 
+                                          onClick={() => toggleNode(subNodeId)}
+                                          className="p-0.5 hover:bg-slate-700 rounded text-amber-400 focus:outline-none cursor-pointer"
+                                        >
+                                          {isSubExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                                        </button>
+                                        <span className="text-amber-300 font-mono text-xs">{sub.kdsubunit}</span>
+                                      </div>
+                                    </td>
+                                    <td className="p-2 border-r border-slate-800 text-amber-200 text-xs font-semibold text-left">
+                                      ↳ {sub.nmsubunit}
+                                    </td>
+                                    <td className="p-2 text-right border-r border-slate-800 whitespace-nowrap text-xs">{formatRupiah(sub.anggaran)}</td>
+                                    <td className="p-2 text-right text-amber-300 border-r border-slate-800 whitespace-nowrap text-xs">{formatRupiah(sub.realisasi)}</td>
+                                    <td className="p-2 text-right border-r border-slate-800 whitespace-nowrap text-xs">{formatRupiah(sisaSub)}</td>
+                                    <td className="p-2 text-center text-xs whitespace-nowrap">
+                                      {renderBadgePersen(persenSub)}
+                                    </td>
+                                  </tr>
+
+                                  {/* REKENING PUSKESMAS / SUB UNIT */}
+                                  {isSubExpanded && sortedRekeningSub.map((rek) => {
+                                    const sisaRek = rek.anggaran - rek.realisasi;
+                                    const persenRek = rek.anggaran > 0 ? (rek.realisasi / rek.anggaran) * 100 : 0;
+
+                                    return (
+                                      <tr key={rek.kdrek} className="border-b border-slate-800/40 hover:bg-slate-800/30 text-[11px]">
+                                        <td className="p-2 pl-12 border-r border-slate-800 text-cyan-300/90 font-mono whitespace-nowrap">
+                                          {rek.kdrek}
+                                        </td>
+                                        <td className="p-2 border-r border-slate-800 text-slate-300 text-left">
+                                          {rek.nmrek}
+                                        </td>
+                                        <td className="p-2 text-right border-r border-slate-800 whitespace-nowrap">{formatRupiah(rek.anggaran)}</td>
+                                        <td className="p-2 text-right text-amber-300 border-r border-slate-800 whitespace-nowrap">{formatRupiah(rek.realisasi)}</td>
+                                        <td className="p-2 text-right border-r border-slate-800 whitespace-nowrap">{formatRupiah(sisaRek)}</td>
+                                        <td className="p-2 text-center text-slate-300 whitespace-nowrap">
+                                          {renderBadgePersen(persenRek)}
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </React.Fragment>
+                              );
+                            })}
+
+                            {/* SKPD NON-DINAS KESEHATAN */}
+                            {isSkpdExpanded && !isDinasKesehatan && sortedRekeningSkpd.map((rek) => {
+                              const sisaRek = rek.anggaran - rek.realisasi;
+                              const persenRek = rek.anggaran > 0 ? (rek.realisasi / rek.anggaran) * 100 : 0;
+
+                              return (
+                                <tr key={rek.kdrek} className="border-b border-slate-800/40 hover:bg-slate-800/30 text-[11px]">
+                                  <td className="p-2 pl-8 border-r border-slate-800 text-amber-300/90 font-mono whitespace-nowrap">
+                                    {rek.kdrek}
+                                  </td>
+                                  <td className="p-2 border-r border-slate-800 text-slate-300 text-left">
+                                    {rek.nmrek}
+                                  </td>
+                                  <td className="p-2 text-right border-r border-slate-800 whitespace-nowrap">{formatRupiah(rek.anggaran)}</td>
+                                  <td className="p-2 text-right text-amber-300 border-r border-slate-800 whitespace-nowrap">{formatRupiah(rek.realisasi)}</td>
+                                  <td className="p-2 text-right border-r border-slate-800 whitespace-nowrap">{formatRupiah(sisaRek)}</td>
+                                  <td className="p-2 text-center text-slate-300 whitespace-nowrap">
+                                    {renderBadgePersen(persenRek)}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </React.Fragment>
+                        );
+                      })
+                    )
+                  )}
+
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+
+        </div>
+      )}
+    </div>
+  );
+}

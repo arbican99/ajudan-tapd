@@ -18,6 +18,7 @@ import ModulCekRealisasi from './components/ModulCekRealisasi';
 import ModulTahapanApbd from './components/ModulTahapanApbd'; 
 import ModulTematik from './components/ModulTematik'; 
 import ModulRka from './components/ModulRka';
+import ModulRealisasiPendapatan from './components/ModulRealisasiPendapatan';
 import ModulRealisasiBelanja from './components/ModulRealisasiBelanja';
 import ModulAsistensi from './components/ModulAsistensi';
 import ModulPembahasan from './components/ModulPembahasan';
@@ -717,7 +718,8 @@ export default function App() {
                   <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
                     <ShieldCheck size={12} /> DATA INTEGRATION // REALISASI PENDAPATAN
                   </div>
-                  <div className="text-slate-400 font-mono text-sm">Modul Realisasi Pendapatan siap dikembangkan di sini.</div>
+                  {/*<div className="text-slate-400 font-mono text-sm">Modul Realisasi Pendapatan siap dikembangkan di sini.</div>*/}
+                  <ModulRealisasiPendapatan />
                 </div>
               )}
 
