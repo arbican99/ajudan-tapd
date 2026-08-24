@@ -494,7 +494,7 @@ export default function App() {
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
-                      <TrendingUp size={15} className={openAccordion === 'realisasi-group' ? 'text-cyan-400 drop-shadow-[0_0_5px_rgba(6,182,212,0.8)]' : 'text-slate-400'} />
+                      <CheckCircle size={15} className={openAccordion === 'realisasi-group' ? 'text-cyan-400 drop-shadow-[0_0_5px_rgba(6,182,212,0.8)]' : 'text-slate-400'} />
                       {!sidebarCollapsed && <span>04. DATA REALISASI</span>}
                     </div>
                     {!sidebarCollapsed && (
@@ -518,7 +518,7 @@ export default function App() {
                             : 'border-transparent text-white/90 hover:bg-slate-900/60 hover:text-slate-300'
                         }`}
                       >
-                        <DollarSign size={13} className={activeTab === 'realisasi-pendapatan' ? 'text-cyan-400' : 'text-slate-600'} />
+                        <TrendingUp size={13} className={activeTab === 'realisasi-pendapatan' ? 'text-cyan-400' : 'text-slate-600'} />
                         <span className="truncate">Realisasi Pendapatan</span>
                       </button>
 
