@@ -6,7 +6,8 @@ import {
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 
 const COLUMN_CONFIG = [
   { id: 'apbd', label: 'APBD' },
@@ -48,8 +49,9 @@ export default function DashboardHistApbd() {
   // State Treeview Expansion
   const [expandedNodes, setExpandedNodes] = useState({});
 
-  // State Format Cetak
+  // State Format & Opsi Cetak
   const [printFormat, setPrintFormat] = useState('pdf');
+  const [printDetailMode, setPrintDetailMode] = useState('RINCI'); // 'RINCI' atau 'SKPD_ONLY'
 
   useEffect(() => {
     ambilDataFilter();
@@ -571,16 +573,55 @@ export default function DashboardHistApbd() {
       return rowArr;
     };
 
+    // Hitung Total Keseluruhan untuk Diletakkan di Baris Pertama
+    const totalsObj = {
+      apbd: 0, gsr1: 0, gsr2: 0, gsr3: 0, gsr4: 0, gsr5: 0, apbdp: 0
+    };
+
+    if (activeTab === 1) {
+      if (isDinkesSelected) {
+        processedData.dinkesSubUnitList.forEach(sub => {
+          COLUMN_CONFIG.forEach(col => { totalsObj[col.id] += (sub[col.id] || 0); });
+        });
+      } else {
+        processedData.flatRekeningList.forEach(row => {
+          if (row.level === 0) {
+            COLUMN_CONFIG.forEach(col => { totalsObj[col.id] += (row[col.id] || 0); });
+          }
+        });
+      }
+    } else if (activeTab === 2 && selectedSkpd === 'REKAP') {
+      processedData.sortedSkpdTreeList.forEach(skpd => {
+        COLUMN_CONFIG.forEach(col => { totalsObj[col.id] += (skpd[col.id] || 0); });
+      });
+    } else if (activeTab === 2 && selectedSkpd !== 'REKAP') {
+      if (isDinkesSelected) {
+        processedData.dinkesSubGiatList.forEach(sub => {
+          COLUMN_CONFIG.forEach(col => { totalsObj[col.id] += (sub[col.id] || 0); });
+        });
+      } else {
+        processedData.sortedSubgiatTreeList.forEach(sg => {
+          COLUMN_CONFIG.forEach(col => { totalsObj[col.id] += (sg[col.id] || 0); });
+        });
+      }
+    }
+
+    // Baris 1: Baris TOTAL di Posisi Pertama
+    rows.push(buildRowObj('', 'JUMLAH TOTAL', totalsObj, true, 0));
+
+    // Isi Data Sesuai Tab & Opsi Detail Cetak
     if (activeTab === 1) {
       if (isDinkesSelected) {
         // Mode Dinkes: Sub Unit -> Rekening
         processedData.dinkesSubUnitList.forEach(sub => {
           rows.push(buildRowObj(sub.kdsubunit, `SUB UNIT: ${sub.nmsubunit}`, sub, true, 0));
 
-          const sortedRek = Object.values(sub.rekening || {}).sort((a, b) => a.kdrek.localeCompare(b.kdrek, undefined, { numeric: true }));
-          sortedRek.forEach(rek => {
-            rows.push(buildRowObj(`\u00A0\u00A0${rek.kdrek}`, `\u00A0\u00A0${rek.nmrek}`, rek, false, 1));
-          });
+          if (printDetailMode === 'RINCI') {
+            const sortedRek = Object.values(sub.rekening || {}).sort((a, b) => a.kdrek.localeCompare(b.kdrek, undefined, { numeric: true }));
+            sortedRek.forEach(rek => {
+              rows.push(buildRowObj(`\u00A0\u00A0${rek.kdrek}`, `\u00A0\u00A0${rek.nmrek}`, rek, false, 1));
+            });
+          }
         });
       } else {
         // Mode Flat Rekening
@@ -597,6 +638,7 @@ export default function DashboardHistApbd() {
       );
 
       list.forEach(skpd => {
+        // SELALU TAMPILKAN SKPD
         rows.push(buildRowObj(skpd.kdskpd, skpd.nmskpd, skpd, true, 0));
 
         const isDinasKesehatan = skpd.nmskpd.toLowerCase().includes('kesehatan');
@@ -604,45 +646,29 @@ export default function DashboardHistApbd() {
         const sortedRekeningSkpd = Object.values(skpd.rekening || {}).sort((a, b) => a.kdrek.localeCompare(b.kdrek, undefined, { numeric: true }));
 
         if (isDinasKesehatan) {
+          // Khusus Dinas Kesehatan: Opsi Hanya SKPD tetap menampilkan Sub Unit
           sortedSubUnits.forEach(sub => {
-            rows.push(buildRowObj(`\u00A0\u00A0${sub.kdsubunit}`, `\u00A0\u00A0\u21B3 ${sub.nmsubunit}`, sub, true, 1));
+            rows.push(buildRowObj(`\u00A0\u00A0${sub.kdsubunit}`, ` ${sub.nmsubunit}`, sub, true, 1));
 
-            const sortedRekeningSub = Object.values(sub.rekening || {}).sort((a, b) => a.kdrek.localeCompare(b.kdrek, undefined, { numeric: true }));
-            sortedRekeningSub.forEach(rek => {
-              rows.push(buildRowObj(`\u00A0\u00A0\u00A0\u00A0${rek.kdrek}`, `\u00A0\u00A0\u00A0\u00A0${rek.nmrek}`, rek, false, 2));
-            });
+            // Rincian Rekening Sub Unit Dinkes hanya jika 'RINCI'
+            if (printDetailMode === 'RINCI') {
+              const sortedRekeningSub = Object.values(sub.rekening || {}).sort((a, b) => a.kdrek.localeCompare(b.kdrek, undefined, { numeric: true }));
+              sortedRekeningSub.forEach(rek => {
+                rows.push(buildRowObj(`\u00A0\u00A0\u00A0\u00A0${rek.kdrek}`, `\u00A0\u00A0\u00A0\u00A0${rek.nmrek}`, rek, false, 2));
+              });
+            }
           });
         } else {
-          sortedRekeningSkpd.forEach(rek => {
-            rows.push(buildRowObj(`\u00A0\u00A0${rek.kdrek}`, `\u00A0\u00A0${rek.nmrek}`, rek, false, 1));
-          });
+          // SKPD Non-Dinkes: Rekening hanya jika 'RINCI'
+          if (printDetailMode === 'RINCI') {
+            sortedRekeningSkpd.forEach(rek => {
+              rows.push(buildRowObj(`\u00A0\u00A0${rek.kdrek}`, `\u00A0\u00A0${rek.nmrek}`, rek, false, 1));
+            });
+          }
         }
       });
     } else if (activeTab === 2 && selectedSkpd !== 'REKAP') {
       // --- CETAKAN PER SUBKEGIATAN (TAB 2 KHUSUS SKPD SPECIFIC) ---
-      // Hitung Total Seluruh Kolom untuk Baris Pertama
-      const totalsObj = {
-        apbd: 0, gsr1: 0, gsr2: 0, gsr3: 0, gsr4: 0, gsr5: 0, apbdp: 0
-      };
-
-      if (isDinkesSelected) {
-        processedData.dinkesSubGiatList.forEach(sub => {
-          COLUMN_CONFIG.forEach(col => {
-            totalsObj[col.id] += (sub[col.id] || 0);
-          });
-        });
-      } else {
-        processedData.sortedSubgiatTreeList.forEach(sg => {
-          COLUMN_CONFIG.forEach(col => {
-            totalsObj[col.id] += (sg[col.id] || 0);
-          });
-        });
-      }
-
-      // Baris Pertama: JUMLAH TOTAL
-      rows.push(buildRowObj('', 'JUMLAH TOTAL', totalsObj, true, 0));
-
-      // Baris Rincian Subkegiatan
       if (isDinkesSelected) {
         // Mode Dinkes Tab 2: Sub Unit -> Sub Kegiatan -> Rekening
         processedData.dinkesSubGiatList.forEach(sub => {
@@ -652,10 +678,12 @@ export default function DashboardHistApbd() {
           sortedSG.forEach(sg => {
             rows.push(buildRowObj(`\u00A0\u00A0${sg.kdsubgiat}`, `${sg.nmsubgiat}`, sg, true, 1));
 
-            const sortedRek = Object.values(sg.rekening || {}).sort((a, b) => a.kdrek.localeCompare(b.kdrek, undefined, { numeric: true }));
-            sortedRek.forEach(rek => {
-              rows.push(buildRowObj(`\u00A0\u00A0\u00A0\u00A0${rek.kdrek}`, `\u00A0\u00A0\u00A0\u00A0${rek.nmrek}`, rek, false, 2));
-            });
+            if (printDetailMode === 'RINCI') {
+              const sortedRek = Object.values(sg.rekening || {}).sort((a, b) => a.kdrek.localeCompare(b.kdrek, undefined, { numeric: true }));
+              sortedRek.forEach(rek => {
+                rows.push(buildRowObj(`\u00A0\u00A0\u00A0\u00A0${rek.kdrek}`, `\u00A0\u00A0\u00A0\u00A0${rek.nmrek}`, rek, false, 2));
+              });
+            }
           });
         });
       } else {
@@ -668,10 +696,12 @@ export default function DashboardHistApbd() {
         list.forEach(subgiat => {
           rows.push(buildRowObj(subgiat.kdsubgiat, subgiat.nmsubgiat, subgiat, true, 0));
 
-          const sortedRekening = Object.values(subgiat.rekening || {}).sort((a, b) => a.kdrek.localeCompare(b.kdrek, undefined, { numeric: true }));
-          sortedRekening.forEach(rek => {
-            rows.push(buildRowObj(`\u00A0\u00A0${rek.kdrek}`, `\u00A0\u00A0${rek.nmrek}`, rek, false, 1));
-          });
+          if (printDetailMode === 'RINCI') {
+            const sortedRekening = Object.values(subgiat.rekening || {}).sort((a, b) => a.kdrek.localeCompare(b.kdrek, undefined, { numeric: true }));
+            sortedRekening.forEach(rek => {
+              rows.push(buildRowObj(`\u00A0\u00A0${rek.kdrek}`, `\u00A0\u00A0${rek.nmrek}`, rek, false, 1));
+            });
+          }
         });
       }
     }
@@ -680,52 +710,129 @@ export default function DashboardHistApbd() {
   };
 
   // --- FUNGSI CETAK PDF & EXCEL ---
-  const handlePrint = () => {
+  const handlePrint = async () => {
     const { headers, rows } = getExportData();
 
     if (printFormat === 'excel') {
-      // Export Excel dengan format yang rapi & terstruktur
-      const excelData = [];
-      
-      // Header Informasi Laporan
-      excelData.push(["RIWAYAT PERUBAHAN DATA APBD"]);
-      excelData.push([`SKPD / UNIT KERJA : ${currentSkpdName}`]);
-      excelData.push([`TAHUN ANGGARAN   : ${selectedThn}`]);
-      if (isDinkesSelected && selectedSubUnit !== 'SEMUA') {
-        excelData.push([`SUB UNIT KERJA   : ${selectedSubUnit}`]);
-      }
-      excelData.push([]); // Baris kosong pembatas
+      try {
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Riwayat APBD', {
+          pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true }
+        });
 
-      // Header Kolom Tabel
-      excelData.push(headers);
+        // Border standar untuk seluruh sel dalam tabel
+        const borderStyle = {
+          top: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+          left: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+          bottom: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+          right: { style: 'thin', color: { argb: 'FFD1D5DB' } }
+        };
 
-      // Baris Data
-      rows.forEach(r => {
-        const rowVal = r.map((val, idx) => {
-          if (idx >= 2 && typeof val === 'number') {
-            return val; // Pertahankan angka asli agar formula Excel dapat memprosesnya
+        // 1. Header Informasi Laporan
+        const r1 = worksheet.addRow(['RIWAYAT PERUBAHAN DATA APBD']);
+        r1.font = { name: 'Calibri', size: 14, bold: true, color: { argb: 'FF1E293B' } };
+
+        const r2 = worksheet.addRow([`SKPD / UNIT KERJA : ${currentSkpdName}`]);
+        r2.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF334155' } };
+
+        const r3 = worksheet.addRow([`TAHUN ANGGARAN   : ${selectedThn}`]);
+        r3.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF334155' } };
+
+        let headerOffset = 5;
+        if (isDinkesSelected && selectedSubUnit !== 'SEMUA') {
+          const r4 = worksheet.addRow([`SUB UNIT KERJA   : ${selectedSubUnit}`]);
+          r4.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF334155' } };
+          headerOffset = 6;
+        }
+
+        worksheet.addRow([]); // Baris kosong pembatas
+
+        // 2. Header Kolom Tabel
+        const headerRow = worksheet.addRow(headers);
+        headerRow.height = 28;
+
+        headerRow.eachCell((cell) => {
+          cell.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FF1E293B' }
+          };
+          cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+          cell.border = borderStyle;
+        });
+
+        // 3. Menambahkan Baris Data
+        rows.forEach((r) => {
+          const rowVal = r.map((val, idx) => {
+            if (idx >= 2 && typeof val === 'number') {
+              return val;
+            }
+            return String(val || '');
+          });
+
+          const addedRow = worksheet.addRow(rowVal);
+          addedRow.height = 20;
+
+          addedRow.eachCell((cell, colIndex) => {
+            cell.font = {
+              name: 'Calibri',
+              size: 9.5,
+              bold: !!r.isBold,
+              color: { argb: 'FF1E293B' }
+            };
+
+            // Latar belakang lembut untuk baris rekapitulasi/penebalan
+            if (r.isBold) {
+              cell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFF1F5F9' }
+              };
+            }
+
+            cell.border = borderStyle;
+
+            // Alignment & Format Angka untuk Kolom Nilai
+            if (colIndex >= 3) {
+              cell.alignment = { vertical: 'middle', horizontal: 'right' };
+              cell.numFmt = '#,##0;(#,##0);"-"';
+            } else {
+              cell.alignment = { vertical: 'middle', horizontal: 'left' };
+            }
+          });
+        });
+
+        // 4. Penyesuaian Lebar Kolom Otomatis
+        worksheet.columns.forEach((column, colIdx) => {
+          let maxLen = 12;
+          column.eachCell({ includeEmpty: true }, (cell, rowIdx) => {
+            if (rowIdx >= headerOffset) {
+              const strVal = cell.value ? cell.value.toString() : '';
+              if (strVal.length > maxLen) {
+                maxLen = strVal.length;
+              }
+            }
+          });
+
+          if (colIdx === 0) {
+            column.width = Math.min(Math.max(maxLen + 4, 22), 35);
+          } else if (colIdx === 1) {
+            column.width = Math.min(Math.max(maxLen + 4, 35), 65);
+          } else {
+            column.width = Math.max(maxLen + 4, 18);
           }
-          return String(val);
         });
-        excelData.push(rowVal);
-      });
 
-      const worksheet = XLSX.utils.aoa_to_sheet(excelData);
+        // 5. Menyimpan dan Mengunduh File Excel
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        saveAs(blob, `RIWAYAT_PERUBAHAN_DATA_APBD_${selectedThn}_${selectedSkpd}.xlsx`);
 
-      // Lebar Kolom Otomatis
-      const colWidths = headers.map((h, i) => {
-        let maxLen = h.length;
-        excelData.slice(5).forEach(row => {
-          const valStr = row[i] !== undefined && row[i] !== null ? String(row[i]) : '';
-          if (valStr.length > maxLen) maxLen = valStr.length;
-        });
-        return { wch: Math.min(Math.max(maxLen + 3, 12), 60) };
-      });
-      worksheet['!cols'] = colWidths;
-
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Riwayat APBD");
-      XLSX.writeFile(workbook, `RIWAYAT_PERUBAHAN_DATA_APBD_${selectedThn}_${selectedSkpd}.xlsx`);
+      } catch (err) {
+        console.error("Gagal mencetak Excel:", err);
+        alert("Gagal mencetak Excel. Pastikan dependensi exceljs & file-saver terpasang.");
+      }
     } else {
       // Export PDF dengan Times New Roman & Penebalan khusus
       try {
@@ -1018,8 +1125,19 @@ export default function DashboardHistApbd() {
               {/* SEPARATOR */}
               <div className="h-6 w-[1px] bg-slate-800 mx-1 hidden sm:block"></div>
 
-              {/* MODUL CETAK (SEBELAH PILIHAN PROSES) */}
-              <div className="flex items-center gap-1 bg-[#030712] p-1 border border-slate-800 rounded-lg">
+              {/* MODUL CETAK (DENGAN PILIHAN DETAIL & FORMAT CETAK) */}
+              <div className="flex items-center gap-1.5 bg-[#030712] p-1 border border-slate-800 rounded-lg flex-wrap">
+                {/* Opsi Detail Cetakan: Dengan Rincian / Hanya SKPD */}
+                <select
+                  value={printDetailMode}
+                  onChange={(e) => setPrintDetailMode(e.target.value)}
+                  className="bg-transparent text-cyan-300 text-xs font-bold px-2 py-1 rounded focus:outline-none cursor-pointer border-r border-slate-800"
+                >
+                  <option value="RINCI" className="bg-[#030712] text-slate-200">Dengan Rincian</option>
+                  <option value="SKPD_ONLY" className="bg-[#030712] text-slate-200">Hanya SKPD</option>
+                </select>
+
+                {/* Opsi Format Cetakan: PDF / Excel */}
                 <select
                   value={printFormat}
                   onChange={(e) => setPrintFormat(e.target.value)}
