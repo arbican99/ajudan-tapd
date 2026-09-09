@@ -6,8 +6,7 @@ import {
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import ExcelJS from 'exceljs';
-import { saveAs } from 'file-saver';
+import * as XLSX from 'xlsx';
 
 const COLUMN_CONFIG = [
   { id: 'apbd', label: 'APBD' },
@@ -681,129 +680,52 @@ export default function DashboardHistApbd() {
   };
 
   // --- FUNGSI CETAK PDF & EXCEL ---
-  const handlePrint = async () => {
+  const handlePrint = () => {
     const { headers, rows } = getExportData();
 
     if (printFormat === 'excel') {
-      try {
-        const workbook = new ExcelJS.Workbook();
-        const worksheet = workbook.addWorksheet('Riwayat APBD', {
-          pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true }
-        });
-
-        // Border standar untuk seluruh sel dalam tabel
-        const borderStyle = {
-          top: { style: 'thin', color: { argb: 'FFD1D5DB' } },
-          left: { style: 'thin', color: { argb: 'FFD1D5DB' } },
-          bottom: { style: 'thin', color: { argb: 'FFD1D5DB' } },
-          right: { style: 'thin', color: { argb: 'FFD1D5DB' } }
-        };
-
-        // 1. Header Informasi Laporan
-        const r1 = worksheet.addRow(['RIWAYAT PERUBAHAN DATA APBD']);
-        r1.font = { name: 'Calibri', size: 14, bold: true, color: { argb: 'FF1E293B' } };
-
-        const r2 = worksheet.addRow([`SKPD / UNIT KERJA : ${currentSkpdName}`]);
-        r2.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF334155' } };
-
-        const r3 = worksheet.addRow([`TAHUN ANGGARAN   : ${selectedThn}`]);
-        r3.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF334155' } };
-
-        let headerOffset = 5;
-        if (isDinkesSelected && selectedSubUnit !== 'SEMUA') {
-          const r4 = worksheet.addRow([`SUB UNIT KERJA   : ${selectedSubUnit}`]);
-          r4.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF334155' } };
-          headerOffset = 6;
-        }
-
-        worksheet.addRow([]); // Baris kosong pembatas
-
-        // 2. Header Kolom Tabel
-        const headerRow = worksheet.addRow(headers);
-        headerRow.height = 28;
-
-        headerRow.eachCell((cell) => {
-          cell.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
-          cell.fill = {
-            type: 'pattern',
-            pattern: 'solid',
-            fgColor: { argb: 'FF1E293B' }
-          };
-          cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-          cell.border = borderStyle;
-        });
-
-        // 3. Menambahkan Baris Data
-        rows.forEach((r) => {
-          const rowVal = r.map((val, idx) => {
-            if (idx >= 2 && typeof val === 'number') {
-              return val;
-            }
-            return String(val || '');
-          });
-
-          const addedRow = worksheet.addRow(rowVal);
-          addedRow.height = 20;
-
-          addedRow.eachCell((cell, colIndex) => {
-            cell.font = {
-              name: 'Calibri',
-              size: 9.5,
-              bold: !!r.isBold,
-              color: { argb: 'FF1E293B' }
-            };
-
-            // Latar belakang lembut untuk baris rekapitulasi/penebalan
-            if (r.isBold) {
-              cell.fill = {
-                type: 'pattern',
-                pattern: 'solid',
-                fgColor: { argb: 'FFF1F5F9' }
-              };
-            }
-
-            cell.border = borderStyle;
-
-            // Alignment & Format Angka untuk Kolom Nilai
-            if (colIndex >= 3) {
-              cell.alignment = { vertical: 'middle', horizontal: 'right' };
-              cell.numFmt = '#,##0;(#,##0);"-"';
-            } else {
-              cell.alignment = { vertical: 'middle', horizontal: 'left' };
-            }
-          });
-        });
-
-        // 4. Penyesuaian Lebar Kolom Otomatis
-        worksheet.columns.forEach((column, colIdx) => {
-          let maxLen = 12;
-          column.eachCell({ includeEmpty: true }, (cell, rowIdx) => {
-            if (rowIdx >= headerOffset) {
-              const strVal = cell.value ? cell.value.toString() : '';
-              if (strVal.length > maxLen) {
-                maxLen = strVal.length;
-              }
-            }
-          });
-
-          if (colIdx === 0) {
-            column.width = Math.min(Math.max(maxLen + 4, 22), 35);
-          } else if (colIdx === 1) {
-            column.width = Math.min(Math.max(maxLen + 4, 35), 65);
-          } else {
-            column.width = Math.max(maxLen + 4, 18);
-          }
-        });
-
-        // 5. Menyimpan dan Mengunduh File Excel
-        const buffer = await workbook.xlsx.writeBuffer();
-        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        saveAs(blob, `RIWAYAT_PERUBAHAN_DATA_APBD_${selectedThn}_${selectedSkpd}.xlsx`);
-
-      } catch (err) {
-        console.error("Gagal mencetak Excel:", err);
-        alert("Gagal mencetak Excel. Pastikan dependensi exceljs & file-saver terpasang.");
+      // Export Excel dengan format yang rapi & terstruktur
+      const excelData = [];
+      
+      // Header Informasi Laporan
+      excelData.push(["RIWAYAT PERUBAHAN DATA APBD"]);
+      excelData.push([`SKPD / UNIT KERJA : ${currentSkpdName}`]);
+      excelData.push([`TAHUN ANGGARAN   : ${selectedThn}`]);
+      if (isDinkesSelected && selectedSubUnit !== 'SEMUA') {
+        excelData.push([`SUB UNIT KERJA   : ${selectedSubUnit}`]);
       }
+      excelData.push([]); // Baris kosong pembatas
+
+      // Header Kolom Tabel
+      excelData.push(headers);
+
+      // Baris Data
+      rows.forEach(r => {
+        const rowVal = r.map((val, idx) => {
+          if (idx >= 2 && typeof val === 'number') {
+            return val; // Pertahankan angka asli agar formula Excel dapat memprosesnya
+          }
+          return String(val);
+        });
+        excelData.push(rowVal);
+      });
+
+      const worksheet = XLSX.utils.aoa_to_sheet(excelData);
+
+      // Lebar Kolom Otomatis
+      const colWidths = headers.map((h, i) => {
+        let maxLen = h.length;
+        excelData.slice(5).forEach(row => {
+          const valStr = row[i] !== undefined && row[i] !== null ? String(row[i]) : '';
+          if (valStr.length > maxLen) maxLen = valStr.length;
+        });
+        return { wch: Math.min(Math.max(maxLen + 3, 12), 60) };
+      });
+      worksheet['!cols'] = colWidths;
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Riwayat APBD");
+      XLSX.writeFile(workbook, `RIWAYAT_PERUBAHAN_DATA_APBD_${selectedThn}_${selectedSkpd}.xlsx`);
     } else {
       // Export PDF dengan Times New Roman & Penebalan khusus
       try {

@@ -6,8 +6,7 @@ import {
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import ExcelJS from 'exceljs';
-import { saveAs } from 'file-saver';
+import * as XLSX from 'xlsx';
 
 const COLUMN_CONFIG = [
   { id: 'apbd', label: 'APBD' },
@@ -561,34 +560,36 @@ export default function DashboardHistApbd() {
 
     const rows = [];
 
-    const buildRowObj = (kode, nama, itemData, isBold = false, levelDepth = 0) => {
-      const rowArr = [kode, nama];
-      selectedColumns.forEach((colId, idx) => {
-        rowArr.push(itemData[colId] || 0);
-        if (idx > 0) rowArr.push(calculateDiff(itemData, idx));
-      });
-      rowArr.isBold = isBold;
-      rowArr.levelDepth = levelDepth;
-      return rowArr;
-    };
-
     if (activeTab === 1) {
       if (isDinkesSelected) {
         // Mode Dinkes: Sub Unit -> Rekening
         processedData.dinkesSubUnitList.forEach(sub => {
-          rows.push(buildRowObj(sub.kdsubunit, `SUB UNIT: ${sub.nmsubunit}`, sub, true, 0));
+          const subRow = [sub.kdsubunit, `SUB UNIT: ${sub.nmsubunit}`];
+          selectedColumns.forEach((colId, idx) => {
+            subRow.push(sub[colId] || 0);
+            if (idx > 0) subRow.push(calculateDiff(sub, idx));
+          });
+          rows.push(subRow);
 
           const sortedRek = Object.values(sub.rekening || {}).sort((a, b) => a.kdrek.localeCompare(b.kdrek, undefined, { numeric: true }));
           sortedRek.forEach(rek => {
-            rows.push(buildRowObj(`\u00A0\u00A0${rek.kdrek}`, `\u00A0\u00A0${rek.nmrek}`, rek, false, 1));
+            const rekRow = [`  ${rek.kdrek}`, `  ${rek.nmrek}`];
+            selectedColumns.forEach((colId, idx) => {
+              rekRow.push(rek[colId] || 0);
+              if (idx > 0) rekRow.push(calculateDiff(rek, idx));
+            });
+            rows.push(rekRow);
           });
         });
       } else {
         // Mode Flat Rekening
         filteredTab1Data.forEach(row => {
-          const isHeaderLevel = row.level === 0 || row.level === 1;
-          const pad = '\u00A0\u00A0'.repeat(row.level || 0);
-          rows.push(buildRowObj(`${pad}${row.kdrek}`, `${pad}${row.nmrek}`, row, isHeaderLevel, row.level || 0));
+          const itemRow = [row.kdrek, row.nmrek];
+          selectedColumns.forEach((colId, idx) => {
+            itemRow.push(row[colId] || 0);
+            if (idx > 0) itemRow.push(calculateDiff(row, idx));
+          });
+          rows.push(itemRow);
         });
       }
     } else if (activeTab === 2 && selectedSkpd === 'REKAP') {
@@ -598,7 +599,12 @@ export default function DashboardHistApbd() {
       );
 
       list.forEach(skpd => {
-        rows.push(buildRowObj(skpd.kdskpd, skpd.nmskpd, skpd, true, 0));
+        const skpdRow = [skpd.kdskpd, skpd.nmskpd];
+        selectedColumns.forEach((colId, idx) => {
+          skpdRow.push(skpd[colId] || 0);
+          if (idx > 0) skpdRow.push(calculateDiff(skpd, idx));
+        });
+        rows.push(skpdRow);
 
         const isDinasKesehatan = skpd.nmskpd.toLowerCase().includes('kesehatan');
         const sortedSubUnits = Object.values(skpd.subUnits || {}).sort((a, b) => a.kdsubunit.localeCompare(b.kdsubunit, undefined, { numeric: true }));
@@ -606,56 +612,62 @@ export default function DashboardHistApbd() {
 
         if (isDinasKesehatan) {
           sortedSubUnits.forEach(sub => {
-            rows.push(buildRowObj(`\u00A0\u00A0${sub.kdsubunit}`, `\u00A0\u00A0\u21B3 ${sub.nmsubunit}`, sub, true, 1));
+            const subRow = [`  ${sub.kdsubunit}`, `  ↳ ${sub.nmsubunit}`];
+            selectedColumns.forEach((colId, idx) => {
+              subRow.push(sub[colId] || 0);
+              if (idx > 0) subRow.push(calculateDiff(sub, idx));
+            });
+            rows.push(subRow);
 
             const sortedRekeningSub = Object.values(sub.rekening || {}).sort((a, b) => a.kdrek.localeCompare(b.kdrek, undefined, { numeric: true }));
             sortedRekeningSub.forEach(rek => {
-              rows.push(buildRowObj(`\u00A0\u00A0\u00A0\u00A0${rek.kdrek}`, `\u00A0\u00A0\u00A0\u00A0${rek.nmrek}`, rek, false, 2));
+              const rekRow = [`    ${rek.kdrek}`, `    ${rek.nmrek}`];
+              selectedColumns.forEach((colId, idx) => {
+                rekRow.push(rek[colId] || 0);
+                if (idx > 0) rekRow.push(calculateDiff(rek, idx));
+              });
+              rows.push(rekRow);
             });
           });
         } else {
           sortedRekeningSkpd.forEach(rek => {
-            rows.push(buildRowObj(`\u00A0\u00A0${rek.kdrek}`, `\u00A0\u00A0${rek.nmrek}`, rek, false, 1));
+            const rekRow = [`  ${rek.kdrek}`, `  ${rek.nmrek}`];
+            selectedColumns.forEach((colId, idx) => {
+              rekRow.push(rek[colId] || 0);
+              if (idx > 0) rekRow.push(calculateDiff(rek, idx));
+            });
+            rows.push(rekRow);
           });
         }
       });
     } else if (activeTab === 2 && selectedSkpd !== 'REKAP') {
-      // --- CETAKAN PER SUBKEGIATAN (TAB 2 KHUSUS SKPD SPECIFIC) ---
-      // Hitung Total Seluruh Kolom untuk Baris Pertama
-      const totalsObj = {
-        apbd: 0, gsr1: 0, gsr2: 0, gsr3: 0, gsr4: 0, gsr5: 0, apbdp: 0
-      };
-
-      if (isDinkesSelected) {
-        processedData.dinkesSubGiatList.forEach(sub => {
-          COLUMN_CONFIG.forEach(col => {
-            totalsObj[col.id] += (sub[col.id] || 0);
-          });
-        });
-      } else {
-        processedData.sortedSubgiatTreeList.forEach(sg => {
-          COLUMN_CONFIG.forEach(col => {
-            totalsObj[col.id] += (sg[col.id] || 0);
-          });
-        });
-      }
-
-      // Baris Pertama: JUMLAH TOTAL
-      rows.push(buildRowObj('', 'JUMLAH TOTAL', totalsObj, true, 0));
-
-      // Baris Rincian Subkegiatan
       if (isDinkesSelected) {
         // Mode Dinkes Tab 2: Sub Unit -> Sub Kegiatan -> Rekening
         processedData.dinkesSubGiatList.forEach(sub => {
-          rows.push(buildRowObj(sub.kdsubunit, `SUB UNIT: ${sub.nmsubunit}`, sub, true, 0));
+          const subRow = [sub.kdsubunit, `SUB UNIT: ${sub.nmsubunit}`];
+          selectedColumns.forEach((colId, idx) => {
+            subRow.push(sub[colId] || 0);
+            if (idx > 0) subRow.push(calculateDiff(sub, idx));
+          });
+          rows.push(subRow);
 
           const sortedSG = Object.values(sub.subgiat || {}).sort((a, b) => a.kdsubgiat.localeCompare(b.kdsubgiat, undefined, { numeric: true }));
           sortedSG.forEach(sg => {
-            rows.push(buildRowObj(`\u00A0\u00A0${sg.kdsubgiat}`, `${sg.nmsubgiat}`, sg, true, 1));
+            const sgRow = [`  ${sg.kdsubgiat}`, `  ↳ ${sg.nmsubgiat}`];
+            selectedColumns.forEach((colId, idx) => {
+              sgRow.push(sg[colId] || 0);
+              if (idx > 0) sgRow.push(calculateDiff(sg, idx));
+            });
+            rows.push(sgRow);
 
             const sortedRek = Object.values(sg.rekening || {}).sort((a, b) => a.kdrek.localeCompare(b.kdrek, undefined, { numeric: true }));
             sortedRek.forEach(rek => {
-              rows.push(buildRowObj(`\u00A0\u00A0\u00A0\u00A0${rek.kdrek}`, `\u00A0\u00A0\u00A0\u00A0${rek.nmrek}`, rek, false, 2));
+              const rekRow = [`    ${rek.kdrek}`, `    ${rek.nmrek}`];
+              selectedColumns.forEach((colId, idx) => {
+                rekRow.push(rek[colId] || 0);
+                if (idx > 0) rekRow.push(calculateDiff(rek, idx));
+              });
+              rows.push(rekRow);
             });
           });
         });
@@ -667,11 +679,21 @@ export default function DashboardHistApbd() {
         );
 
         list.forEach(subgiat => {
-          rows.push(buildRowObj(subgiat.kdsubgiat, subgiat.nmsubgiat, subgiat, true, 0));
+          const sgRow = [subgiat.kdsubgiat, subgiat.nmsubgiat];
+          selectedColumns.forEach((colId, idx) => {
+            sgRow.push(subgiat[colId] || 0);
+            if (idx > 0) sgRow.push(calculateDiff(subgiat, idx));
+          });
+          rows.push(sgRow);
 
           const sortedRekening = Object.values(subgiat.rekening || {}).sort((a, b) => a.kdrek.localeCompare(b.kdrek, undefined, { numeric: true }));
           sortedRekening.forEach(rek => {
-            rows.push(buildRowObj(`\u00A0\u00A0${rek.kdrek}`, `\u00A0\u00A0${rek.nmrek}`, rek, false, 1));
+            const rekRow = [`  ${rek.kdrek}`, `  ${rek.nmrek}`];
+            selectedColumns.forEach((colId, idx) => {
+              rekRow.push(rek[colId] || 0);
+              if (idx > 0) rekRow.push(calculateDiff(rek, idx));
+            });
+            rows.push(rekRow);
           });
         });
       }
@@ -681,131 +703,25 @@ export default function DashboardHistApbd() {
   };
 
   // --- FUNGSI CETAK PDF & EXCEL ---
-  const handlePrint = async () => {
+  const handlePrint = () => {
     const { headers, rows } = getExportData();
 
     if (printFormat === 'excel') {
-      try {
-        const workbook = new ExcelJS.Workbook();
-        const worksheet = workbook.addWorksheet('Riwayat APBD', {
-          pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true }
+      // Export Excel
+      const formattedRows = rows.map(r => {
+        const rowObj = {};
+        headers.forEach((h, i) => {
+          rowObj[h] = typeof r[i] === 'number' ? r[i] : String(r[i]).trim();
         });
+        return rowObj;
+      });
 
-        // Border standar untuk seluruh sel dalam tabel
-        const borderStyle = {
-          top: { style: 'thin', color: { argb: 'FFD1D5DB' } },
-          left: { style: 'thin', color: { argb: 'FFD1D5DB' } },
-          bottom: { style: 'thin', color: { argb: 'FFD1D5DB' } },
-          right: { style: 'thin', color: { argb: 'FFD1D5DB' } }
-        };
-
-        // 1. Header Informasi Laporan
-        const r1 = worksheet.addRow(['RIWAYAT PERUBAHAN DATA APBD']);
-        r1.font = { name: 'Calibri', size: 14, bold: true, color: { argb: 'FF1E293B' } };
-
-        const r2 = worksheet.addRow([`SKPD / UNIT KERJA : ${currentSkpdName}`]);
-        r2.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF334155' } };
-
-        const r3 = worksheet.addRow([`TAHUN ANGGARAN   : ${selectedThn}`]);
-        r3.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF334155' } };
-
-        let headerOffset = 5;
-        if (isDinkesSelected && selectedSubUnit !== 'SEMUA') {
-          const r4 = worksheet.addRow([`SUB UNIT KERJA   : ${selectedSubUnit}`]);
-          r4.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF334155' } };
-          headerOffset = 6;
-        }
-
-        worksheet.addRow([]); // Baris kosong pembatas
-
-        // 2. Header Kolom Tabel
-        const headerRow = worksheet.addRow(headers);
-        headerRow.height = 28;
-
-        headerRow.eachCell((cell) => {
-          cell.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
-          cell.fill = {
-            type: 'pattern',
-            pattern: 'solid',
-            fgColor: { argb: 'FF1E293B' }
-          };
-          cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-          cell.border = borderStyle;
-        });
-
-        // 3. Menambahkan Baris Data
-        rows.forEach((r) => {
-          const rowVal = r.map((val, idx) => {
-            if (idx >= 2 && typeof val === 'number') {
-              return val;
-            }
-            return String(val || '');
-          });
-
-          const addedRow = worksheet.addRow(rowVal);
-          addedRow.height = 20;
-
-          addedRow.eachCell((cell, colIndex) => {
-            cell.font = {
-              name: 'Calibri',
-              size: 9.5,
-              bold: !!r.isBold,
-              color: { argb: 'FF1E293B' }
-            };
-
-            // Latar belakang lembut untuk baris rekapitulasi/penebalan
-            if (r.isBold) {
-              cell.fill = {
-                type: 'pattern',
-                pattern: 'solid',
-                fgColor: { argb: 'FFF1F5F9' }
-              };
-            }
-
-            cell.border = borderStyle;
-
-            // Alignment & Format Angka untuk Kolom Nilai
-            if (colIndex >= 3) {
-              cell.alignment = { vertical: 'middle', horizontal: 'right' };
-              cell.numFmt = '#,##0;(#,##0);"-"';
-            } else {
-              cell.alignment = { vertical: 'middle', horizontal: 'left' };
-            }
-          });
-        });
-
-        // 4. Penyesuaian Lebar Kolom Otomatis
-        worksheet.columns.forEach((column, colIdx) => {
-          let maxLen = 12;
-          column.eachCell({ includeEmpty: true }, (cell, rowIdx) => {
-            if (rowIdx >= headerOffset) {
-              const strVal = cell.value ? cell.value.toString() : '';
-              if (strVal.length > maxLen) {
-                maxLen = strVal.length;
-              }
-            }
-          });
-
-          if (colIdx === 0) {
-            column.width = Math.min(Math.max(maxLen + 4, 22), 35);
-          } else if (colIdx === 1) {
-            column.width = Math.min(Math.max(maxLen + 4, 35), 65);
-          } else {
-            column.width = Math.max(maxLen + 4, 18);
-          }
-        });
-
-        // 5. Menyimpan dan Mengunduh File Excel
-        const buffer = await workbook.xlsx.writeBuffer();
-        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        saveAs(blob, `RIWAYAT_PERUBAHAN_DATA_APBD_${selectedThn}_${selectedSkpd}.xlsx`);
-
-      } catch (err) {
-        console.error("Gagal mencetak Excel:", err);
-        alert("Gagal mencetak Excel. Pastikan dependensi exceljs & file-saver terpasang.");
-      }
+      const worksheet = XLSX.utils.json_to_sheet(formattedRows);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Riwayat APBD");
+      XLSX.writeFile(workbook, `RIWAYAT_PERUBAHAN_DATA_APBD_${selectedThn}_${selectedSkpd}.xlsx`);
     } else {
-      // Export PDF dengan Times New Roman & Penebalan khusus
+      // Export PDF dengan jsPDF + autoTable
       try {
         const doc = new jsPDF({
           orientation: 'landscape',
@@ -813,13 +729,13 @@ export default function DashboardHistApbd() {
           format: 'a4'
         });
         
-        // Judul & Header Laporan dengan Font Times New Roman
-        doc.setFont('times', 'bold');
+        // Judul & Header Laporan
+        doc.setFont('helvetica', 'bold');
         doc.setFontSize(14);
         doc.text("RIWAYAT PERUBAHAN DATA APBD", 40, 35);
         
         doc.setFontSize(9);
-        doc.setFont('times', 'normal');
+        doc.setFont('helvetica', 'normal');
         doc.text(`SKPD / UNIT KERJA : ${currentSkpdName}`, 40, 52);
         doc.text(`TAHUN ANGGARAN   : ${selectedThn}`, 40, 66);
         if (isDinkesSelected && selectedSubUnit !== 'SEMUA') {
@@ -835,7 +751,7 @@ export default function DashboardHistApbd() {
           })
         );
 
-        // Render Tabel dengan Font Times New Roman & Penebalan Baris Induk
+        // Render Tabel dengan Border Lengkap
         autoTable(doc, {
           head: [headers],
           body: formattedPdfRows,
@@ -846,33 +762,24 @@ export default function DashboardHistApbd() {
             cellPadding: 4,
             lineColor: [100, 100, 100],
             lineWidth: 0.5,
-            font: 'times',
-            textColor: [30, 30, 30]
+            font: 'helvetica'
           },
           headStyles: { 
             fillColor: [30, 41, 59], 
             textColor: [255, 255, 255],
             fontStyle: 'bold',
             halign: 'center',
-            valign: 'middle',
-            font: 'times'
+            valign: 'middle'
           },
           columnStyles: {
             0: { cellWidth: 120 },
             1: { cellWidth: 'auto' }
           },
           didParseCell: (data) => {
-            if (data.section === 'body') {
-              const originalRow = rows[data.row.index];
-              if (originalRow && originalRow.isBold) {
-                data.cell.styles.fontStyle = 'bold';
-                data.cell.styles.fillColor = [240, 243, 246];
-              }
-
-              // Align kanan untuk nilai numerik
-              if (data.column.index >= 2) {
-                data.cell.styles.halign = 'right';
-              }
+            // Align kanan untuk kolom numerik
+            if (data.section === 'body' && data.column.index >= 2) {
+              data.cell.styles.halign = 'right';
+              data.cell.styles.font = 'courier';
             }
           }
         });
@@ -1326,7 +1233,7 @@ export default function DashboardHistApbd() {
                                       </div>
                                     </td>
                                     <td className="p-2 border-r border-slate-800 text-amber-200 text-xs font-semibold text-left">
-                                      {'\u21B3'} {sub.nmsubunit}
+                                      ↳ {sub.nmsubunit}
                                     </td>
                                     {renderValueCells(sub)}
                                   </tr>
@@ -1419,7 +1326,7 @@ export default function DashboardHistApbd() {
                                       </div>
                                     </td>
                                     <td className="p-2 border-r border-slate-800 text-amber-200 text-xs font-semibold text-left">
-                                       {sg.nmsubgiat}
+                                      ↳ {sg.nmsubgiat}
                                     </td>
                                     {renderValueCells(sg)}
                                   </tr>
