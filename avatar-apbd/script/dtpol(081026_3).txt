@@ -166,7 +166,7 @@ export default function DataPol() {
   const [klpol] = useState(MOCK_KLPOL);
   const [dtpolList, setDtpolList] = useState([]);
 
-  // Grouping & Sorting SKPD untuk Combo Box
+  // Grouping Unik SKPD untuk Combo Box
   const uniqueSkpdList = useMemo(() => {
     const map = new Map();
     tblSkpd.forEach(item => {
@@ -174,9 +174,7 @@ export default function DataPol() {
         map.set(item.kd_skpd, item);
       }
     });
-    return Array.from(map.values()).sort((a, b) =>
-      a.kd_skpd.localeCompare(b.kd_skpd, undefined, { numeric: true, sensitivity: 'base' })
-    );
+    return Array.from(map.values());
   }, [tblSkpd]);
 
   // Form States
@@ -548,21 +546,17 @@ export default function DataPol() {
     }
   };
 
-  // Filter Grid Sesuai Tahun dan Status Anggaran & DIURUTKAN BERDASARKAN KODE SKPD
+  // Filter Grid Sesuai Tahun dan Status Anggaran yang Dipilih
   const filteredGridData = useMemo(() => {
-    return dtpolList
-      .filter(item => {
-        const matchTahun = String(item.tahun) === String(tahun);
-        const matchStatus = item.st === st;
-        const matchSearch =
-          (item.kdskpd || '').toLowerCase().includes(searchGrid.toLowerCase()) ||
-          (item.nmskpd || '').toLowerCase().includes(searchGrid.toLowerCase());
+    return dtpolList.filter(item => {
+      const matchTahun = String(item.tahun) === String(tahun);
+      const matchStatus = item.st === st;
+      const matchSearch =
+        (item.kdskpd || '').toLowerCase().includes(searchGrid.toLowerCase()) ||
+        (item.nmskpd || '').toLowerCase().includes(searchGrid.toLowerCase());
 
-        return matchTahun && matchStatus && matchSearch;
-      })
-      .sort((a, b) =>
-        (a.kdskpd || '').localeCompare(b.kdskpd || '', undefined, { numeric: true, sensitivity: 'base' })
-      );
+      return matchTahun && matchStatus && matchSearch;
+    });
   }, [dtpolList, tahun, st, searchGrid]);
 
   // AKUMULASI GRAND TOTAL POL UNTUK SEMUA DATA PADA GRID (9 Komponen x 12 Bulan)
@@ -600,7 +594,7 @@ export default function DataPol() {
       );
   }, [klpol, searchKlpol]);
 
-  // CETAKAN FORMAT EXCEL RESMI SIAP CETAK (TERURUT BERDASARKAN KODE SKPD)
+  // CETAKAN FORMAT EXCEL RESMI SIAP CETAK
   const exportToExcelFormat = () => {
     if (filteredGridData.length === 0) {
       alert('Tidak ada data dtpol untuk diekspor!');
@@ -772,20 +766,20 @@ export default function DataPol() {
     }, 300);
   };
 
-  // Export PDF (TERURUT BERDASARKAN KODE SKPD)
+  // Export PDF
   const exportToPDF = () => {
     if (filteredGridData.length === 0) {
-      alert('Tidak ada data untuk diekspor!');
+      alert('Tidak ada data dtpol untuk diekspor!');
       return;
     }
     setLoadingAction('pdf');
     setTimeout(() => {
       const doc = new jsPDF('landscape', 'mm', 'a4');
       doc.setFontSize(14);
-      doc.text(`Laporan Data Belanja Pertimbangan Objektif Lainnya - Tahun ${tahun} (${st})`, 14, 15);
+      doc.text(`Laporan Data dtpol - Tahun ${tahun} (${st})`, 14, 15);
       
       const tableColumn = [
-        'No', 'Kode SKPD', 'Nama SKPD', 'Status Anggaran', 'PA', 'KPA', 'PPTK', 'PPK', 'BENDAHARA', 'BEND. PEMBANTU', 'Pengurus Brg Pengelola', 'Pembantu PBP', 'Pengurus Brg Pengguna', 'Total POL'
+        'No', 'Kode SKPD', 'Nama SKPD', 'Status', 'PA', 'KPA', 'PPTK', 'PPK', 'Bdh', 'Bdh Pmb', 'PB Peng', 'Pmb PB', 'PB Pengguna', 'Total POL (12 Bln)'
       ];
 
       const tableRows = filteredGridData.map((row, index) => {
@@ -1272,7 +1266,7 @@ export default function DataPol() {
                 <h3 className="text-sm font-bold text-white uppercase tracking-wider">
                   Data Grid Belanja Pertimbangan Objektif Lainnya ({tahun} - {st})
                 </h3>
-                <p className="text-slate-400 text-[10px]">Daftar Perhitungan POL SKPD (Terurut berdasarkan Kode SKPD)</p>
+                <p className="text-slate-400 text-[10px]">Daftar Perhitungan POL SKPD</p>
               </div>
 
               <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
