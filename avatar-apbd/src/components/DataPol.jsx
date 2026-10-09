@@ -986,7 +986,7 @@ export default function DataPol() {
                     />
                   </div>
                   <div className="flex-1">
-                    <label className="block mb-1 text-slate-400">Indeks Honor KPA (JNS A)</label>
+                    <label className="block mb-1 text-slate-400">Indeks Honor KPA</label>
                     <input
                       type="text"
                       disabled
@@ -1198,7 +1198,7 @@ export default function DataPol() {
                 ) : (
                   <Save size={16} />
                 )}
-                {editId ? 'Perbarui Data (dtpol)' : 'Simpan Data Ke dtpol'}
+                {editId ? 'Perbarui Data (dtpol)' : 'Simpan Data'}
               </button>
             </div>
           </form>
