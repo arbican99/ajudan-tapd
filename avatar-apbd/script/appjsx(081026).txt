@@ -6,7 +6,7 @@ import {
   Menu, HelpCircle, Sliders, Database, BookOpen,
   ClipboardCheck, TrendingUp, DollarSign, ListTree, CheckCircle2,
   Edit3, MessageSquare, LayoutDashboard, FileText, Settings, UserCheck,
-  History, Calculator, CheckSquare, Scale
+  History, Calculator, CheckSquare
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 
@@ -31,7 +31,6 @@ import UserAplikasi from './components/UserAplikasi';
 import HistoriAPBD from './components/HistoriAPBD';
 import ModulKomponen from './components/ModulKomponen';
 import ModulDataKomponen from './components/ModulDataKomponen';
-import DataPol from './components/DataPol.jsx';
 
 export default function App() {
   const [email, setEmail] = useState('');
@@ -136,7 +135,6 @@ export default function App() {
       case 'tematik': return 'Master Kelompok Laporan Tematik APBD';
       case 'perhitungan-komponen': return 'Perhitungan Komponen';
       case 'verifikasi-rka': return 'Sistem Validasi RKA';
-      case 'verifikasi-pol': return 'Pertimbangan Objektif Lainnya';
       case 'verifikasi-realisasi': return 'Audit Komparatif Realisasi';
       case 'input-hasil-asistensi': return 'Input Hasil Asistensi';
       case 'pembahasan-hasil-asistensi': return 'Pembahasan Hasil Asistensi';
@@ -407,19 +405,6 @@ export default function App() {
                       >
                         <FileSpreadsheet size={13} className={activeTab === 'verifikasi-rka' ? 'text-cyan-400' : 'text-slate-600'} />
                         <span className="truncate">Verifikasi Struktur RKA</span>
-                      </button>
-
-                      {/* SUBMENU BARU: Pertimbangan Objektif Lainnya */}
-                      <button 
-                        onClick={() => setActiveTab('verifikasi-pol')}
-                        className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-md text-left text-[11px] font-bold tracking-wide transition-all border active:scale-98 cursor-pointer ${
-                          activeTab === 'verifikasi-pol' 
-                            ? 'bg-cyan-950/40 border-cyan-500/50 text-cyan-300 shadow-[inset_0_0_8px_rgba(6,182,212,0.2)]' 
-                            : 'border-transparent text-white/90 hover:bg-slate-900/60 hover:text-slate-300'
-                        }`}
-                      >
-                        <Scale size={13} className={activeTab === 'verifikasi-pol' ? 'text-cyan-400 animate-pulse' : 'text-slate-600'} />
-                        <span className="truncate">Pertimbangan Objektif Lainnya</span>
                       </button>
                     </div>
                   )}
@@ -731,16 +716,6 @@ export default function App() {
                     <ShieldCheck size={12} /> CORE INTEGRATION // MODUL VERIFIKASI RKA
                   </div>
                   <ModulVerifikasiRka />
-                </div>
-              )}
-
-              {/* PERTIMBANGAN OBJEKTIF LAINNYA (ADMIN & TAPD) */}
-              {activeTab === 'verifikasi-pol' && (userStatus === 'ADMIN' || userStatus === 'TAPD') && (
-                <div className="bg-slate-950/60 border-2 border-cyan-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(6,182,212,0.04)] animate-fadeIn">
-                  <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
-                    <ShieldCheck size={12} /> CORE INTEGRATION // PERTIMBANGAN OBJEKTIF LAINNYA
-                  </div>
-                  <DataPol />
                 </div>
               )}
 

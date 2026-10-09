@@ -6,7 +6,7 @@ import {
   Menu, HelpCircle, Sliders, Database, BookOpen,
   ClipboardCheck, TrendingUp, DollarSign, ListTree, CheckCircle2,
   Edit3, MessageSquare, LayoutDashboard, FileText, Settings, UserCheck,
-  History, Calculator, CheckSquare, Scale
+  History
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 
@@ -29,9 +29,6 @@ import ModulDashboard from './components/ModulDashboard';
 import HasilAsistensi from './components/HasilAsistensi';
 import UserAplikasi from './components/UserAplikasi';
 import HistoriAPBD from './components/HistoriAPBD';
-import ModulKomponen from './components/ModulKomponen';
-import ModulDataKomponen from './components/ModulDataKomponen';
-import DataPol from './components/DataPol.jsx';
 
 export default function App() {
   const [email, setEmail] = useState('');
@@ -134,15 +131,12 @@ export default function App() {
       case 'master-rka': return 'Master Arsip Dokumen RKA SKPD';
       case 'data-realisasi': return 'Repository Data Realisasi';
       case 'tematik': return 'Master Kelompok Laporan Tematik APBD';
-      case 'perhitungan-komponen': return 'Perhitungan Komponen';
       case 'verifikasi-rka': return 'Sistem Validasi RKA';
-      case 'verifikasi-pol': return 'Pertimbangan Objektif Lainnya';
       case 'verifikasi-realisasi': return 'Audit Komparatif Realisasi';
       case 'input-hasil-asistensi': return 'Input Hasil Asistensi';
       case 'pembahasan-hasil-asistensi': return 'Pembahasan Hasil Asistensi';
       case 'dashboard-asistensi': return 'Dashboard Asistensi';
       case 'laporan-hasil-asistensi': return 'Laporan Hasil Asistensi';
-      case 'pemenuhan-komponen': return 'Pemenuhan Komponen';
       case 'histori-apbd': return 'Data Per Status APBD';
       case 'realisasi-pendapatan': return 'Data Realisasi Pendapatan';
       case 'realisasi-belanja': return 'Data Realisasi Belanja';
@@ -348,19 +342,6 @@ export default function App() {
                         <span className="truncate">Kode Laporan Tematik</span>
                       </button>
 
-                      {/* SUBMENU BARU: Perhitungan Komponen */}
-                      <button 
-                        onClick={() => setActiveTab('perhitungan-komponen')}
-                        className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-md text-left text-[11px] font-bold tracking-wide transition-all border active:scale-98 cursor-pointer ${
-                          activeTab === 'perhitungan-komponen' 
-                            ? 'bg-cyan-950/40 border-cyan-500/50 text-cyan-300 shadow-[inset_0_0_8px_rgba(6,182,212,0.2)]' 
-                            : 'border-transparent text-white/90 hover:bg-slate-900/60 hover:text-slate-300'
-                        }`}
-                      >
-                        <Calculator size={13} className={activeTab === 'perhitungan-komponen' ? 'text-cyan-400 animate-pulse' : 'text-slate-400'} />
-                        <span className="truncate">Perhitungan Komponen</span>
-                      </button>
-
                     </div>
                   )}
                 </div>
@@ -407,19 +388,6 @@ export default function App() {
                       >
                         <FileSpreadsheet size={13} className={activeTab === 'verifikasi-rka' ? 'text-cyan-400' : 'text-slate-600'} />
                         <span className="truncate">Verifikasi Struktur RKA</span>
-                      </button>
-
-                      {/* SUBMENU BARU: Pertimbangan Objektif Lainnya */}
-                      <button 
-                        onClick={() => setActiveTab('verifikasi-pol')}
-                        className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-md text-left text-[11px] font-bold tracking-wide transition-all border active:scale-98 cursor-pointer ${
-                          activeTab === 'verifikasi-pol' 
-                            ? 'bg-cyan-950/40 border-cyan-500/50 text-cyan-300 shadow-[inset_0_0_8px_rgba(6,182,212,0.2)]' 
-                            : 'border-transparent text-white/90 hover:bg-slate-900/60 hover:text-slate-300'
-                        }`}
-                      >
-                        <Scale size={13} className={activeTab === 'verifikasi-pol' ? 'text-cyan-400 animate-pulse' : 'text-slate-600'} />
-                        <span className="truncate">Pertimbangan Objektif Lainnya</span>
                       </button>
                     </div>
                   )}
@@ -508,19 +476,6 @@ export default function App() {
                     >
                       <FileText size={13} className={activeTab === 'laporan-hasil-asistensi' ? 'text-cyan-400 animate-pulse' : 'text-slate-600'} />
                       <span className="truncate">Laporan Hasil Asistensi</span>
-                    </button>
-
-                    {/* SUBMENU BARU: Pemenuhan Komponen (Diletakkan diatas Dashboard Riwayat APBD) */}
-                    <button 
-                      onClick={() => setActiveTab('pemenuhan-komponen')}
-                      className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-md text-left text-[11px] font-bold tracking-wide transition-all border active:scale-98 cursor-pointer ${
-                        activeTab === 'pemenuhan-komponen' 
-                          ? 'bg-cyan-950/40 border-cyan-500/50 text-cyan-300 shadow-[inset_0_0_8px_rgba(6,182,212,0.2)]' 
-                          : 'border-transparent text-white/90 hover:bg-slate-900/60 hover:text-slate-300'
-                      }`}
-                    >
-                      <CheckSquare size={13} className={activeTab === 'pemenuhan-komponen' ? 'text-cyan-400 animate-pulse' : 'text-slate-600'} />
-                      <span className="truncate">Pemenuhan Komponen</span>
                     </button>
 
                     {/* Data Per Status APBD (ADMIN, TAPD, & SKPD) */}
@@ -714,16 +669,6 @@ export default function App() {
                 </div>
               )}
 
-              {/* MODUL PERHITUNGAN KOMPONEN (ADMIN ONLY) */}
-              {activeTab === 'perhitungan-komponen' && userStatus === 'ADMIN' && (
-                <div className="bg-slate-950/60 border-2 border-cyan-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(6,182,212,0.04)] animate-fadeIn">
-                  <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
-                    <ShieldCheck size={12} /> CORE INTEGRATION // MODUL PERHITUNGAN KOMPONEN
-                  </div>
-                  <ModulKomponen />
-                </div>
-              )}
-
               {/* VERIFIKASI RKA (ADMIN & TAPD) */}
               {activeTab === 'verifikasi-rka' && (userStatus === 'ADMIN' || userStatus === 'TAPD') && (
                 <div className="bg-slate-950/60 border-2 border-cyan-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(6,182,212,0.04)] animate-fadeIn">
@@ -731,16 +676,6 @@ export default function App() {
                     <ShieldCheck size={12} /> CORE INTEGRATION // MODUL VERIFIKASI RKA
                   </div>
                   <ModulVerifikasiRka />
-                </div>
-              )}
-
-              {/* PERTIMBANGAN OBJEKTIF LAINNYA (ADMIN & TAPD) */}
-              {activeTab === 'verifikasi-pol' && (userStatus === 'ADMIN' || userStatus === 'TAPD') && (
-                <div className="bg-slate-950/60 border-2 border-cyan-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(6,182,212,0.04)] animate-fadeIn">
-                  <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
-                    <ShieldCheck size={12} /> CORE INTEGRATION // PERTIMBANGAN OBJEKTIF LAINNYA
-                  </div>
-                  <DataPol />
                 </div>
               )}
 
@@ -793,16 +728,6 @@ export default function App() {
                 </div>
               )}
 
-              {/* PEMENUHAN KOMPONEN (ADMIN, TAPD, & SKPD) */}
-              {activeTab === 'pemenuhan-komponen' && (
-                <div className="bg-slate-950/60 border-2 border-cyan-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(6,182,212,0.04)] animate-fadeIn">
-                  <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
-                    <ShieldCheck size={12} /> PROCESS INTEGRATION // PEMENUHAN KOMPONEN
-                  </div>
-                  <ModulDataKomponen />
-                </div>
-              )}
-
               {/* DATA PER STATUS APBD (ADMIN, TAPD, & SKPD) */}
               {activeTab === 'histori-apbd' && (
                 <div className="bg-slate-950/60 border-2 border-cyan-500/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_rgba(6,182,212,0.04)] animate-fadeIn">
@@ -819,6 +744,7 @@ export default function App() {
                   <div className="mb-4 flex items-center gap-2 font-mono text-[10px] text-cyan-400/80 font-bold uppercase tracking-wider">
                     <ShieldCheck size={12} /> DATA INTEGRATION // REALISASI PENDAPATAN
                   </div>
+                  {/*<div className="text-slate-400 font-mono text-sm">Modul Realisasi Pendapatan siap dikembangkan di sini.</div>*/}
                   <ModulRealisasiPendapatan />
                 </div>
               )}

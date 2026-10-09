@@ -1,0 +1,1478 @@
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Search, Plus, Save, Trash2, Edit, Calculator, BookOpen, FileText, Download, Loader2, Info } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
+import { createClient } from '@supabase/supabase-js';
+
+// Inisialisasi Client Supabase (Pastikan VITE_SUPABASE_URL dan VITE_SUPABASE_ANON_KEY ada di .env)
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabase = (supabaseUrl && supabaseAnonKey) ? createClient(supabaseUrl, supabaseAnonKey) : null;
+
+// Helper Format Ribuan & Parsing
+const formatRupiah = (val) => {
+  if (val === undefined || val === null || val === '') return '';
+  const num = String(val).replace(/\D/g, '');
+  return num ? Number(num).toLocaleString('id-ID') : '';
+};
+
+const parseNumber = (val) => {
+  if (!val) return 0;
+  return Number(String(val).replace(/\D/g, '')) || 0;
+};
+
+// Data Master SKPD Sesuai Format Kolom database tblskpd (1.01.2.22.0.00.01.0000)
+const MOCK_TBLSKPD = [
+  { id: 1, kd_skpd: '1.01.2.22.0.00.01.0000', nm_skpd: 'DINAS PENDIDIKAN DAN KEBUDAYAAN' },
+  { id: 2, kd_skpd: '1.02.2.22.0.00.01.0000', nm_skpd: 'DINAS KESEHATAN' },
+  { id: 3, kd_skpd: '1.03.2.22.0.00.01.0000', nm_skpd: 'DINAS PEKERJAAN UMUM DAN PENATAAN RUANG' },
+  { id: 4, kd_skpd: '1.04.2.22.0.00.01.0000', nm_skpd: 'DINAS PERUMAHAN RAKYAT DAN KAWASAN PERMUKIMAN' },
+  { id: 5, kd_skpd: '1.05.2.22.0.00.01.0000', nm_skpd: 'SATUAN POLISI PAMONG PRAJA' },
+  { id: 6, kd_skpd: '1.06.2.22.0.00.01.0000', nm_skpd: 'DINAS SOSIAL' },
+  { id: 7, kd_skpd: '2.01.2.22.0.00.01.0000', nm_skpd: 'DINAS TENAGA KERJA' },
+  { id: 8, kd_skpd: '2.02.2.22.0.00.01.0000', nm_skpd: 'DINAS PEMBERDAYAAN PEREMPUAN DAN PERLINDUNGAN ANAK' },
+  { id: 9, kd_skpd: '2.03.2.22.0.00.01.0000', nm_skpd: 'DINAS PANGAN' },
+  { id: 10, kd_skpd: '2.04.2.22.0.00.01.0000', nm_skpd: 'DINAS LINGKUNGAN HIDUP' },
+  { id: 11, kd_skpd: '2.05.2.22.0.00.01.0000', nm_skpd: 'DINAS KEPENDUDUKAN DAN PENCATATAN SIPIL' },
+  { id: 12, kd_skpd: '2.06.2.22.0.00.01.0000', nm_skpd: 'DINAS PEMBERDAYAAN MASYARAKAT DAN DESA' },
+  { id: 13, kd_skpd: '2.07.2.22.0.00.01.0000', nm_skpd: 'DINAS PERHUBUNGAN' },
+  { id: 14, kd_skpd: '2.08.2.22.0.00.01.0000', nm_skpd: 'DINAS KOMUNIKASI DAN INFORMATIKA' },
+  { id: 15, kd_skpd: '2.09.2.22.0.00.01.0000', nm_skpd: 'DINAS KOPERASI, USAHA KECIL DAN MENENGAH' },
+  { id: 16, kd_skpd: '2.10.2.22.0.00.01.0000', nm_skpd: 'DINAS PENANAMAN MODAL DAN PTSP' },
+  { id: 17, kd_skpd: '2.11.2.22.0.00.01.0000', nm_skpd: 'DINAS KEPEMUDAAN DAN OLAHRAGA' },
+  { id: 18, kd_skpd: '2.12.2.22.0.00.01.0000', nm_skpd: 'DINAS PERPUSTAKAAN DAN KEARSIPAN' },
+  { id: 19, kd_skpd: '3.01.2.22.0.00.01.0000', nm_skpd: 'DINAS KELAUTAN DAN PERIKANAN' },
+  { id: 20, kd_skpd: '3.02.2.22.0.00.01.0000', nm_skpd: 'DINAS PARIWISATA' },
+  { id: 21, kd_skpd: '3.03.2.22.0.00.01.0000', nm_skpd: 'DINAS PERTANIAN' },
+  { id: 22, kd_skpd: '3.04.2.22.0.00.01.0000', nm_skpd: 'DINAS PERDAGANGAN DAN PERINDUSTRIAN' },
+  { id: 23, kd_skpd: '4.01.2.22.0.00.01.0000', nm_skpd: 'SEKRETARIAT DAERAH' },
+  { id: 24, kd_skpd: '4.02.2.22.0.00.01.0000', nm_skpd: 'SEKRETARIAT DPRD' },
+  { id: 25, kd_skpd: '5.01.2.22.0.00.01.0000', nm_skpd: 'INSPEKTORAT DAERAH' },
+  { id: 26, kd_skpd: '5.02.2.22.0.00.01.0000', nm_skpd: 'BADAN PERENCANAAN PEMBANGUNAN DAERAH' },
+  { id: 27, kd_skpd: '5.03.2.22.0.00.01.0000', nm_skpd: 'BADAN PENGELOLA KEUANGAN DAN ASET DAERAH' },
+  { id: 28, kd_skpd: '5.04.2.22.0.00.01.0000', nm_skpd: 'BADAN PENDAPATAN DAERAH' },
+  { id: 29, kd_skpd: '5.05.2.22.0.00.01.0000', nm_skpd: 'BADAN KEPEGAWAIAN DAN PENGEMBANGAN SDM' },
+  { id: 30, kd_skpd: '5.06.2.22.0.00.01.0000', nm_skpd: 'BADAN PENELITIAN DAN PENGEMBANGAN' },
+  { id: 31, kd_skpd: '5.07.2.22.0.00.01.0000', nm_skpd: 'BADAN KESATUAN BANGSA DAN POLITIK' },
+  { id: 32, kd_skpd: '5.08.2.22.0.00.01.0000', nm_skpd: 'BADAN PENANGGULANGAN BENCANA DAERAH' },
+  { id: 33, kd_skpd: '6.01.2.22.0.00.01.0000', nm_skpd: 'DINAS KEBUDAYAAN' },
+  { id: 34, kd_skpd: '7.01.2.22.0.00.01.0000', nm_skpd: 'DINAS PEMADAM KEBAKARAN DAN PENYELAMATAN' },
+];
+
+// Data Master KLPOL (83 Baris Lengkap)
+const MOCK_KLPOL = [
+  // JNS A
+  { jns: 'A', kode: 'A1', bts1: 0, bts2: 100000000, nilai: 150000, ket: 'BUD/PA/KPA' },
+  { jns: 'A', kode: 'A2', bts1: 100000001, bts2: 250000000, nilai: 200000, ket: 'BUD/PA/KPA' },
+  { jns: 'A', kode: 'A3', bts1: 250000001, bts2: 500000000, nilai: 250000, ket: 'BUD/PA/KPA' },
+  { jns: 'A', kode: 'A4', bts1: 500000001, bts2: 1000000000, nilai: 300000, ket: 'BUD/PA/KPA' },
+  { jns: 'A', kode: 'A5', bts1: 1000000001, bts2: 2500000000, nilai: 350000, ket: 'BUD/PA/KPA' },
+  { jns: 'A', kode: 'A6', bts1: 2500000001, bts2: 5000000000, nilai: 450000, ket: 'BUD/PA/KPA' },
+  { jns: 'A', kode: 'A7', bts1: 5000000001, bts2: 10000000000, nilai: 550000, ket: 'BUD/PA/KPA' },
+  { jns: 'A', kode: 'A8', bts1: 10000000001, bts2: 25000000000, nilai: 650000, ket: 'BUD/PA/KPA' },
+  { jns: 'A', kode: 'A9', bts1: 25000000001, bts2: 50000000000, nilai: 800000, ket: 'BUD/PA/KPA' },
+  { jns: 'A', kode: 'A10', bts1: 50000000001, bts2: 75000000000, nilai: 950000, ket: 'BUD/PA/KPA' },
+  { jns: 'A', kode: 'A11', bts1: 75000000001, bts2: 100000000000, nilai: 1100000, ket: 'BUD/PA/KPA' },
+  { jns: 'A', kode: 'A12', bts1: 100000000001, bts2: 250000000000, nilai: 1250000, ket: 'BUD/PA/KPA' },
+  { jns: 'A', kode: 'A13', bts1: 250000000001, bts2: 500000000000, nilai: 1450000, ket: 'BUD/PA/KPA' },
+  { jns: 'A', kode: 'A14', bts1: 500000000001, bts2: 750000000000, nilai: 1650000, ket: 'BUD/PA/KPA' },
+  { jns: 'A', kode: 'A15', bts1: 750000000001, bts2: 1000000000000, nilai: 1900000, ket: 'BUD/PA/KPA' },
+  { jns: 'A', kode: 'A16', bts1: 1000000000001, bts2: Infinity, nilai: 2400000, ket: 'BUD/PA/KPA' },
+
+  // JNS B
+  { jns: 'B', kode: 'B1', bts1: 0, bts2: 100000000, nilai: 125000, ket: 'PPTK' },
+  { jns: 'B', kode: 'B2', bts1: 100000001, bts2: 250000000, nilai: 175000, ket: 'PPTK' },
+  { jns: 'B', kode: 'B3', bts1: 250000001, bts2: 500000000, nilai: 225000, ket: 'PPTK' },
+  { jns: 'B', kode: 'B4', bts1: 500000001, bts2: 1000000000, nilai: 275000, ket: 'PPTK' },
+  { jns: 'B', kode: 'B5', bts1: 1000000001, bts2: 2500000000, nilai: 325000, ket: 'PPTK' },
+  { jns: 'B', kode: 'B6', bts1: 2500000001, bts2: 5000000000, nilai: 425000, ket: 'PPTK' },
+  { jns: 'B', kode: 'B7', bts1: 5000000001, bts2: 10000000000, nilai: 525000, ket: 'PPTK' },
+  { jns: 'B', kode: 'B8', bts1: 10000000001, bts2: 25000000000, nilai: 625000, ket: 'PPTK' },
+  { jns: 'B', kode: 'B9', bts1: 25000000001, bts2: 50000000000, nilai: 775000, ket: 'PPTK' },
+  { jns: 'B', kode: 'B10', bts1: 50000000001, bts2: 75000000000, nilai: 925000, ket: 'PPTK' },
+  { jns: 'B', kode: 'B11', bts1: 75000000001, bts2: 100000000000, nilai: 1075000, ket: 'PPTK' },
+  { jns: 'B', kode: 'B12', bts1: 100000000001, bts2: 250000000000, nilai: 1225000, ket: 'PPTK' },
+  { jns: 'B', kode: 'B13', bts1: 250000000001, bts2: 500000000000, nilai: 1425000, ket: 'PPTK' },
+  { jns: 'B', kode: 'B14', bts1: 500000000001, bts2: 750000000000, nilai: 1625000, ket: 'PPTK' },
+  { jns: 'B', kode: 'B15', bts1: 750000000001, bts2: 1000000000000, nilai: 1875000, ket: 'PPTK' },
+  { jns: 'B', kode: 'B16', bts1: 1000000000001, bts2: Infinity, nilai: 2375000, ket: 'PPTK' },
+
+  // JNS C
+  { jns: 'C', kode: 'C1', bts1: 0, bts2: 100000000, nilai: 100000, ket: 'PPK SKPD' },
+  { jns: 'C', kode: 'C2', bts1: 100000001, bts2: 250000000, nilai: 140000, ket: 'PPK SKPD' },
+  { jns: 'C', kode: 'C3', bts1: 250000001, bts2: 500000000, nilai: 190000, ket: 'PPK SKPD' },
+  { jns: 'C', kode: 'C4', bts1: 500000001, bts2: 1000000000, nilai: 240000, ket: 'PPK SKPD' },
+  { jns: 'C', kode: 'C5', bts1: 1000000001, bts2: 2500000000, nilai: 290000, ket: 'PPK SKPD' },
+  { jns: 'C', kode: 'C6', bts1: 2500000001, bts2: 5000000000, nilai: 390000, ket: 'PPK SKPD' },
+  { jns: 'C', kode: 'C7', bts1: 5000000001, bts2: 10000000000, nilai: 490000, ket: 'PPK SKPD' },
+  { jns: 'C', kode: 'C8', bts1: 10000000001, bts2: 25000000000, nilai: 590000, ket: 'PPK SKPD' },
+  { jns: 'C', kode: 'C9', bts1: 25000000001, bts2: 50000000000, nilai: 740000, ket: 'PPK SKPD' },
+  { jns: 'C', kode: 'C10', bts1: 50000000001, bts2: 75000000000, nilai: 890000, ket: 'PPK SKPD' },
+  { jns: 'C', kode: 'C11', bts1: 750000000001, bts2: 100000000000, nilai: 1040000, ket: 'PPK SKPD' },
+  { jns: 'C', kode: 'C12', bts1: 100000000001, bts2: 250000000000, nilai: 1190000, ket: 'PPK SKPD' },
+  { jns: 'C', kode: 'C13', bts1: 250000000001, bts2: 500000000000, nilai: 1390000, ket: 'PPK SKPD' },
+  { jns: 'C', kode: 'C14', bts1: 500000000001, bts2: 750000000000, nilai: 1590000, ket: 'PPK SKPD' },
+  { jns: 'C', kode: 'C15', bts1: 750000000001, bts2: 1000000000000, nilai: 1840000, ket: 'PPK SKPD' },
+  { jns: 'C', kode: 'C16', bts1: 1000000000001, bts2: Infinity, nilai: 2340000, ket: 'PPK SKPD' },
+
+  // JNS D
+  { jns: 'D', kode: 'D1', bts1: 0, bts2: 100000000, nilai: 80000, ket: 'BENDAHARA SKPD' },
+  { jns: 'D', kode: 'D2', bts1: 100000001, bts2: 250000000, nilai: 130000, ket: 'BENDAHARA SKPD' },
+  { jns: 'D', kode: 'D3', bts1: 250000001, bts2: 500000000, nilai: 180000, ket: 'BENDAHARA SKPD' },
+  { jns: 'D', kode: 'D4', bts1: 500000001, bts2: 1000000000, nilai: 230000, ket: 'BENDAHARA SKPD' },
+  { jns: 'D', kode: 'D5', bts1: 1000000001, bts2: 2500000000, nilai: 280000, ket: 'BENDAHARA SKPD' },
+  { jns: 'D', kode: 'D6', bts1: 2500000001, bts2: 5000000000, nilai: 380000, ket: 'BENDAHARA SKPD' },
+  { jns: 'D', kode: 'D7', bts1: 5000000001, bts2: 10000000000, nilai: 480000, ket: 'BENDAHARA SKPD' },
+  { jns: 'D', kode: 'D8', bts1: 10000000001, bts2: 25000000000, nilai: 580000, ket: 'BENDAHARA SKPD' },
+  { jns: 'D', kode: 'D9', bts1: 25000000001, bts2: 50000000000, nilai: 730000, ket: 'BENDAHARA SKPD' },
+  { jns: 'D', kode: 'D10', bts1: 50000000001, bts2: 75000000000, nilai: 880000, ket: 'BENDAHARA SKPD' },
+  { jns: 'D', kode: 'D11', bts1: 75000000001, bts2: 100000000000, nilai: 1030000, ket: 'BENDAHARA SKPD' },
+  { jns: 'D', kode: 'D12', bts1: 100000000001, bts2: 250000000000, nilai: 1180000, ket: 'BENDAHARA SKPD' },
+  { jns: 'D', kode: 'D13', bts1: 250000000001, bts2: 500000000000, nilai: 1380000, ket: 'BENDAHARA SKPD' },
+  { jns: 'D', kode: 'D14', bts1: 500000000001, bts2: 750000000000, nilai: 1580000, ket: 'BENDAHARA SKPD' },
+  { jns: 'D', kode: 'D15', bts1: 750000000001, bts2: 1000000000000, nilai: 1830000, ket: 'BENDAHARA SKPD' },
+  { jns: 'D', kode: 'D16', bts1: 1000000000001, bts2: Infinity, nilai: 2330000, ket: 'BENDAHARA SKPD' },
+
+  // JNS E
+  { jns: 'E', kode: 'E1', bts1: 0, bts2: 100000000, nilai: 70000, ket: 'BENDAHARA PEMBANTU SKPD' },
+  { jns: 'E', kode: 'E2', bts1: 100000001, bts2: 250000000, nilai: 120000, ket: 'BENDAHARA PEMBANTU SKPD' },
+  { jns: 'E', kode: 'E3', bts1: 250000001, bts2: 500000000, nilai: 170000, ket: 'BENDAHARA PEMBANTU SKPD' },
+  { jns: 'E', kode: 'E4', bts1: 500000001, bts2: 1000000000, nilai: 220000, ket: 'BENDAHARA PEMBANTU SKPD' },
+  { jns: 'E', kode: 'E5', bts1: 1000000001, bts2: 2500000000, nilai: 270000, ket: 'BENDAHARA PEMBANTU SKPD' },
+  { jns: 'E', kode: 'E6', bts1: 2500000001, bts2: 5000000000, nilai: 370000, ket: 'BENDAHARA PEMBANTU SKPD' },
+  { jns: 'E', kode: 'E7', bts1: 5000000001, bts2: 10000000000, nilai: 470000, ket: 'BENDAHARA PEMBANTU SKPD' },
+  { jns: 'E', kode: 'E8', bts1: 10000000001, bts2: 25000000000, nilai: 570000, ket: 'BENDAHARA PEMBANTU SKPD' },
+  { jns: 'E', kode: 'E9', bts1: 25000000001, bts2: 50000000000, nilai: 720000, ket: 'BENDAHARA PEMBANTU SKPD' },
+  { jns: 'E', kode: 'E10', bts1: 50000000001, bts2: 75000000000, nilai: 870000, ket: 'BENDAHARA PEMBANTU SKPD' },
+  { jns: 'E', kode: 'E11', bts1: 75000000001, bts2: 100000000000, nilai: 1020000, ket: 'BENDAHARA PEMBANTU SKPD' },
+  { jns: 'E', kode: 'E12', bts1: 100000000001, bts2: 250000000000, nilai: 1170000, ket: 'BENDAHARA PEMBANTU SKPD' },
+  { jns: 'E', kode: 'E13', bts1: 250000000001, bts2: 500000000000, nilai: 1370000, ket: 'BENDAHARA PEMBANTU SKPD' },
+  { jns: 'E', kode: 'E14', bts1: 500000000001, bts2: 750000000000, nilai: 1570000, ket: 'BENDAHARA PEMBANTU SKPD' },
+  { jns: 'E', kode: 'E15', bts1: 750000000001, bts2: 1000000000000, nilai: 1820000, ket: 'BENDAHARA PEMBANTU SKPD' },
+  { jns: 'E', kode: 'E16', bts1: 1000000000001, bts2: Infinity, nilai: 2320000, ket: 'BENDAHARA PEMBANTU SKPD' },
+
+  // JNS F
+  { jns: 'F', kode: 'F1', bts1: 0, bts2: 0, nilai: 350000, ket: 'Pengurus Barang Pengelola' },
+  { jns: 'F', kode: 'F2', bts1: 0, bts2: 0, nilai: 300000, ket: 'Pembantu Pengurus Barang Pengelola' },
+  { jns: 'F', kode: 'F3', bts1: 0, bts2: 0, nilai: 250000, ket: 'Pengurus Barang Pengguna' },
+];
+
+export default function DataPol() {
+  const [activeTab, setActiveTab] = useState('page1');
+
+  // Master States
+  const [tblSkpd] = useState(MOCK_TBLSKPD);
+  const [klpol] = useState(MOCK_KLPOL);
+  const [dtpolList, setDtpolList] = useState([]);
+
+  // Grouping Unik SKPD untuk Combo Box
+  const uniqueSkpdList = useMemo(() => {
+    const map = new Map();
+    tblSkpd.forEach(item => {
+      if (!map.has(item.kd_skpd)) {
+        map.set(item.kd_skpd, item);
+      }
+    });
+    return Array.from(map.values());
+  }, [tblSkpd]);
+
+  // Form States
+  const [editId, setEditId] = useState(null);
+  const [tahun, setTahun] = useState('2027');
+  const [st, setSt] = useState('APBD');
+  const [kdskpd, setKdskpd] = useState('');
+  const [nmskpd, setNmskpd] = useState('');
+  const [pagu, setPagu] = useState('');
+
+  // Personel States
+  const [jpa, setJpa] = useState('');
+  const [jkpa, setJkpa] = useState('');
+  const [jpptk, setJpptk] = useState('');
+  const [jppk, setJppk] = useState('');
+  const [jbdh, setJbdh] = useState('');
+  const [jbdh1, setJbdh1] = useState('');
+  const [jbr1, setJbr1] = useState('');
+  const [jbr2, setJbr2] = useState('');
+  const [jbr3, setJbr3] = useState('');
+
+  // Indeks Honor
+  const [ijpa, setIjpa] = useState(0);
+  const [ijkpa, setIjkpa] = useState(0);
+  const [ijpptk, setIjpptk] = useState(0);
+  const [ijppk, setIjppk] = useState(0);
+  const [ijbdh, setIjbdh] = useState(0);
+  const [ijbdh1, setIjbdh1] = useState(0);
+  const [ijbr1, setIjbr1] = useState(0);
+  const [ijbr2, setIjbr2] = useState(0);
+  const [ijbr3, setIjbr3] = useState(0);
+
+  // Search & Loading
+  const [searchGrid, setSearchGrid] = useState('');
+  const [searchKlpol, setSearchKlpol] = useState('');
+  const [loadingAction, setLoadingAction] = useState(null);
+
+  // REFS UNTUK NAVIGASI ENTER
+  const inputRefs = {
+    pagu: useRef(null),
+    jpa: useRef(null),
+    jkpa: useRef(null),
+    jpptk: useRef(null),
+    jppk: useRef(null),
+    jbdh: useRef(null),
+    jbdh1: useRef(null),
+    jbr1: useRef(null),
+    jbr2: useRef(null),
+    jbr3: useRef(null),
+  };
+
+  const handleKeyDownNext = (e, nextRef) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (nextRef && nextRef.current) {
+        nextRef.current.focus();
+      }
+    }
+  };
+
+  // Helper Index Matching
+  const getIndeksByAnggaran = (jnsCode, nominal) => {
+    if (!nominal) return 0;
+    const found = klpol.find(
+      item => item.jns === jnsCode && nominal >= item.bts1 && nominal <= item.bts2
+    );
+    return found ? found.nilai : 0;
+  };
+
+  const getIndeksByKode = (kode) => {
+    const found = klpol.find(item => item.kode === kode);
+    return found ? found.nilai : 0;
+  };
+
+  // Fetch Real Data dari Supabase
+  const fetchDtpolFromDatabase = async () => {
+    if (!supabase) return;
+    try {
+      const { data, error } = await supabase.from('dtpol').select('*');
+      if (error) {
+        console.error('Gagal mengambil data dtpol:', error.message);
+      } else if (data) {
+        setDtpolList(data);
+      }
+    } catch (err) {
+      console.error('Error fetching dtpol:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchDtpolFromDatabase();
+  }, []);
+
+  // Handle SKPD Selection
+  const handleSkpdChange = (e) => {
+    const selectedKd = e.target.value;
+    setKdskpd(selectedKd);
+    const selectedItem = uniqueSkpdList.find(item => item.kd_skpd === selectedKd);
+    setNmskpd(selectedItem ? selectedItem.nm_skpd : '');
+  };
+
+  // Recalculate Indeks ketika Anggaran berubah
+  useEffect(() => {
+    const valAnggaran = parseNumber(pagu);
+
+    if (valAnggaran > 0) {
+      const indexA = getIndeksByAnggaran('A', valAnggaran);
+      setIjpa(indexA);
+      setIjkpa(indexA);
+      setIjpptk(getIndeksByAnggaran('B', valAnggaran));
+      setIjppk(getIndeksByAnggaran('C', valAnggaran));
+      setIjbdh(getIndeksByAnggaran('D', valAnggaran));
+      setIjbdh1(getIndeksByAnggaran('E', valAnggaran));
+
+      setIjbr1(getIndeksByKode('F1'));
+      setIjbr2(getIndeksByKode('F2'));
+      setIjbr3(getIndeksByKode('F3'));
+    } else {
+      setIjpa(0);
+      setIjkpa(0);
+      setIjpptk(0);
+      setIjppk(0);
+      setIjbdh(0);
+      setIjbdh1(0);
+      setIjbr1(0);
+      setIjbr2(0);
+      setIjbr3(0);
+    }
+  }, [pagu, klpol]);
+
+  // Perhitungan Jumlah POL Bulanan (9 Komponen Termasuk KPA)
+  const jumlahPolBulanan = useMemo(() => {
+    return (
+      (ijpa * parseNumber(jpa)) +
+      (ijkpa * parseNumber(jkpa)) +
+      (ijpptk * parseNumber(jpptk)) +
+      (ijppk * parseNumber(jppk)) +
+      (ijbdh * parseNumber(jbdh)) +
+      (ijbdh1 * parseNumber(jbdh1)) +
+      (ijbr1 * parseNumber(jbr1)) +
+      (ijbr2 * parseNumber(jbr2)) +
+      (ijbr3 * parseNumber(jbr3))
+    );
+  }, [ijpa, jpa, ijkpa, jkpa, ijpptk, jpptk, ijppk, jppk, ijbdh, jbdh, ijbdh1, jbdh1, ijbr1, jbr1, ijbr2, jbr2, ijbr3, jbr3]);
+
+  // Perhitungan TOTAL POL TAHUNAN (DIKALI 12 BULAN)
+  const jumlahPOLTahunan = useMemo(() => {
+    return jumlahPolBulanan * 12;
+  }, [jumlahPolBulanan]);
+
+  // Reset Form (Termasuk mengosongkan Indeks Honor)
+  const handleDataBaru = () => {
+    setEditId(null);
+    setKdskpd('');
+    setNmskpd('');
+    setPagu('');
+    setJpa('');
+    setJkpa('');
+    setJpptk('');
+    setJppk('');
+    setJbdh('');
+    setJbdh1('');
+    setJbr1('');
+    setJbr2('');
+    setJbr3('');
+
+    // Reset Indeks Honor
+    setIjpa(0);
+    setIjkpa(0);
+    setIjpptk(0);
+    setIjppk(0);
+    setIjbdh(0);
+    setIjbdh1(0);
+    setIjbr1(0);
+    setIjbr2(0);
+    setIjbr3(0);
+  };
+
+  // FUNGSI SIMPAN/UPDATE DATA KE TABEL DTPOL
+  const handleSimpan = async (e) => {
+    e.preventDefault();
+    if (!kdskpd) {
+      alert('Silakan pilih Kode SKPD terlebih dahulu.');
+      return;
+    }
+
+    setLoadingAction('simpan');
+
+    const rawAnggaran = parseNumber(pagu);
+
+    const payload = {
+      tahun: Number(tahun),
+      kdskpd,
+      nmskpd,
+      st,
+      pagu: rawAnggaran,
+      jpa: parseNumber(jpa),
+      ijpa,
+      jkpa: parseNumber(jkpa),
+      ijkpa,
+      jpptk: parseNumber(jpptk),
+      ijpptk,
+      jppk: parseNumber(jppk),
+      ijppk,
+      jbdh: parseNumber(jbdh),
+      ijbdh,
+      jbdh1: parseNumber(jbdh1),
+      ijbdh1,
+      jbr1: parseNumber(jbr1),
+      ijbr1,
+      jbr2: parseNumber(jbr2),
+      ijbr2,
+      jbr3: parseNumber(jbr3),
+      ijbr3
+    };
+
+    if (supabase) {
+      try {
+        if (editId) {
+          const { error } = await supabase
+            .from('dtpol')
+            .update(payload)
+            .eq('id', editId);
+
+          if (error) throw error;
+          alert('Data berhasil diperbarui di tabel dtpol!');
+        } else {
+          const { error } = await supabase
+            .from('dtpol')
+            .insert([payload]);
+
+          if (error) throw error;
+          alert('Data berhasil disimpan ke tabel dtpol!');
+        }
+        await fetchDtpolFromDatabase();
+      } catch (err) {
+        console.error('Error menyimpan ke Supabase:', err.message);
+        alert(`Gagal simpan ke database: ${err.message}. Menggunakan penyimpanan lokal sementara.`);
+        
+        const localRecord = { ...payload, id: editId || Date.now() };
+        if (editId) {
+          setDtpolList(prev => prev.map(item => item.id === editId ? localRecord : item));
+        } else {
+          setDtpolList(prev => [...prev, localRecord]);
+        }
+      }
+    } else {
+      const localRecord = { ...payload, id: editId || Date.now() };
+      if (editId) {
+        setDtpolList(prev => prev.map(item => item.id === editId ? localRecord : item));
+      } else {
+        setDtpolList(prev => [...prev, localRecord]);
+      }
+      alert('Data tersimpan ke tabel dtpol lokal!');
+    }
+
+    setLoadingAction(null);
+    handleDataBaru(); // Otomatis reset form & index honor setelah simpan
+  };
+
+  // Edit Row dari Grid dtpol
+  const handleSelectRow = (row) => {
+    setEditId(row.id);
+    setTahun(String(row.tahun));
+    setSt(row.st);
+    setKdskpd(row.kdskpd);
+    setNmskpd(row.nmskpd);
+
+    const valAnggaran = row.pagu || row.anggaranSkpd || row.anggaran_skpd || 0;
+    setPagu(formatRupiah(valAnggaran));
+
+    setJpa(formatRupiah(row.jpa));
+    setJkpa(formatRupiah(row.jkpa));
+    setJpptk(formatRupiah(row.jpptk));
+    setJppk(formatRupiah(row.jppk));
+    setJbdh(formatRupiah(row.jbdh));
+    setJbdh1(formatRupiah(row.jbdh1));
+    setJbr1(formatRupiah(row.jbr1));
+    setJbr2(formatRupiah(row.jbr2));
+    setJbr3(formatRupiah(row.jbr3));
+
+    // Sinkronisasi Indeks Honorarium
+    const indexA = getIndeksByAnggaran('A', valAnggaran);
+    setIjpa(row.ijpa || indexA);
+    setIjkpa(row.ijkpa || indexA);
+    setIjpptk(row.ijpptk || getIndeksByAnggaran('B', valAnggaran));
+    setIjppk(row.ijppk || getIndeksByAnggaran('C', valAnggaran));
+    setIjbdh(row.ijbdh || getIndeksByAnggaran('D', valAnggaran));
+    setIjbdh1(row.ijbdh1 || getIndeksByAnggaran('E', valAnggaran));
+    setIjbr1(row.ijbr1 || getIndeksByKode('F1'));
+    setIjbr2(row.ijbr2 || getIndeksByKode('F2'));
+    setIjbr3(row.ijbr3 || getIndeksByKode('F3'));
+  };
+
+  // Hapus Data
+  const handleHapus = async (id) => {
+    if (window.confirm('Apakah Anda yakin ingin menghapus data ini dari tabel dtpol?')) {
+      setLoadingAction(`delete-${id}`);
+      if (supabase) {
+        try {
+          const { error } = await supabase.from('dtpol').delete().eq('id', id);
+          if (error) throw error;
+          await fetchDtpolFromDatabase();
+        } catch (err) {
+          console.error('Error delete dtpol:', err.message);
+          setDtpolList(prev => prev.filter(item => item.id !== id));
+        }
+      } else {
+        setDtpolList(prev => prev.filter(item => item.id !== id));
+      }
+      if (editId === id) handleDataBaru();
+      setLoadingAction(null);
+    }
+  };
+
+  // Filter Grid Sesuai Tahun dan Status Anggaran yang Dipilih
+  const filteredGridData = useMemo(() => {
+    return dtpolList.filter(item => {
+      const matchTahun = String(item.tahun) === String(tahun);
+      const matchStatus = item.st === st;
+      const matchSearch =
+        (item.kdskpd || '').toLowerCase().includes(searchGrid.toLowerCase()) ||
+        (item.nmskpd || '').toLowerCase().includes(searchGrid.toLowerCase());
+
+      return matchTahun && matchStatus && matchSearch;
+    });
+  }, [dtpolList, tahun, st, searchGrid]);
+
+  // AKUMULASI GRAND TOTAL POL UNTUK SEMUA DATA PADA GRID (9 Komponen x 12 Bulan)
+  const grandTotalGrid = useMemo(() => {
+    return filteredGridData.reduce((acc, row) => {
+      const rowMonthly = (
+        ((row.jpa || 0) * (row.ijpa || 0)) +
+        ((row.jkpa || 0) * (row.ijkpa || 0)) +
+        ((row.jpptk || 0) * (row.ijpptk || 0)) +
+        ((row.jppk || 0) * (row.ijppk || 0)) +
+        ((row.jbdh || 0) * (row.ijbdh || 0)) +
+        ((row.jbdh1 || 0) * (row.ijbdh1 || 0)) +
+        ((row.jbr1 || 0) * (row.ijbr1 || 0)) +
+        ((row.jbr2 || 0) * (row.ijbr2 || 0)) +
+        ((row.jbr3 || 0) * (row.ijbr3 || 0))
+      );
+      const rowYearly = rowMonthly * 12;
+      return acc + rowYearly;
+    }, 0);
+  }, [filteredGridData]);
+
+  // Sort Referensi KLPOL Page 2
+  const sortedAndFilteredKlpol = useMemo(() => {
+    return [...klpol]
+      .sort((a, b) => {
+        if (a.jns !== b.jns) return a.jns.localeCompare(b.jns);
+        const numA = parseInt(a.kode.replace(/\D/g, '')) || 0;
+        const numB = parseInt(b.kode.replace(/\D/g, '')) || 0;
+        return numA - numB;
+      })
+      .filter(item =>
+        item.jns.toLowerCase().includes(searchKlpol.toLowerCase()) ||
+        item.kode.toLowerCase().includes(searchKlpol.toLowerCase()) ||
+        item.ket.toLowerCase().includes(searchKlpol.toLowerCase())
+      );
+  }, [klpol, searchKlpol]);
+
+  // CETAKAN FORMAT EXCEL RESMI SIAP CETAK (SESUAI LAPORAN POL.XLSX)
+  const exportToExcelFormat = () => {
+    if (filteredGridData.length === 0) {
+      alert('Tidak ada data dtpol untuk diekspor!');
+      return;
+    }
+    setLoadingAction('excel');
+    setTimeout(() => {
+      try {
+        // 1. Data Array 2D untuk Sheet
+        const sheetData = [];
+
+        // Row 1: Judul Utama Laporan
+        sheetData.push(['DAFTAR ANGGARAN PERTIMBANGAN OBJEKTIF LAINNYA (POL)']);
+        // Row 2: Sub-judul Tahun & Status Anggaran
+        sheetData.push([`TAHUN ANGGARAN ${tahun} - STATUS: ${st}`]);
+        sheetData.push([]); // Empty Row
+
+        // Row 4: Header Tingkat 1 (Nama Komponen Utama)
+        sheetData.push([
+          'No',
+          'KLASIFIKASI',
+          'SKPD',
+          'JUMLAH ANGGARAN (PAGU)',
+          'JUMLAH PA (Orang)',
+          'INDEKS PA',
+          'JUMLAH PA (Rp)',
+          'JUMLAH KPA (Orang)',
+          'INDEKS KPA',
+          'JUMLAH KPA (Rp)',
+          'JUMLAH PPTK (Orang)',
+          'INDEKS PPTK',
+          'JUMLAH PPTK (Rp)',
+          'JUMLAH PPK-SKPD (Orang)',
+          'INDEKS PPK-SKPD',
+          'JUMLAH PPK (Rp)',
+          'JUMLAH BENDAHARA (Orang)',
+          'INDEKS BENDAHARA',
+          'JUMLAH BENDAHARA (Rp)',
+          'JUMLAH BPP (Orang)',
+          'INDEKS BPP',
+          'JUMLAH BPP (Rp)',
+          'JUMLAH PB PENGELOLA (Orang)',
+          'INDEKS PB PENGELOLA',
+          'JUMLAH PB PENGELOLA (Rp)',
+          'JUMLAH PEMBANTU PB PENGELOLA (Orang)',
+          'INDEKS PEMBANTU PB PENGELOLA',
+          'JUMLAH PEMBANTU PB PENGELOLA (Rp)',
+          'JUMLAH PB PENGGUNA (Orang)',
+          'INDEKS PB PENGGUNA',
+          'JUMLAH PB PENGGUNA (Rp)',
+          'Total Honorarium SKPD / 12 Bulan (Rp)'
+        ]);
+
+        // Row 5: Header Tingkat 2 (Penomoran Kolom 1..32)
+        const colNumbers = Array.from({ length: 32 }, (_, i) => i + 1);
+        sheetData.push(colNumbers);
+
+        // Row 6+: Baris Data SKPD
+        filteredGridData.forEach((row, idx) => {
+          const paguVal = Number(row.pagu || row.anggaranSkpd || row.anggaran_skpd || 0);
+
+          const jpaVal = Number(row.jpa || 0);
+          const ijpaVal = Number(row.ijpa || 0);
+          const totPa = jpaVal * ijpaVal;
+
+          const jkpaVal = Number(row.jkpa || 0);
+          const ijkpaVal = Number(row.ijkpa || 0);
+          const totKpa = jkpaVal * ijkpaVal;
+
+          const jpptkVal = Number(row.jpptk || 0);
+          const ijpptkVal = Number(row.ijpptk || 0);
+          const totPptk = jpptkVal * ijpptkVal;
+
+          const jppkVal = Number(row.jppk || 0);
+          const ijppkVal = Number(row.ijppk || 0);
+          const totPpk = jppkVal * ijppkVal;
+
+          const jbdhVal = Number(row.jbdh || 0);
+          const ijbdhVal = Number(row.ijbdh || 0);
+          const totBdh = jbdhVal * ijbdhVal;
+
+          const jbdh1Val = Number(row.jbdh1 || 0);
+          const ijbdh1Val = Number(row.ijbdh1 || 0);
+          const totBpp = jbdh1Val * ijbdh1Val;
+
+          const jbr1Val = Number(row.jbr1 || 0);
+          const ijbr1Val = Number(row.ijbr1 || 0);
+          const totPbPeng = jbr1Val * ijbr1Val;
+
+          const jbr2Val = Number(row.jbr2 || 0);
+          const ijbr2Val = Number(row.ijbr2 || 0);
+          const totPmbPbPeng = jbr2Val * ijbr2Val;
+
+          const jbr3Val = Number(row.jbr3 || 0);
+          const ijbr3Val = Number(row.ijbr3 || 0);
+          const totPbPengguna = jbr3Val * ijbr3Val;
+
+          const rowMonthly = totPa + totKpa + totPptk + totPpk + totBdh + totBpp + totPbPeng + totPmbPbPeng + totPbPengguna;
+          const rowYearly = rowMonthly * 12;
+
+          sheetData.push([
+            idx + 1,
+            row.kdskpd,
+            row.nmskpd,
+            paguVal,
+            jpaVal,
+            ijpaVal,
+            totPa,
+            jkpaVal,
+            ijkpaVal,
+            totKpa,
+            jpptkVal,
+            ijpptkVal,
+            totPptk,
+            jppkVal,
+            ijppkVal,
+            totPpk,
+            jbdhVal,
+            ijbdhVal,
+            totBdh,
+            jbdh1Val,
+            ijbdh1Val,
+            totBpp,
+            jbr1Val,
+            ijbr1Val,
+            totPbPeng,
+            jbr2Val,
+            ijbr2Val,
+            totPmbPbPeng,
+            jbr3Val,
+            ijbr3Val,
+            totPbPengguna,
+            rowYearly
+          ]);
+        });
+
+        // Baris Grand Total Keseluruhan
+        const grandTotalRow = Array(32).fill('');
+        grandTotalRow[0] = '';
+        grandTotalRow[2] = 'GRAND TOTAL:';
+        grandTotalRow[31] = grandTotalGrid;
+        sheetData.push(grandTotalRow);
+
+        // 2. Buat Worksheet & Workbook
+        const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
+
+        // 3. Mengatur Lebar Kolom Otomatis (Auto Width)
+        const colWidths = [
+          { wch: 5 },   // No
+          { wch: 24 },  // Klasifikasi
+          { wch: 40 },  // SKPD
+          { wch: 22 },  // Pagu
+          { wch: 16 }, { wch: 16 }, { wch: 18 }, // PA
+          { wch: 16 }, { wch: 16 }, { wch: 18 }, // KPA
+          { wch: 16 }, { wch: 16 }, { wch: 18 }, // PPTK
+          { wch: 16 }, { wch: 16 }, { wch: 18 }, // PPK
+          { wch: 16 }, { wch: 16 }, { wch: 18 }, // Bdh
+          { wch: 16 }, { wch: 16 }, { wch: 18 }, // BPP
+          { wch: 18 }, { wch: 18 }, { wch: 18 }, // PB Pengelola
+          { wch: 22 }, { wch: 22 }, { wch: 22 }, // Pmb PB Pengelola
+          { wch: 18 }, { wch: 18 }, { wch: 18 }, // PB Pengguna
+          { wch: 28 }   // Total POL 12 Bln
+        ];
+        worksheet['!cols'] = colWidths;
+
+        // 4. Set Opsi Cetak Excel (Print Setup - Landscape & Fit to Page)
+        worksheet['!pageSetup'] = {
+          orientation: 'landscape',
+          paperSize: 9, // A4
+          fitToWidth: 1,
+          fitToHeight: 0
+        };
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Laporan POL');
+        XLSX.writeFile(workbook, `laporan_pol_${tahun}_${st}.xlsx`);
+      } catch (err) {
+        console.error('Error export XLSX:', err);
+        alert('Gagal mengekspor file Excel .xlsx!');
+      }
+      setLoadingAction(null);
+    }, 300);
+  };
+
+  // Export PDF
+  const exportToPDF = () => {
+    if (filteredGridData.length === 0) {
+      alert('Tidak ada data dtpol untuk diekspor!');
+      return;
+    }
+    setLoadingAction('pdf');
+    setTimeout(() => {
+      const doc = new jsPDF('landscape', 'mm', 'a4');
+      doc.setFontSize(14);
+      doc.text(`Laporan Data dtpol - Tahun ${tahun} (${st})`, 14, 15);
+      
+      const tableColumn = [
+        'No', 'Kode SKPD', 'Nama SKPD', 'Status', 'PA', 'KPA', 'PPTK', 'PPK', 'Bdh', 'Bdh Pmb', 'PB Peng', 'Pmb PB', 'PB Pengguna', 'Total POL (12 Bln)'
+      ];
+
+      const tableRows = filteredGridData.map((row, index) => {
+        const rowTotal = 
+          ((row.jpa || 0) * (row.ijpa || 0)) + 
+          ((row.jkpa || 0) * (row.ijkpa || 0)) + 
+          ((row.jpptk || 0) * (row.ijpptk || 0)) + 
+          ((row.jppk || 0) * (row.ijppk || 0)) + 
+          ((row.jbdh || 0) * (row.ijbdh || 0)) + 
+          ((row.jbdh1 || 0) * (row.ijbdh1 || 0)) + 
+          ((row.jbr1 || 0) * (row.ijbr1 || 0)) + 
+          ((row.jbr2 || 0) * (row.ijbr2 || 0)) + 
+          ((row.jbr3 || 0) * (row.ijbr3 || 0));
+
+        const rowTotalYearly = rowTotal * 12;
+
+        return [
+          index + 1,
+          row.kdskpd,
+          row.nmskpd,
+          row.st,
+          `${row.jpa || 0}×${(row.ijpa || 0).toLocaleString('id-ID')}`,
+          `${row.jkpa || 0}×${(row.ijkpa || 0).toLocaleString('id-ID')}`,
+          `${row.jpptk || 0}×${(row.ijpptk || 0).toLocaleString('id-ID')}`,
+          `${row.jppk || 0}×${(row.ijppk || 0).toLocaleString('id-ID')}`,
+          `${row.jbdh || 0}×${(row.ijbdh || 0).toLocaleString('id-ID')}`,
+          `${row.jbdh1 || 0}×${(row.ijbdh1 || 0).toLocaleString('id-ID')}`,
+          `${row.jbr1 || 0}×${(row.ijbr1 || 0).toLocaleString('id-ID')}`,
+          `${row.jbr2 || 0}×${(row.ijbr2 || 0).toLocaleString('id-ID')}`,
+          `${row.jbr3 || 0}×${(row.ijbr3 || 0).toLocaleString('id-ID')}`,
+          rowTotalYearly.toLocaleString('id-ID')
+        ];
+      });
+
+      // Tambahkan Baris Grand Total
+      tableRows.push([
+        '', '', '', '', '', '', '', '', '', '', '', '', 'GRAND TOTAL:', grandTotalGrid.toLocaleString('id-ID')
+      ]);
+
+      autoTable(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        startY: 22,
+        styles: { fontSize: 7 },
+        headStyles: { fillColor: [6, 182, 212] }
+      });
+
+      doc.save(`dtpol_${tahun}_${st}.pdf`);
+      setLoadingAction(null);
+    }, 300);
+  };
+
+  return (
+    <div className="space-y-6 font-sans text-xs bg-slate-900 text-slate-100 p-6 rounded-2xl min-h-screen">
+      {/* HEADER */}
+      <div className="flex items-center justify-between bg-slate-950 p-4 rounded-xl border border-cyan-500/30">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-cyan-950 border border-cyan-500/40 rounded-xl text-cyan-400">
+            <Calculator size={24} />
+          </div>
+          <div>
+            <h1 className="text-base font-bold text-white tracking-wider">
+              PERTIMBANGAN OBJEKTIF LAINNYA (POL)
+            </h1>
+            <p className="text-slate-400 text-[11px]">
+              Modul Perhitungan Belanja Pertimbangan Objektif Lainnya <code className="text-cyan-400 font-bold"></code>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* TAB NAVIGATION */}
+      <div className="flex gap-2 border-b border-slate-800 pb-2">
+        <button
+          type="button"
+          onClick={() => setActiveTab('page1')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all duration-150 active:scale-95 ${
+            activeTab === 'page1'
+              ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30'
+              : 'bg-slate-800 text-slate-400 hover:text-white'
+          }`}
+        >
+          <Calculator size={16} />
+          Perhitungan Pertimbangan Obejktif Lainnya
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('page2')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all duration-150 active:scale-95 ${
+            activeTab === 'page2'
+              ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30'
+              : 'bg-slate-800 text-slate-400 hover:text-white'
+          }`}
+        >
+          <BookOpen size={16} />
+          Referensi Data Pertimbangan Obejktif Lainnya
+        </button>
+      </div>
+
+      {/* PAGE 1: PROSES PERHITUNGAN */}
+      {activeTab === 'page1' && (
+        <div className="space-y-6">
+          <form onSubmit={handleSimpan} className="bg-slate-950 p-6 rounded-xl border border-slate-800 space-y-6">
+            <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+              <h2 className="text-sm font-bold text-cyan-400 uppercase tracking-wider">
+                {editId ? 'Edit Data POL (Tabel dtpol)' : 'Form Input Perhitungan POL'}
+              </h2>
+              <button
+                type="button"
+                onClick={handleDataBaru}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md font-medium transition-all active:scale-95 shadow-md"
+              >
+                <Plus size={14} /> Data Baru
+              </button>
+            </div>
+
+            {/* Header Options */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label className="block mb-1 font-semibold text-slate-300">Tahun Anggaran</label>
+                <select
+                  value={tahun}
+                  onChange={(e) => setTahun(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-md p-2 text-white focus:outline-none focus:border-cyan-500"
+                >
+                  <option value="2025">2025</option>
+                  <option value="2026">2026</option>
+                  <option value="2027">2027</option>
+                  <option value="2028">2028</option>
+                  <option value="2029">2029</option>
+                  <option value="2030">2030</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block mb-1 font-semibold text-slate-300">Status Anggaran</label>
+                <select
+                  value={st}
+                  onChange={(e) => setSt(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-md p-2 text-white focus:outline-none focus:border-cyan-500"
+                >
+                  <option value="APBD">APBD</option>
+                  <option value="PERGESERAN 1">PERGESERAN 1</option>
+                  <option value="PERGESERAN 2">PERGESERAN 2</option>
+                  <option value="PERGESERAN 3">PERGESERAN 3</option>
+                  <option value="PERGESERAN 4">PERGESERAN 4</option>
+                  <option value="PERGESERAN 5">PERGESERAN 5</option>
+                  <option value="PERUBAHAN APBD">PERUBAHAN APBD</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block mb-1 font-semibold text-slate-300">Kode SKPD</label>
+                <select
+                  value={kdskpd}
+                  onChange={handleSkpdChange}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-md p-2 text-white focus:outline-none focus:border-cyan-500 font-mono text-[11px]"
+                >
+                  <option value="">-- Pilih SKPD --</option>
+                  {uniqueSkpdList.map((item) => (
+                    <option key={item.kd_skpd} value={item.kd_skpd}>
+                      {item.kd_skpd} - {item.nm_skpd}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block mb-1 font-semibold text-slate-300">Nama SKPD</label>
+                <input
+                  type="text"
+                  value={nmskpd}
+                  disabled
+                  placeholder="Nama SKPD otomatis terisi"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-md p-2 text-slate-300 cursor-not-allowed font-semibold"
+                />
+              </div>
+            </div>
+
+            {/* Input Nominal Anggaran SKPD */}
+            <div className="bg-slate-900 p-4 rounded-lg border border-slate-800">
+              <div className="flex justify-between items-center mb-1">
+                <label className="font-bold text-cyan-300">Input Anggaran SKPD (Rp)</label>
+                {pagu && (
+                  <span className="text-[11px] font-mono text-emerald-400">
+                    Nilai: Rp {formatRupiah(pagu)}
+                  </span>
+                )}
+              </div>
+              <input
+                ref={inputRefs.pagu}
+                type="text"
+                value={pagu}
+                onChange={(e) => setPagu(formatRupiah(e.target.value))}
+                onKeyDown={(e) => handleKeyDownNext(e, inputRefs.jpa)}
+                placeholder="Masukkan nominal anggaran SKPD (Tekan Enter untuk lanjut)..."
+                className="w-full bg-slate-950 border border-cyan-500/50 rounded-md p-2.5 text-white font-bold text-sm focus:outline-none focus:ring-1 focus:ring-cyan-500"
+              />
+            </div>
+
+            {/* KELOMPOK 1: PEJABAT PENGELOLA (PA, KPA, PPTK, PPK) */}
+            <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+              <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider block border-b border-slate-800 pb-1">
+                // Kelompok Pejabat Pengelola Keuangan (PA, KPA, PPTK, PPK)
+              </span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* PA */}
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <label className="block mb-1 text-slate-300">Jumlah PA</label>
+                    <input
+                      ref={inputRefs.jpa}
+                      type="text"
+                      value={jpa}
+                      onChange={(e) => setJpa(formatRupiah(e.target.value))}
+                      onKeyDown={(e) => handleKeyDownNext(e, inputRefs.jkpa)}
+                      placeholder="0"
+                      className="w-full bg-slate-900 border border-slate-700 rounded-md p-2 text-white font-mono focus:border-cyan-500 focus:outline-none"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block mb-1 text-slate-400">Indeks Honor PA</label>
+                    <input
+                      type="text"
+                      disabled
+                      value={ijpa ? `Rp ${ijpa.toLocaleString('id-ID')}` : 'Rp 0'}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-md p-2 text-emerald-400 cursor-not-allowed font-bold font-mono"
+                    />
+                  </div>
+                </div>
+
+                {/* KPA */}
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <label className="block mb-1 text-slate-300">Jumlah KPA</label>
+                    <input
+                      ref={inputRefs.jkpa}
+                      type="text"
+                      value={jkpa}
+                      onChange={(e) => setJkpa(formatRupiah(e.target.value))}
+                      onKeyDown={(e) => handleKeyDownNext(e, inputRefs.jpptk)}
+                      placeholder="0"
+                      className="w-full bg-slate-900 border border-slate-700 rounded-md p-2 text-white font-mono focus:border-cyan-500 focus:outline-none"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block mb-1 text-slate-400">Indeks Honor KPA (JNS A)</label>
+                    <input
+                      type="text"
+                      disabled
+                      value={ijkpa ? `Rp ${ijkpa.toLocaleString('id-ID')}` : 'Rp 0'}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-md p-2 text-emerald-400 cursor-not-allowed font-bold font-mono"
+                    />
+                  </div>
+                </div>
+
+                {/* PPTK */}
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <label className="block mb-1 text-slate-300">Jumlah PPTK</label>
+                    <input
+                      ref={inputRefs.jpptk}
+                      type="text"
+                      value={jpptk}
+                      onChange={(e) => setJpptk(formatRupiah(e.target.value))}
+                      onKeyDown={(e) => handleKeyDownNext(e, inputRefs.jppk)}
+                      placeholder="0"
+                      className="w-full bg-slate-900 border border-slate-700 rounded-md p-2 text-white font-mono focus:border-cyan-500 focus:outline-none"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block mb-1 text-slate-400">Indeks Honor PPTK</label>
+                    <input
+                      type="text"
+                      disabled
+                      value={ijpptk ? `Rp ${ijpptk.toLocaleString('id-ID')}` : 'Rp 0'}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-md p-2 text-emerald-400 cursor-not-allowed font-bold font-mono"
+                    />
+                  </div>
+                </div>
+
+                {/* PPK */}
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <label className="block mb-1 text-slate-300">Jumlah PPK</label>
+                    <input
+                      ref={inputRefs.jppk}
+                      type="text"
+                      value={jppk}
+                      onChange={(e) => setJppk(formatRupiah(e.target.value))}
+                      onKeyDown={(e) => handleKeyDownNext(e, inputRefs.jbdh)}
+                      placeholder="0"
+                      className="w-full bg-slate-900 border border-slate-700 rounded-md p-2 text-white font-mono focus:border-cyan-500 focus:outline-none"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block mb-1 text-slate-400">Indeks Honor PPK</label>
+                    <input
+                      type="text"
+                      disabled
+                      value={ijppk ? `Rp ${ijppk.toLocaleString('id-ID')}` : 'Rp 0'}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-md p-2 text-emerald-400 cursor-not-allowed font-bold font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* KELOMPOK 2: KEBENDAHARAAN (BENDAHARA SKPD, BENDAHARA PEMBANTU) */}
+            <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+              <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider block border-b border-slate-800 pb-1">
+                // Kelompok Kebendaharaan (Bendahara SKPD & Bendahara Pembantu SKPD)
+              </span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* BENDAHARA SKPD */}
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <label className="block mb-1 text-slate-300">Jumlah Bendahara SKPD</label>
+                    <input
+                      ref={inputRefs.jbdh}
+                      type="text"
+                      value={jbdh}
+                      onChange={(e) => setJbdh(formatRupiah(e.target.value))}
+                      onKeyDown={(e) => handleKeyDownNext(e, inputRefs.jbdh1)}
+                      placeholder="0"
+                      className="w-full bg-slate-900 border border-slate-700 rounded-md p-2 text-white font-mono focus:border-cyan-500 focus:outline-none"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block mb-1 text-slate-400">Indeks Honor Bendahara</label>
+                    <input
+                      type="text"
+                      disabled
+                      value={ijbdh ? `Rp ${ijbdh.toLocaleString('id-ID')}` : 'Rp 0'}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-md p-2 text-emerald-400 cursor-not-allowed font-bold font-mono"
+                    />
+                  </div>
+                </div>
+
+                {/* BENDAHARA PEMBANTU */}
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <label className="block mb-1 text-slate-300">Jml Bendahara Pembantu</label>
+                    <input
+                      ref={inputRefs.jbdh1}
+                      type="text"
+                      value={jbdh1}
+                      onChange={(e) => setJbdh1(formatRupiah(e.target.value))}
+                      onKeyDown={(e) => handleKeyDownNext(e, inputRefs.jbr1)}
+                      placeholder="0"
+                      className="w-full bg-slate-900 border border-slate-700 rounded-md p-2 text-white font-mono focus:border-cyan-500 focus:outline-none"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block mb-1 text-slate-400">Indeks Bendahara Pembantu</label>
+                    <input
+                      type="text"
+                      disabled
+                      value={ijbdh1 ? `Rp ${ijbdh1.toLocaleString('id-ID')}` : 'Rp 0'}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-md p-2 text-emerald-400 cursor-not-allowed font-bold font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* KELOMPOK 3: PENGURUS BARANG */}
+            <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+              <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider block border-b border-slate-800 pb-1">
+                // Kelompok Pengurus Barang (Pengelola, Pembantu Pengelola & Pengguna)
+              </span>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* PENGURUS BARANG PENGELOLA (F1) */}
+                <div className="flex flex-col gap-1">
+                  <label className="block text-slate-300">Jml Pengurus Barang Pengelola</label>
+                  <input
+                    ref={inputRefs.jbr1}
+                    type="text"
+                    value={jbr1}
+                    onChange={(e) => setJbr1(formatRupiah(e.target.value))}
+                    onKeyDown={(e) => handleKeyDownNext(e, inputRefs.jbr2)}
+                    placeholder="0"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-md p-2 text-white font-mono focus:border-cyan-500 focus:outline-none"
+                  />
+                  <input
+                    type="text"
+                    disabled
+                    value={ijbr1 ? `Indeks (ijbr1): Rp ${ijbr1.toLocaleString('id-ID')}` : 'Rp 0'}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-md p-1.5 text-emerald-400 text-[10px] cursor-not-allowed font-bold font-mono"
+                  />
+                </div>
+
+                {/* PEMBANTU PB PENGELOLA (F2) */}
+                <div className="flex flex-col gap-1">
+                  <label className="block text-slate-300">Jml Pembantu PB Pengelola</label>
+                  <input
+                    ref={inputRefs.jbr2}
+                    type="text"
+                    value={jbr2}
+                    onChange={(e) => setJbr2(formatRupiah(e.target.value))}
+                    onKeyDown={(e) => handleKeyDownNext(e, inputRefs.jbr3)}
+                    placeholder="0"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-md p-2 text-white font-mono focus:border-cyan-500 focus:outline-none"
+                  />
+                  <input
+                    type="text"
+                    disabled
+                    value={ijbr2 ? `Indeks (ijbr2): Rp ${ijbr2.toLocaleString('id-ID')}` : 'Rp 0'}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-md p-1.5 text-emerald-400 text-[10px] cursor-not-allowed font-bold font-mono"
+                  />
+                </div>
+
+                {/* PENGURUS BARANG PENGGUNA (F3) */}
+                <div className="flex flex-col gap-1">
+                  <label className="block text-slate-300">Jml Pengurus Barang Pengguna</label>
+                  <input
+                    ref={inputRefs.jbr3}
+                    type="text"
+                    value={jbr3}
+                    onChange={(e) => setJbr3(formatRupiah(e.target.value))}
+                    placeholder="0"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-md p-2 text-white font-mono focus:border-cyan-500 focus:outline-none"
+                  />
+                  <input
+                    type="text"
+                    disabled
+                    value={ijbr3 ? `Indeks (ijbr3): Rp ${ijbr3.toLocaleString('id-ID')}` : 'Rp 0'}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-md p-1.5 text-emerald-400 text-[10px] cursor-not-allowed font-bold font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Total POL & Keterangan Dikali 12 Bulan */}
+            <div className="flex flex-col md:flex-row items-center justify-between bg-slate-900 p-4 rounded-xl border border-cyan-500/30 gap-4 mt-4">
+              <div className="space-y-1">
+                <span className="text-slate-400 font-medium">TOTAL JUMLAH POL (1 TAHUN / 12 BULAN):</span>
+                <div className="text-xl font-black text-cyan-400 font-mono">
+                  Rp {jumlahPOLTahunan.toLocaleString('id-ID')}
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px] text-amber-400 italic font-sans pt-1">
+                  <Info size={12} className="shrink-0" />
+                  <span>
+                    * Total Pertimbangan Objektif Lainnya (POL) dihitung untuk jangka waktu 12 Bulan (1 Tahun Anggaran).
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loadingAction === 'simpan'}
+                className="flex items-center gap-2 px-6 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg font-bold shadow-lg shadow-cyan-600/30 transition-all duration-150 active:scale-95 disabled:opacity-50 shrink-0"
+              >
+                {loadingAction === 'simpan' ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Save size={16} />
+                )}
+                {editId ? 'Perbarui Data (dtpol)' : 'Simpan Data Ke dtpol'}
+              </button>
+            </div>
+          </form>
+
+          {/* GRID DATA DTPOL */}
+          <div className="bg-slate-950 p-6 rounded-xl border border-slate-800 space-y-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                  Data Grid Tabel dtpol ({tahun} - {st})
+                </h3>
+                <p className="text-slate-400 text-[10px]">Menampilkan data lengkap tersimpan di tabel dtpol (9 Komponen Personel)</p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                <button
+                  onClick={exportToExcelFormat}
+                  disabled={loadingAction === 'excel'}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold transition-all duration-150 active:scale-95 disabled:opacity-50"
+                >
+                  {loadingAction === 'excel' ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />} Excel (.xlsx)
+                </button>
+                <button
+                  onClick={exportToPDF}
+                  disabled={loadingAction === 'pdf'}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg font-semibold transition-all duration-150 active:scale-95 disabled:opacity-50"
+                >
+                  {loadingAction === 'pdf' ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />} PDF
+                </button>
+
+                <div className="relative w-full md:w-56">
+                  <Search size={14} className="absolute left-3 top-3 text-slate-500" />
+                  <input
+                    type="text"
+                    placeholder="Cari Kode / Nama SKPD..."
+                    value={searchGrid}
+                    onChange={(e) => setSearchGrid(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-white focus:outline-none focus:border-cyan-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto rounded-lg border border-slate-800">
+              <table className="w-full text-left text-slate-300">
+                <thead className="bg-slate-900 text-cyan-400 font-bold border-b border-slate-800">
+                  <tr>
+                    <th className="p-2.5">No</th>
+                    <th className="p-2.5 min-w-[180px]">SKPD</th>
+                    <th className="p-2.5">Sts</th>
+                    <th className="p-2.5 text-right min-w-[110px]">PA (jpa × ijpa)</th>
+                    <th className="p-2.5 text-right min-w-[110px]">KPA (jkpa × ijkpa)</th>
+                    <th className="p-2.5 text-right min-w-[110px]">PPTK (jpptk × ijpptk)</th>
+                    <th className="p-2.5 text-right min-w-[110px]">PPK (jppk × ijppk)</th>
+                    <th className="p-2.5 text-right min-w-[110px]">Bdh (jbdh × ijbdh)</th>
+                    <th className="p-2.5 text-right min-w-[110px]">Bdh Pmb (jbdh1 × ijbdh1)</th>
+                    <th className="p-2.5 text-right min-w-[110px]">PB Pengelola (jbr1 × ijbr1)</th>
+                    <th className="p-2.5 text-right min-w-[110px]">Pmb PB Peng (jbr2 × ijbr2)</th>
+                    <th className="p-2.5 text-right min-w-[110px]">PB Pengguna (jbr3 × ijbr3)</th>
+                    <th className="p-2.5 text-right min-w-[130px]">Total POL / 12 Bln (Rp)</th>
+                    <th className="p-2.5 text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800">
+                  {filteredGridData.length === 0 ? (
+                    <tr>
+                      <td colSpan="14" className="p-4 text-center text-slate-500">
+                        Belum ada data POL tersimpan di tabel dtpol untuk Tahun <strong>{tahun}</strong> dan Status <strong>{st}</strong>.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredGridData.map((row, idx) => {
+                      const valJpa = (row.jpa || 0) * (row.ijpa || 0);
+                      const valJkpa = (row.jkpa || 0) * (row.ijkpa || 0);
+                      const valJpptk = (row.jpptk || 0) * (row.ijpptk || 0);
+                      const valJppk = (row.jppk || 0) * (row.ijppk || 0);
+                      const valJbdh = (row.jbdh || 0) * (row.ijbdh || 0);
+                      const valJbdh1 = (row.jbdh1 || 0) * (row.ijbdh1 || 0);
+                      const valJbr1 = (row.jbr1 || 0) * (row.ijbr1 || 0);
+                      const valJbr2 = (row.jbr2 || 0) * (row.ijbr2 || 0);
+                      const valJbr3 = (row.jbr3 || 0) * (row.ijbr3 || 0);
+
+                      const rowMonthly = valJpa + valJkpa + valJpptk + valJppk + valJbdh + valJbdh1 + valJbr1 + valJbr2 + valJbr3;
+                      const rowTotalYearly = rowMonthly * 12;
+
+                      return (
+                        <tr
+                          key={row.id}
+                          className={`hover:bg-slate-900/60 cursor-pointer transition ${
+                            editId === row.id ? 'bg-cyan-950/40 border-l-2 border-cyan-500' : ''
+                          }`}
+                          onClick={() => handleSelectRow(row)}
+                        >
+                          <td className="p-2.5 text-center">{idx + 1}</td>
+                          <td className="p-2.5">
+                            <div className="font-bold text-white font-mono text-[11px]">{row.kdskpd}</div>
+                            <div className="text-[10px] text-slate-400">{row.nmskpd}</div>
+                          </td>
+                          <td className="p-2.5">
+                            <span className="px-1.5 py-0.5 bg-slate-800 text-cyan-300 rounded text-[9px]">
+                              {row.st}
+                            </span>
+                          </td>
+
+                          {/* PA */}
+                          <td className="p-2.5 text-right font-mono">
+                            {row.jpa || 0} × {(row.ijpa || 0).toLocaleString('id-ID')}
+                            <div className="text-[9px] text-slate-500">= {valJpa.toLocaleString('id-ID')}</div>
+                          </td>
+
+                          {/* KPA */}
+                          <td className="p-2.5 text-right font-mono">
+                            {row.jkpa || 0} × {(row.ijkpa || 0).toLocaleString('id-ID')}
+                            <div className="text-[9px] text-slate-500">= {valJkpa.toLocaleString('id-ID')}</div>
+                          </td>
+
+                          {/* PPTK */}
+                          <td className="p-2.5 text-right font-mono">
+                            {row.jpptk || 0} × {(row.ijpptk || 0).toLocaleString('id-ID')}
+                            <div className="text-[9px] text-slate-500">= {valJpptk.toLocaleString('id-ID')}</div>
+                          </td>
+
+                          {/* PPK */}
+                          <td className="p-2.5 text-right font-mono">
+                            {row.jppk || 0} × {(row.ijppk || 0).toLocaleString('id-ID')}
+                            <div className="text-[9px] text-slate-500">= {valJppk.toLocaleString('id-ID')}</div>
+                          </td>
+
+                          {/* BENDAHARA */}
+                          <td className="p-2.5 text-right font-mono">
+                            {row.jbdh || 0} × {(row.ijbdh || 0).toLocaleString('id-ID')}
+                            <div className="text-[9px] text-slate-500">= {valJbdh.toLocaleString('id-ID')}</div>
+                          </td>
+
+                          {/* BENDAHARA PEMBANTU */}
+                          <td className="p-2.5 text-right font-mono">
+                            {row.jbdh1 || 0} × {(row.ijbdh1 || 0).toLocaleString('id-ID')}
+                            <div className="text-[9px] text-slate-500">= {valJbdh1.toLocaleString('id-ID')}</div>
+                          </td>
+
+                          {/* PENGURUS BARANG PENGELOLA */}
+                          <td className="p-2.5 text-right font-mono">
+                            {row.jbr1 || 0} × {(row.ijbr1 || 0).toLocaleString('id-ID')}
+                            <div className="text-[9px] text-slate-500">= {valJbr1.toLocaleString('id-ID')}</div>
+                          </td>
+
+                          {/* PEMBANTU PB PENGELOLA */}
+                          <td className="p-2.5 text-right font-mono">
+                            {row.jbr2 || 0} × {(row.ijbr2 || 0).toLocaleString('id-ID')}
+                            <div className="text-[9px] text-slate-500">= {valJbr2.toLocaleString('id-ID')}</div>
+                          </td>
+
+                          {/* PENGURUS BARANG PENGGUNA */}
+                          <td className="p-2.5 text-right font-mono">
+                            {row.jbr3 || 0} × {(row.ijbr3 || 0).toLocaleString('id-ID')}
+                            <div className="text-[9px] text-slate-500">= {valJbr3.toLocaleString('id-ID')}</div>
+                          </td>
+
+                          {/* TOTAL TAHUNAN */}
+                          <td className="p-2.5 text-right font-bold text-cyan-400 font-mono">
+                            {rowTotalYearly.toLocaleString('id-ID')}
+                          </td>
+
+                          <td className="p-2.5 text-center" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex justify-center gap-1">
+                              <button
+                                onClick={() => handleSelectRow(row)}
+                                className="p-1.5 bg-cyan-900/50 hover:bg-cyan-800 text-cyan-300 rounded transition-transform duration-100 active:scale-90"
+                                title="Edit Data"
+                              >
+                                <Edit size={12} />
+                              </button>
+                              <button
+                                onClick={() => handleHapus(row.id)}
+                                disabled={loadingAction === `delete-${row.id}`}
+                                className="p-1.5 bg-rose-900/50 hover:bg-rose-800 text-rose-300 rounded transition-transform duration-100 active:scale-90"
+                                title="Hapus Data"
+                              >
+                                {loadingAction === `delete-${row.id}` ? (
+                                  <Loader2 size={12} className="animate-spin" />
+                                ) : (
+                                  <Trash2 size={12} />
+                                )}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+
+                {/* BARIS GRAND TOTAL KESELURUHAN PADA GRID */}
+                {filteredGridData.length > 0 && (
+                  <tfoot className="bg-slate-900 border-t-2 border-cyan-500/50">
+                    <tr>
+                      <td colSpan="12" className="p-3 text-right font-bold text-slate-200 tracking-wider">
+                        GRAND TOTAL POL SEMUA DATA SKPD (12 BULAN / 1 TAHUN):
+                      </td>
+                      <td className="p-3 text-right font-black text-cyan-400 font-mono text-sm">
+                        Rp {grandTotalGrid.toLocaleString('id-ID')}
+                      </td>
+                      <td></td>
+                    </tr>
+                  </tfoot>
+                )}
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PAGE 2: REFERENSI DATA POL (KLPOL) */}
+      {activeTab === 'page2' && (
+        <div className="bg-slate-950 p-6 rounded-xl border border-slate-800 space-y-4">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <h2 className="text-sm font-bold text-cyan-400 uppercase tracking-wider">
+                Tabel Referensi Honor (KLPOL)
+              </h2>
+              <p className="text-slate-400 text-[10px]">
+                Menampilkan seluruh data referensi terurut Jenis dan Kode (Read Only)
+              </p>
+            </div>
+
+            <div className="relative w-full md:w-64">
+              <Search size={14} className="absolute left-3 top-3 text-slate-500" />
+              <input
+                type="text"
+                placeholder="Cari jenis, kode, keterangan..."
+                value={searchKlpol}
+                onChange={(e) => setSearchKlpol(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-white focus:outline-none focus:border-cyan-500"
+              />
+            </div>
+          </div>
+
+          <div className="overflow-x-auto rounded-lg border border-slate-800">
+            <table className="w-full text-left text-slate-300">
+              <thead className="bg-slate-900 text-cyan-400 font-bold border-b border-slate-800">
+                <tr>
+                  <th className="p-3">JNS</th>
+                  <th className="p-3">Kode</th>
+                  <th className="p-3 text-right">Batas Bawah (BTS1)</th>
+                  <th className="p-3 text-right">Batas Atas (BTS2)</th>
+                  <th className="p-3 text-right">Nilai Indeks (Rp)</th>
+                  <th className="p-3">Keterangan</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800 font-mono">
+                {sortedAndFilteredKlpol.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="p-4 text-center text-slate-500 font-sans">
+                      Data referensi KLPOL tidak ditemukan.
+                    </td>
+                  </tr>
+                ) : (
+                  sortedAndFilteredKlpol.map((row, idx) => (
+                    <tr key={idx} className="hover:bg-slate-900/50">
+                      <td className="p-3 font-bold text-cyan-300">{row.jns}</td>
+                      <td className="p-3 font-bold text-slate-200">{row.kode}</td>
+                      <td className="p-3 text-right">{row.bts1.toLocaleString('id-ID')}</td>
+                      <td className="p-3 text-right">
+                        {row.bts2 === Infinity ? 'Tak Terhingga' : row.bts2.toLocaleString('id-ID')}
+                      </td>
+                      <td className="p-3 text-right font-bold text-emerald-400">
+                        {row.nilai.toLocaleString('id-ID')}
+                      </td>
+                      <td className="p-3 text-slate-400 font-sans">{row.ket}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
