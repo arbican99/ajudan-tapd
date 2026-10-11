@@ -3,6 +3,8 @@ import { Search, Plus, Save, Trash2, Edit, Calculator, BookOpen, FileText, Downl
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 import { createClient } from '@supabase/supabase-js';
 
 // Inisialisasi Client Supabase
@@ -62,7 +64,6 @@ const MOCK_TBLSKPD = [
 
 // Data Master KLPOL (83 Baris Lengkap)
 const MOCK_KLPOL = [
-  // JNS A
   { jns: 'A', kode: 'A1', bts1: 0, bts2: 100000000, nilai: 150000, ket: 'BUD/PA/KPA' },
   { jns: 'A', kode: 'A2', bts1: 100000001, bts2: 250000000, nilai: 200000, ket: 'BUD/PA/KPA' },
   { jns: 'A', kode: 'A3', bts1: 250000001, bts2: 500000000, nilai: 250000, ket: 'BUD/PA/KPA' },
@@ -80,7 +81,6 @@ const MOCK_KLPOL = [
   { jns: 'A', kode: 'A15', bts1: 750000000001, bts2: 1000000000000, nilai: 1900000, ket: 'BUD/PA/KPA' },
   { jns: 'A', kode: 'A16', bts1: 1000000000001, bts2: Infinity, nilai: 2400000, ket: 'BUD/PA/KPA' },
 
-  // JNS B
   { jns: 'B', kode: 'B1', bts1: 0, bts2: 100000000, nilai: 125000, ket: 'PPTK' },
   { jns: 'B', kode: 'B2', bts1: 100000001, bts2: 250000000, nilai: 175000, ket: 'PPTK' },
   { jns: 'B', kode: 'B3', bts1: 250000001, bts2: 500000000, nilai: 225000, ket: 'PPTK' },
@@ -98,7 +98,6 @@ const MOCK_KLPOL = [
   { jns: 'B', kode: 'B15', bts1: 750000000001, bts2: 1000000000000, nilai: 1875000, ket: 'PPTK' },
   { jns: 'B', kode: 'B16', bts1: 1000000000001, bts2: Infinity, nilai: 2375000, ket: 'PPTK' },
 
-  // JNS C
   { jns: 'C', kode: 'C1', bts1: 0, bts2: 100000000, nilai: 100000, ket: 'PPK SKPD' },
   { jns: 'C', kode: 'C2', bts1: 100000001, bts2: 250000000, nilai: 140000, ket: 'PPK SKPD' },
   { jns: 'C', kode: 'C3', bts1: 250000001, bts2: 500000000, nilai: 190000, ket: 'PPK SKPD' },
@@ -116,7 +115,6 @@ const MOCK_KLPOL = [
   { jns: 'C', kode: 'C15', bts1: 750000000001, bts2: 1000000000000, nilai: 1840000, ket: 'PPK SKPD' },
   { jns: 'C', kode: 'C16', bts1: 1000000000001, bts2: Infinity, nilai: 2340000, ket: 'PPK SKPD' },
 
-  // JNS D
   { jns: 'D', kode: 'D1', bts1: 0, bts2: 100000000, nilai: 80000, ket: 'BENDAHARA SKPD' },
   { jns: 'D', kode: 'D2', bts1: 100000001, bts2: 250000000, nilai: 130000, ket: 'BENDAHARA SKPD' },
   { jns: 'D', kode: 'D3', bts1: 250000001, bts2: 500000000, nilai: 180000, ket: 'BENDAHARA SKPD' },
@@ -134,7 +132,6 @@ const MOCK_KLPOL = [
   { jns: 'D', kode: 'D15', bts1: 750000000001, bts2: 1000000000000, nilai: 1830000, ket: 'BENDAHARA SKPD' },
   { jns: 'D', kode: 'D16', bts1: 1000000000001, bts2: Infinity, nilai: 2330000, ket: 'BENDAHARA SKPD' },
 
-  // JNS E
   { jns: 'E', kode: 'E1', bts1: 0, bts2: 100000000, nilai: 70000, ket: 'BENDAHARA PEMBANTU SKPD' },
   { jns: 'E', kode: 'E2', bts1: 100000001, bts2: 250000000, nilai: 120000, ket: 'BENDAHARA PEMBANTU SKPD' },
   { jns: 'E', kode: 'E3', bts1: 250000001, bts2: 500000000, nilai: 170000, ket: 'BENDAHARA PEMBANTU SKPD' },
@@ -152,7 +149,6 @@ const MOCK_KLPOL = [
   { jns: 'E', kode: 'E15', bts1: 750000000001, bts2: 1000000000000, nilai: 1820000, ket: 'BENDAHARA PEMBANTU SKPD' },
   { jns: 'E', kode: 'E16', bts1: 1000000000001, bts2: Infinity, nilai: 2320000, ket: 'BENDAHARA PEMBANTU SKPD' },
 
-  // JNS F
   { jns: 'F', kode: 'F1', bts1: 0, bts2: 0, nilai: 350000, ket: 'Pengurus Barang Pengelola' },
   { jns: 'F', kode: 'F2', bts1: 0, bts2: 0, nilai: 300000, ket: 'Pembantu Pengurus Barang Pengelola' },
   { jns: 'F', kode: 'F3', bts1: 0, bts2: 0, nilai: 250000, ket: 'Pengurus Barang Pengguna' },
@@ -600,176 +596,252 @@ export default function DataPol() {
       );
   }, [klpol, searchKlpol]);
 
-  // CETAKAN FORMAT EXCEL RESMI SIAP CETAK (TERURUT BERDASARKAN KODE SKPD)
-  const exportToExcelFormat = () => {
+  // CETAKAN FORMAT EXCEL RESMI MENGGUNAKAN EXCELJS & FILE-SAVER
+  const exportToExcelFormat = async () => {
     if (filteredGridData.length === 0) {
       alert('Tidak ada data dtpol untuk diekspor!');
       return;
     }
     setLoadingAction('excel');
-    setTimeout(() => {
-      try {
-        const sheetData = [];
 
-        sheetData.push(['DAFTAR ANGGARAN PERTIMBANGAN OBJEKTIF LAINNYA (POL)']);
-        sheetData.push([`TAHUN ANGGARAN ${tahun} - STATUS: ${st}`]);
-        sheetData.push([]);
+    try {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Laporan');
 
-        sheetData.push([
-          'No',
-          'KLASIFIKASI',
-          'SKPD',
-          'JUMLAH ANGGARAN (PAGU)',
-          'JUMLAH PA (Orang)',
-          'INDEKS PA',
-          'JUMLAH PA (Rp)',
-          'JUMLAH KPA (Orang)',
-          'INDEKS KPA',
-          'JUMLAH KPA (Rp)',
-          'JUMLAH PPTK (Orang)',
-          'INDEKS PPTK',
-          'JUMLAH PPTK (Rp)',
-          'JUMLAH PPK-SKPD (Orang)',
-          'INDEKS PPK-SKPD',
-          'JUMLAH PPK (Rp)',
-          'JUMLAH BENDAHARA (Orang)',
-          'INDEKS BENDAHARA',
-          'JUMLAH BENDAHARA (Rp)',
-          'JUMLAH BPP (Orang)',
-          'INDEKS BPP',
-          'JUMLAH BPP (Rp)',
-          'JUMLAH PB PENGELOLA (Orang)',
-          'INDEKS PB PENGELOLA',
-          'JUMLAH PB PENGELOLA (Rp)',
-          'JUMLAH PEMBANTU PB PENGELOLA (Orang)',
-          'INDEKS PEMBANTU PB PENGELOLA',
-          'JUMLAH PEMBANTU PB PENGELOLA (Rp)',
-          'JUMLAH PB PENGGUNA (Orang)',
-          'INDEKS PB PENGGUNA',
-          'JUMLAH PB PENGGUNA (Rp)',
-          'Total Honorarium SKPD / 12 Bulan (Rp)'
+      // Setup Halaman Landscape
+      worksheet.pageSetup = {
+        orientation: 'landscape',
+        paperSize: 9, // A4
+        fitToWidth: 1,
+        fitToHeight: 0
+      };
+
+      // 1. Judul Laporan
+      worksheet.addRow(['DAFTAR ANGGARAN PERTIMBANGAN OBJEKTIF LAINNYA (POL)']);
+      worksheet.addRow([`TAHUN ANGGARAN ${tahun} - STATUS: ${st}`]);
+      worksheet.addRow([]); // Baris kosong
+
+      // 2. Header Kolom Utama
+      const headerRow = [
+        'No',
+        'KODE SKPD',
+        'SKPD',
+        'JUMLAH ANGGARAN (PAGU)',
+        'JUMLAH PA (Orang)',
+        'INDEKS PA',
+        'JUMLAH PA (Rp)',
+        'JUMLAH KPA (Orang)',
+        'INDEKS KPA',
+        'JUMLAH KPA (Rp)',
+        'JUMLAH PPTK (Orang)',
+        'INDEKS PPTK',
+        'JUMLAH PPTK (Rp)',
+        'JUMLAH PPK-SKPD (Orang)',
+        'INDEKS PPK-SKPD',
+        'JUMLAH PPK (Rp)',
+        'JUMLAH BENDAHARA (Orang)',
+        'INDEKS BENDAHARA',
+        'JUMLAH BENDAHARA (Rp)',
+        'JUMLAH BPP (Orang)',
+        'INDEKS BPP',
+        'JUMLAH BPP (Rp)',
+        'JUMLAH PB PENGELOLA (Orang)',
+        'INDEKS PB PENGELOLA',
+        'JUMLAH PB PENGELOLA (Rp)',
+        'JUMLAH PEMBANTU PB PENGELOLA (Orang)',
+        'INDEKS PEMBANTU PB PENGELOLA',
+        'JUMLAH PEMBANTU PB PENGELOLA (Rp)',
+        'JUMLAH PB PENGGUNA (Orang)',
+        'INDEKS PB PENGGUNA',
+        'JUMLAH PB PENGGUNA (Rp)',
+        'Total Honorarium SKPD / 12 Bulan (Rp)'
+      ];
+      worksheet.addRow(headerRow);
+
+      // 3. Nomor Urut Kolom (1 s.d 32)
+      const colNumbers = Array.from({ length: 32 }, (_, i) => i + 1);
+      worksheet.addRow(colNumbers);
+
+      // 4. Masukkan Data Baris
+      filteredGridData.forEach((row, idx) => {
+        const paguVal = Number(row.pagu || row.anggaranSkpd || row.anggaran_skpd || 0);
+
+        const jpaVal = Number(row.jpa || 0);
+        const ijpaVal = Number(row.ijpa || 0);
+        const totPa = jpaVal * ijpaVal;
+
+        const jkpaVal = Number(row.jkpa || 0);
+        const ijkpaVal = Number(row.ijkpa || 0);
+        const totKpa = jkpaVal * ijkpaVal;
+
+        const jpptkVal = Number(row.jpptk || 0);
+        const ijpptkVal = Number(row.ijpptk || 0);
+        const totPptk = jpptkVal * ijpptkVal;
+
+        const jppkVal = Number(row.jppk || 0);
+        const ijppkVal = Number(row.ijppk || 0);
+        const totPpk = jppkVal * ijppkVal;
+
+        const jbdhVal = Number(row.jbdh || 0);
+        const ijbdhVal = Number(row.ijbdh || 0);
+        const totBdh = jbdhVal * ijbdhVal;
+
+        const jbdh1Val = Number(row.jbdh1 || 0);
+        const ijbdh1Val = Number(row.ijbdh1 || 0);
+        const totBpp = jbdh1Val * ijbdh1Val;
+
+        const jbr1Val = Number(row.jbr1 || 0);
+        const ijbr1Val = Number(row.ijbr1 || 0);
+        const totPbPeng = jbr1Val * ijbr1Val;
+
+        const jbr2Val = Number(row.jbr2 || 0);
+        const ijbr2Val = Number(row.ijbr2 || 0);
+        const totPmbPbPeng = jbr2Val * ijbr2Val;
+
+        const jbr3Val = Number(row.jbr3 || 0);
+        const ijbr3Val = Number(row.ijbr3 || 0);
+        const totPbPengguna = jbr3Val * ijbr3Val;
+
+        const rowMonthly = totPa + totKpa + totPptk + totPpk + totBdh + totBpp + totPbPeng + totPmbPbPeng + totPbPengguna;
+        const rowYearly = rowMonthly * 12;
+
+        worksheet.addRow([
+          idx + 1,
+          row.kdskpd,
+          row.nmskpd,
+          paguVal,
+          jpaVal,
+          ijpaVal,
+          totPa,
+          jkpaVal,
+          ijkpaVal,
+          totKpa,
+          jpptkVal,
+          ijpptkVal,
+          totPptk,
+          jppkVal,
+          ijppkVal,
+          totPpk,
+          jbdhVal,
+          ijbdhVal,
+          totBdh,
+          jbdh1Val,
+          ijbdh1Val,
+          totBpp,
+          jbr1Val,
+          ijbr1Val,
+          totPbPeng,
+          jbr2Val,
+          ijbr2Val,
+          totPmbPbPeng,
+          jbr3Val,
+          ijbr3Val,
+          totPbPengguna,
+          rowYearly
         ]);
+      });
 
-        const colNumbers = Array.from({ length: 32 }, (_, i) => i + 1);
-        sheetData.push(colNumbers);
+      // 5. Baris Grand Total
+      const grandTotalRow = Array(32).fill('');
+      grandTotalRow[2] = 'GRAND TOTAL:';
+      grandTotalRow[31] = grandTotalGrid;
+      worksheet.addRow(grandTotalRow);
 
-        filteredGridData.forEach((row, idx) => {
-          const paguVal = Number(row.pagu || row.anggaranSkpd || row.anggaran_skpd || 0);
+      // 6. Styling Komprehensif (Font Arial Narrow 11, Border, Alignment, Wrap Text, Format Angka)
+      const borderStyle = {
+        top: { style: 'thin', color: { argb: 'FFD3D3D3' } },
+        left: { style: 'thin', color: { argb: 'FFD3D3D3' } },
+        bottom: { style: 'thin', color: { argb: 'FFD3D3D3' } },
+        right: { style: 'thin', color: { argb: 'FFD3D3D3' } }
+      };
 
-          const jpaVal = Number(row.jpa || 0);
-          const ijpaVal = Number(row.ijpa || 0);
-          const totPa = jpaVal * ijpaVal;
+      worksheet.eachRow((row, rowNumber) => {
+        row.eachCell((cell, colNumber) => {
+          // Font Arial Narrow 12 untuk keseluruhan lembar kerja
+          cell.font = { name: 'Arial Narrow', size: 11 };
+          cell.border = borderStyle;
 
-          const jkpaVal = Number(row.jkpa || 0);
-          const ijkpaVal = Number(row.ijkpa || 0);
-          const totKpa = jkpaVal * ijkpaVal;
+          // Pengaturan Judul (Baris 1 & 2)
+          if (rowNumber === 1 || rowNumber === 2) {
+            cell.font = { name: 'Arial Narrow', size: 11, bold: true };
+            cell.alignment = { horizontal: 'left', vertical: 'middle' };
+            cell.border = {}; // Tanpa border untuk judul
+          }
+          // Pengaturan Header Tabel (Baris 4 & 5)
+          else if (rowNumber === 4 || rowNumber === 5) {
+            cell.font = { name: 'Arial Narrow', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } }; // Slate-800
+            cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+          }
+          // Baris Data & Total
+          else {
+            cell.alignment = { vertical: 'middle', wrapText: true };
 
-          const jpptkVal = Number(row.jpptk || 0);
-          const ijpptkVal = Number(row.ijpptk || 0);
-          const totPptk = jpptkVal * ijpptkVal;
+            // Kolom tertentu format angka rupiah/ribuan
+            const isNumericCol = colNumber === 4 || colNumber === 7 || colNumber === 10 || colNumber === 13 || 
+                                 colNumber === 16 || colNumber === 19 || colNumber === 22 || colNumber === 25 || 
+                                 colNumber === 28 || colNumber === 31 || colNumber === 32;
 
-          const jppkVal = Number(row.jppk || 0);
-          const ijppkVal = Number(row.ijppk || 0);
-          const totPpk = jppkVal * ijppkVal;
+            const isCountCol = colNumber === 5 || colNumber === 6 || colNumber === 8 || colNumber === 9 || 
+                               colNumber === 11 || colNumber === 12 || colNumber === 14 || colNumber === 15 || 
+                               colNumber === 17 || colNumber === 18 || colNumber === 20 || colNumber === 21 || 
+                               colNumber === 23 || colNumber === 24 || colNumber === 26 || colNumber === 27 || 
+                               colNumber === 29 || colNumber === 30;
 
-          const jbdhVal = Number(row.jbdh || 0);
-          const ijbdhVal = Number(row.ijbdh || 0);
-          const totBdh = jbdhVal * ijbdhVal;
+            if (isNumericCol) {
+              cell.numFmt = '#,##0';
+              cell.alignment = { horizontal: 'right', vertical: 'middle' };
+            } else if (isCountCol) {
+              cell.numFmt = '#,##0';
+              cell.alignment = { horizontal: 'right', vertical: 'middle' };
+            } else if (colNumber === 1 || colNumber === 2) {
+              cell.alignment = { horizontal: 'center', vertical: 'middle' };
+            } else {
+              cell.alignment = { horizontal: 'left', vertical: 'middle' };
+            }
 
-          const jbdh1Val = Number(row.jbdh1 || 0);
-          const ijbdh1Val = Number(row.ijbdh1 || 0);
-          const totBpp = jbdh1Val * ijbdh1Val;
-
-          const jbr1Val = Number(row.jbr1 || 0);
-          const ijbr1Val = Number(row.ijbr1 || 0);
-          const totPbPeng = jbr1Val * ijbr1Val;
-
-          const jbr2Val = Number(row.jbr2 || 0);
-          const ijbr2Val = Number(row.ijbr2 || 0);
-          const totPmbPbPeng = jbr2Val * ijbr2Val;
-
-          const jbr3Val = Number(row.jbr3 || 0);
-          const ijbr3Val = Number(row.ijbr3 || 0);
-          const totPbPengguna = jbr3Val * ijbr3Val;
-
-          const rowMonthly = totPa + totKpa + totPptk + totPpk + totBdh + totBpp + totPbPeng + totPmbPbPeng + totPbPengguna;
-          const rowYearly = rowMonthly * 12;
-
-          sheetData.push([
-            idx + 1,
-            row.kdskpd,
-            row.nmskpd,
-            paguVal,
-            jpaVal,
-            ijpaVal,
-            totPa,
-            jkpaVal,
-            ijkpaVal,
-            totKpa,
-            jpptkVal,
-            ijpptkVal,
-            totPptk,
-            jppkVal,
-            ijppkVal,
-            totPpk,
-            jbdhVal,
-            ijbdhVal,
-            totBdh,
-            jbdh1Val,
-            ijbdh1Val,
-            totBpp,
-            jbr1Val,
-            ijbr1Val,
-            totPbPeng,
-            jbr2Val,
-            ijbr2Val,
-            totPmbPbPeng,
-            jbr3Val,
-            ijbr3Val,
-            totPbPengguna,
-            rowYearly
-          ]);
+            // Jika baris Grand Total (baris terakhir)
+            if (rowNumber === worksheet.rowCount) {
+              cell.font = { name: 'Arial Narrow', size: 11, bold: true };
+              cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } }; // Light gray background
+            }
+          }
         });
+      });
 
-        const grandTotalRow = Array(32).fill('');
-        grandTotalRow[0] = '';
-        grandTotalRow[2] = 'GRAND TOTAL:';
-        grandTotalRow[31] = grandTotalGrid;
-        sheetData.push(grandTotalRow);
+      // 7. Pengaturan Lebar Kolom
+      const colWidths = [
+        { width: 6 },   // No
+        { width: 25 },  // Klasifikasi (Kode SKPD)
+        { width: 42 },  // Nama SKPD
+        { width: 24 },  // Pagu
+        { width: 16 }, { width: 16 }, { width: 18 }, // PA
+        { width: 16 }, { width: 16 }, { width: 18 }, // KPA
+        { width: 16 }, { width: 16 }, { width: 18 }, // PPTK
+        { width: 16 }, { width: 16 }, { width: 18 }, // PPK
+        { width: 16 }, { width: 16 }, { width: 18 }, // Bendahara
+        { width: 16 }, { width: 16 }, { width: 18 }, // BPP
+        { width: 18 }, { width: 18 }, { width: 18 }, // PB Pengelola
+        { width: 22 }, { width: 22 }, { width: 22 }, // Pembantu PB Pengelola
+        { width: 18 }, { width: 18 }, { width: 18 }, // PB Pengguna
+        { width: 30 }   // Total
+      ];
+      
+      colWidths.forEach((w, index) => {
+        worksheet.getColumn(index + 1).width = w.width;
+      });
 
-        const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
+      // 8. Ekspor File menggunakan FileSaver
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      saveAs(blob, `laporan_pol_${tahun}_${st}.xlsx`);
 
-        const colWidths = [
-          { wch: 5 }, { wch: 24 }, { wch: 40 }, { wch: 22 },
-          { wch: 16 }, { wch: 16 }, { wch: 18 },
-          { wch: 16 }, { wch: 16 }, { wch: 18 },
-          { wch: 16 }, { wch: 16 }, { wch: 18 },
-          { wch: 16 }, { wch: 16 }, { wch: 18 },
-          { wch: 16 }, { wch: 16 }, { wch: 18 },
-          { wch: 16 }, { wch: 16 }, { wch: 18 },
-          { wch: 18 }, { wch: 18 }, { wch: 18 },
-          { wch: 22 }, { wch: 22 }, { wch: 22 },
-          { wch: 18 }, { wch: 18 }, { wch: 18 },
-          { wch: 28 }
-        ];
-        worksheet['!cols'] = colWidths;
-
-        worksheet['!pageSetup'] = {
-          orientation: 'landscape',
-          paperSize: 9,
-          fitToWidth: 1,
-          fitToHeight: 0
-        };
-
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Laporan POL');
-        XLSX.writeFile(workbook, `laporan_pol_${tahun}_${st}.xlsx`);
-      } catch (err) {
-        console.error('Error export XLSX:', err);
-        alert('Gagal mengekspor file Excel .xlsx!');
-      }
+    } catch (err) {
+      console.error('Error export ExcelJS:', err);
+      alert('Gagal mengekspor file Excel .xlsx menggunakan ExcelJS!');
+    } finally {
       setLoadingAction(null);
-    }, 300);
+    }
   };
 
   // Export PDF (TERURUT BERDASARKAN KODE SKPD)
