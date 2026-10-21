@@ -62,96 +62,120 @@ const MOCK_TBLSKPD = [
   { id: 34, kd_skpd: '8.01.0.00.0.00.01.0000', nm_skpd: 'KESATUAN BANGSA DAN POLITIK' },
 ];
 
-// Data Master KLPOL (83 Baris Lengkap)
+// Data Master KLPOL Sesuai Excel Terbaru (99 Baris Lengkap: A s.d. G)
 const MOCK_KLPOL = [
-  { jns: 'A', kode: 'A1', bts1: 0, bts2: 100000000, nilai: 150000, ket: 'BUD/PA/KPA' },
-  { jns: 'A', kode: 'A2', bts1: 100000001, bts2: 250000000, nilai: 200000, ket: 'BUD/PA/KPA' },
-  { jns: 'A', kode: 'A3', bts1: 250000001, bts2: 500000000, nilai: 250000, ket: 'BUD/PA/KPA' },
-  { jns: 'A', kode: 'A4', bts1: 500000001, bts2: 1000000000, nilai: 300000, ket: 'BUD/PA/KPA' },
-  { jns: 'A', kode: 'A5', bts1: 1000000001, bts2: 2500000000, nilai: 350000, ket: 'BUD/PA/KPA' },
-  { jns: 'A', kode: 'A6', bts1: 2500000001, bts2: 5000000000, nilai: 450000, ket: 'BUD/PA/KPA' },
-  { jns: 'A', kode: 'A7', bts1: 5000000001, bts2: 10000000000, nilai: 550000, ket: 'BUD/PA/KPA' },
-  { jns: 'A', kode: 'A8', bts1: 10000000001, bts2: 25000000000, nilai: 650000, ket: 'BUD/PA/KPA' },
-  { jns: 'A', kode: 'A9', bts1: 25000000001, bts2: 50000000000, nilai: 800000, ket: 'BUD/PA/KPA' },
-  { jns: 'A', kode: 'A10', bts1: 50000000001, bts2: 75000000000, nilai: 950000, ket: 'BUD/PA/KPA' },
-  { jns: 'A', kode: 'A11', bts1: 75000000001, bts2: 100000000000, nilai: 1100000, ket: 'BUD/PA/KPA' },
-  { jns: 'A', kode: 'A12', bts1: 100000000001, bts2: 250000000000, nilai: 1250000, ket: 'BUD/PA/KPA' },
-  { jns: 'A', kode: 'A13', bts1: 250000000001, bts2: 500000000000, nilai: 1450000, ket: 'BUD/PA/KPA' },
-  { jns: 'A', kode: 'A14', bts1: 500000000001, bts2: 750000000000, nilai: 1650000, ket: 'BUD/PA/KPA' },
-  { jns: 'A', kode: 'A15', bts1: 750000000001, bts2: 1000000000000, nilai: 1900000, ket: 'BUD/PA/KPA' },
-  { jns: 'A', kode: 'A16', bts1: 1000000000001, bts2: Infinity, nilai: 2400000, ket: 'BUD/PA/KPA' },
+  // Jenis A: PA/KPA/KBUD
+  { jns: 'A', kode: 'A1', bts1: 0, bts2: 100000000, nilai: 225000, ket: 'PA/KPA/KBUD' },
+  { jns: 'A', kode: 'A2', bts1: 100000001, bts2: 250000000, nilai: 300000, ket: 'PA/KPA/KBUD' },
+  { jns: 'A', kode: 'A3', bts1: 250000001, bts2: 500000000, nilai: 375000, ket: 'PA/KPA/KBUD' },
+  { jns: 'A', kode: 'A4', bts1: 500000001, bts2: 1000000000, nilai: 450000, ket: 'PA/KPA/KBUD' },
+  { jns: 'A', kode: 'A5', bts1: 1000000001, bts2: 2500000000, nilai: 525000, ket: 'PA/KPA/KBUD' },
+  { jns: 'A', kode: 'A6', bts1: 2500000001, bts2: 5000000000, nilai: 675000, ket: 'PA/KPA/KBUD' },
+  { jns: 'A', kode: 'A7', bts1: 5000000001, bts2: 10000000000, nilai: 825000, ket: 'PA/KPA/KBUD' },
+  { jns: 'A', kode: 'A8', bts1: 10000000001, bts2: 25000000000, nilai: 975000, ket: 'PA/KPA/KBUD' },
+  { jns: 'A', kode: 'A9', bts1: 25000000001, bts2: 50000000000, nilai: 1200000, ket: 'PA/KPA/KBUD' },
+  { jns: 'A', kode: 'A10', bts1: 50000000001, bts2: 75000000000, nilai: 1425000, ket: 'PA/KPA/KBUD' },
+  { jns: 'A', kode: 'A11', bts1: 75000000001, bts2: 100000000000, nilai: 1650000, ket: 'PA/KPA/KBUD' },
+  { jns: 'A', kode: 'A12', bts1: 100000000001, bts2: 250000000000, nilai: 1875000, ket: 'PA/KPA/KBUD' },
+  { jns: 'A', kode: 'A13', bts1: 250000000001, bts2: 500000000000, nilai: 2175000, ket: 'PA/KPA/KBUD' },
+  { jns: 'A', kode: 'A14', bts1: 500000000001, bts2: 750000000000, nilai: 2475000, ket: 'PA/KPA/KBUD' },
+  { jns: 'A', kode: 'A15', bts1: 750000000001, bts2: 1000000000000, nilai: 2850000, ket: 'PA/KPA/KBUD' },
+  { jns: 'A', kode: 'A16', bts1: 1000000000001, bts2: Infinity, nilai: 3600000, ket: 'PA/KPA/KBUD' },
 
-  { jns: 'B', kode: 'B1', bts1: 0, bts2: 100000000, nilai: 125000, ket: 'PPTK' },
-  { jns: 'B', kode: 'B2', bts1: 100000001, bts2: 250000000, nilai: 175000, ket: 'PPTK' },
-  { jns: 'B', kode: 'B3', bts1: 250000001, bts2: 500000000, nilai: 225000, ket: 'PPTK' },
-  { jns: 'B', kode: 'B4', bts1: 500000001, bts2: 1000000000, nilai: 275000, ket: 'PPTK' },
-  { jns: 'B', kode: 'B5', bts1: 1000000001, bts2: 2500000000, nilai: 325000, ket: 'PPTK' },
-  { jns: 'B', kode: 'B6', bts1: 2500000001, bts2: 5000000000, nilai: 425000, ket: 'PPTK' },
-  { jns: 'B', kode: 'B7', bts1: 5000000001, bts2: 10000000000, nilai: 525000, ket: 'PPTK' },
-  { jns: 'B', kode: 'B8', bts1: 10000000001, bts2: 25000000000, nilai: 625000, ket: 'PPTK' },
-  { jns: 'B', kode: 'B9', bts1: 25000000001, bts2: 50000000000, nilai: 775000, ket: 'PPTK' },
-  { jns: 'B', kode: 'B10', bts1: 50000000001, bts2: 75000000000, nilai: 925000, ket: 'PPTK' },
-  { jns: 'B', kode: 'B11', bts1: 75000000001, bts2: 100000000000, nilai: 1075000, ket: 'PPTK' },
-  { jns: 'B', kode: 'B12', bts1: 100000000001, bts2: 250000000000, nilai: 1225000, ket: 'PPTK' },
-  { jns: 'B', kode: 'B13', bts1: 250000000001, bts2: 500000000000, nilai: 1425000, ket: 'PPTK' },
-  { jns: 'B', kode: 'B14', bts1: 500000000001, bts2: 750000000000, nilai: 1625000, ket: 'PPTK' },
-  { jns: 'B', kode: 'B15', bts1: 750000000001, bts2: 1000000000000, nilai: 1875000, ket: 'PPTK' },
-  { jns: 'B', kode: 'B16', bts1: 1000000000001, bts2: Infinity, nilai: 2375000, ket: 'PPTK' },
+  // Jenis B: BUD
+  { jns: 'B', kode: 'B1', bts1: 0, bts2: 100000000, nilai: 225000, ket: 'BUD' },
+  { jns: 'B', kode: 'B2', bts1: 100000001, bts2: 250000000, nilai: 300000, ket: 'BUD' },
+  { jns: 'B', kode: 'B3', bts1: 250000001, bts2: 500000000, nilai: 375000, ket: 'BUD' },
+  { jns: 'B', kode: 'B4', bts1: 500000001, bts2: 1000000000, nilai: 450000, ket: 'BUD' },
+  { jns: 'B', kode: 'B5', bts1: 1000000001, bts2: 2500000000, nilai: 525000, ket: 'BUD' },
+  { jns: 'B', kode: 'B6', bts1: 2500000001, bts2: 5000000000, nilai: 675000, ket: 'BUD' },
+  { jns: 'B', kode: 'B7', bts1: 5000000001, bts2: 10000000000, nilai: 825000, ket: 'BUD' },
+  { jns: 'B', kode: 'B8', bts1: 10000000001, bts2: 25000000000, nilai: 975000, ket: 'BUD' },
+  { jns: 'B', kode: 'B9', bts1: 25000000001, bts2: 50000000000, nilai: 1200000, ket: 'BUD' },
+  { jns: 'B', kode: 'B10', bts1: 50000000001, bts2: 75000000000, nilai: 1425000, ket: 'BUD' },
+  { jns: 'B', kode: 'B11', bts1: 75000000001, bts2: 100000000000, nilai: 1650000, ket: 'BUD' },
+  { jns: 'B', kode: 'B12', bts1: 100000000001, bts2: 250000000000, nilai: 1875000, ket: 'BUD' },
+  { jns: 'B', kode: 'B13', bts1: 250000000001, bts2: 500000000000, nilai: 2175000, ket: 'BUD' },
+  { jns: 'B', kode: 'B14', bts1: 500000000001, bts2: 750000000000, nilai: 2475000, ket: 'BUD' },
+  { jns: 'B', kode: 'B15', bts1: 750000000001, bts2: 1000000000000, nilai: 6330000, ket: 'BUD' },
+  { jns: 'B', kode: 'B16', bts1: 1000000000001, bts2: Infinity, nilai: 7370000, ket: 'BUD' },
 
-  { jns: 'C', kode: 'C1', bts1: 0, bts2: 100000000, nilai: 100000, ket: 'PPK SKPD' },
-  { jns: 'C', kode: 'C2', bts1: 100000001, bts2: 250000000, nilai: 140000, ket: 'PPK SKPD' },
-  { jns: 'C', kode: 'C3', bts1: 250000001, bts2: 500000000, nilai: 190000, ket: 'PPK SKPD' },
-  { jns: 'C', kode: 'C4', bts1: 500000001, bts2: 1000000000, nilai: 240000, ket: 'PPK SKPD' },
-  { jns: 'C', kode: 'C5', bts1: 1000000001, bts2: 2500000000, nilai: 290000, ket: 'PPK SKPD' },
-  { jns: 'C', kode: 'C6', bts1: 2500000001, bts2: 5000000000, nilai: 390000, ket: 'PPK SKPD' },
-  { jns: 'C', kode: 'C7', bts1: 5000000001, bts2: 10000000000, nilai: 490000, ket: 'PPK SKPD' },
-  { jns: 'C', kode: 'C8', bts1: 10000000001, bts2: 25000000000, nilai: 590000, ket: 'PPK SKPD' },
-  { jns: 'C', kode: 'C9', bts1: 25000000001, bts2: 50000000000, nilai: 740000, ket: 'PPK SKPD' },
-  { jns: 'C', kode: 'C10', bts1: 50000000001, bts2: 75000000000, nilai: 890000, ket: 'PPK SKPD' },
-  { jns: 'C', kode: 'C11', bts1: 750000000001, bts2: 100000000000, nilai: 1040000, ket: 'PPK SKPD' },
-  { jns: 'C', kode: 'C12', bts1: 100000000001, bts2: 250000000000, nilai: 1190000, ket: 'PPK SKPD' },
-  { jns: 'C', kode: 'C13', bts1: 250000000001, bts2: 500000000000, nilai: 1390000, ket: 'PPK SKPD' },
-  { jns: 'C', kode: 'C14', bts1: 500000000001, bts2: 750000000000, nilai: 1590000, ket: 'PPK SKPD' },
-  { jns: 'C', kode: 'C15', bts1: 750000000001, bts2: 1000000000000, nilai: 1840000, ket: 'PPK SKPD' },
-  { jns: 'C', kode: 'C16', bts1: 1000000000001, bts2: Infinity, nilai: 2340000, ket: 'PPK SKPD' },
+  // Jenis C: PPTK
+  { jns: 'C', kode: 'C1', bts1: 0, bts2: 100000000, nilai: 187500, ket: 'PPTK' },
+  { jns: 'C', kode: 'C2', bts1: 100000001, bts2: 250000000, nilai: 262500, ket: 'PPTK' },
+  { jns: 'C', kode: 'C3', bts1: 250000001, bts2: 500000000, nilai: 337500, ket: 'PPTK' },
+  { jns: 'C', kode: 'C4', bts1: 500000001, bts2: 1000000000, nilai: 412500, ket: 'PPTK' },
+  { jns: 'C', kode: 'C5', bts1: 1000000001, bts2: 2500000000, nilai: 487500, ket: 'PPTK' },
+  { jns: 'C', kode: 'C6', bts1: 2500000001, bts2: 5000000000, nilai: 637500, ket: 'PPTK' },
+  { jns: 'C', kode: 'C7', bts1: 5000000001, bts2: 10000000000, nilai: 787500, ket: 'PPTK' },
+  { jns: 'C', kode: 'C8', bts1: 10000000001, bts2: 25000000000, nilai: 937500, ket: 'PPTK' },
+  { jns: 'C', kode: 'C9', bts1: 25000000001, bts2: 50000000000, nilai: 1162500, ket: 'PPTK' },
+  { jns: 'C', kode: 'C10', bts1: 50000000001, bts2: 75000000000, nilai: 1387500, ket: 'PPTK' },
+  { jns: 'C', kode: 'C11', bts1: 75000000001, bts2: 100000000000, nilai: 1612500, ket: 'PPTK' },
+  { jns: 'C', kode: 'C12', bts1: 100000000001, bts2: 250000000000, nilai: 1837500, ket: 'PPTK' },
+  { jns: 'C', kode: 'C13', bts1: 250000000001, bts2: 500000000000, nilai: 2137500, ket: 'PPTK' },
+  { jns: 'C', kode: 'C14', bts1: 500000000001, bts2: 750000000000, nilai: 2437500, ket: 'PPTK' },
+  { jns: 'C', kode: 'C15', bts1: 750000000001, bts2: 1000000000000, nilai: 2812500, ket: 'PPTK' },
+  { jns: 'C', kode: 'C16', bts1: 1000000000001, bts2: Infinity, nilai: 3562500, ket: 'PPTK' },
 
-  { jns: 'D', kode: 'D1', bts1: 0, bts2: 100000000, nilai: 80000, ket: 'BENDAHARA SKPD' },
-  { jns: 'D', kode: 'D2', bts1: 100000001, bts2: 250000000, nilai: 130000, ket: 'BENDAHARA SKPD' },
-  { jns: 'D', kode: 'D3', bts1: 250000001, bts2: 500000000, nilai: 180000, ket: 'BENDAHARA SKPD' },
-  { jns: 'D', kode: 'D4', bts1: 500000001, bts2: 1000000000, nilai: 230000, ket: 'BENDAHARA SKPD' },
-  { jns: 'D', kode: 'D5', bts1: 1000000001, bts2: 2500000000, nilai: 280000, ket: 'BENDAHARA SKPD' },
-  { jns: 'D', kode: 'D6', bts1: 2500000001, bts2: 5000000000, nilai: 380000, ket: 'BENDAHARA SKPD' },
-  { jns: 'D', kode: 'D7', bts1: 5000000001, bts2: 10000000000, nilai: 480000, ket: 'BENDAHARA SKPD' },
-  { jns: 'D', kode: 'D8', bts1: 10000000001, bts2: 25000000000, nilai: 580000, ket: 'BENDAHARA SKPD' },
-  { jns: 'D', kode: 'D9', bts1: 25000000001, bts2: 50000000000, nilai: 730000, ket: 'BENDAHARA SKPD' },
-  { jns: 'D', kode: 'D10', bts1: 50000000001, bts2: 75000000000, nilai: 880000, ket: 'BENDAHARA SKPD' },
-  { jns: 'D', kode: 'D11', bts1: 75000000001, bts2: 100000000000, nilai: 1030000, ket: 'BENDAHARA SKPD' },
-  { jns: 'D', kode: 'D12', bts1: 100000000001, bts2: 250000000000, nilai: 1180000, ket: 'BENDAHARA SKPD' },
-  { jns: 'D', kode: 'D13', bts1: 250000000001, bts2: 500000000000, nilai: 1380000, ket: 'BENDAHARA SKPD' },
-  { jns: 'D', kode: 'D14', bts1: 500000000001, bts2: 750000000000, nilai: 1580000, ket: 'BENDAHARA SKPD' },
-  { jns: 'D', kode: 'D15', bts1: 750000000001, bts2: 1000000000000, nilai: 1830000, ket: 'BENDAHARA SKPD' },
-  { jns: 'D', kode: 'D16', bts1: 1000000000001, bts2: Infinity, nilai: 2330000, ket: 'BENDAHARA SKPD' },
+  // Jenis D: PPK SKPD
+  { jns: 'D', kode: 'D1', bts1: 0, bts2: 100000000, nilai: 150000, ket: 'PPK SKPD' },
+  { jns: 'D', kode: 'D2', bts1: 100000001, bts2: 250000000, nilai: 210000, ket: 'PPK SKPD' },
+  { jns: 'D', kode: 'D3', bts1: 250000001, bts2: 500000000, nilai: 285000, ket: 'PPK SKPD' },
+  { jns: 'D', kode: 'D4', bts1: 500000001, bts2: 1000000000, nilai: 360000, ket: 'PPK SKPD' },
+  { jns: 'D', kode: 'D5', bts1: 1000000001, bts2: 2500000000, nilai: 435000, ket: 'PPK SKPD' },
+  { jns: 'D', kode: 'D6', bts1: 2500000001, bts2: 5000000000, nilai: 585000, ket: 'PPK SKPD' },
+  { jns: 'D', kode: 'D7', bts1: 5000000001, bts2: 10000000000, nilai: 735000, ket: 'PPK SKPD' },
+  { jns: 'D', kode: 'D8', bts1: 10000000001, bts2: 25000000000, nilai: 885000, ket: 'PPK SKPD' },
+  { jns: 'D', kode: 'D9', bts1: 25000000001, bts2: 50000000000, nilai: 1110000, ket: 'PPK SKPD' },
+  { jns: 'D', kode: 'D10', bts1: 50000000001, bts2: 75000000000, nilai: 1335000, ket: 'PPK SKPD' },
+  { jns: 'D', kode: 'D11', bts1: 75000000001, bts2: 100000000000, nilai: 1560000, ket: 'PPK SKPD' },
+  { jns: 'D', kode: 'D12', bts1: 100000000001, bts2: 250000000000, nilai: 1785000, ket: 'PPK SKPD' },
+  { jns: 'D', kode: 'D13', bts1: 250000000001, bts2: 500000000000, nilai: 2085000, ket: 'PPK SKPD' },
+  { jns: 'D', kode: 'D14', bts1: 500000000001, bts2: 750000000000, nilai: 2385000, ket: 'PPK SKPD' },
+  { jns: 'D', kode: 'D15', bts1: 750000000001, bts2: 1000000000000, nilai: 2760000, ket: 'PPK SKPD' },
+  { jns: 'D', kode: 'D16', bts1: 1000000000001, bts2: Infinity, nilai: 3510000, ket: 'PPK SKPD' },
 
-  { jns: 'E', kode: 'E1', bts1: 0, bts2: 100000000, nilai: 70000, ket: 'BENDAHARA PEMBANTU SKPD' },
-  { jns: 'E', kode: 'E2', bts1: 100000001, bts2: 250000000, nilai: 120000, ket: 'BENDAHARA PEMBANTU SKPD' },
-  { jns: 'E', kode: 'E3', bts1: 250000001, bts2: 500000000, nilai: 170000, ket: 'BENDAHARA PEMBANTU SKPD' },
-  { jns: 'E', kode: 'E4', bts1: 500000001, bts2: 1000000000, nilai: 220000, ket: 'BENDAHARA PEMBANTU SKPD' },
-  { jns: 'E', kode: 'E5', bts1: 1000000001, bts2: 2500000000, nilai: 270000, ket: 'BENDAHARA PEMBANTU SKPD' },
-  { jns: 'E', kode: 'E6', bts1: 2500000001, bts2: 5000000000, nilai: 370000, ket: 'BENDAHARA PEMBANTU SKPD' },
-  { jns: 'E', kode: 'E7', bts1: 5000000001, bts2: 10000000000, nilai: 470000, ket: 'BENDAHARA PEMBANTU SKPD' },
-  { jns: 'E', kode: 'E8', bts1: 10000000001, bts2: 25000000000, nilai: 570000, ket: 'BENDAHARA PEMBANTU SKPD' },
-  { jns: 'E', kode: 'E9', bts1: 25000000001, bts2: 50000000000, nilai: 720000, ket: 'BENDAHARA PEMBANTU SKPD' },
-  { jns: 'E', kode: 'E10', bts1: 500000000001, bts2: 75000000000, nilai: 870000, ket: 'BENDAHARA PEMBANTU SKPD' },
-  { jns: 'E', kode: 'E11', bts1: 75000000001, bts2: 100000000000, nilai: 1020000, ket: 'BENDAHARA PEMBANTU SKPD' },
-  { jns: 'E', kode: 'E12', bts1: 100000000001, bts2: 250000000000, nilai: 1170000, ket: 'BENDAHARA PEMBANTU SKPD' },
-  { jns: 'E', kode: 'E13', bts1: 250000000001, bts2: 500000000000, nilai: 1370000, ket: 'BENDAHARA PEMBANTU SKPD' },
-  { jns: 'E', kode: 'E14', bts1: 500000000001, bts2: 750000000000, nilai: 1570000, ket: 'BENDAHARA PEMBANTU SKPD' },
-  { jns: 'E', kode: 'E15', bts1: 750000000001, bts2: 1000000000000, nilai: 1820000, ket: 'BENDAHARA PEMBANTU SKPD' },
-  { jns: 'E', kode: 'E16', bts1: 1000000000001, bts2: Infinity, nilai: 2320000, ket: 'BENDAHARA PEMBANTU SKPD' },
+  // Jenis E: BENDAHARA SKPD
+  { jns: 'E', kode: 'E1', bts1: 0, bts2: 100000000, nilai: 120000, ket: 'BENDAHARA SKPD' },
+  { jns: 'E', kode: 'E2', bts1: 100000001, bts2: 250000000, nilai: 195000, ket: 'BENDAHARA SKPD' },
+  { jns: 'E', kode: 'E3', bts1: 250000001, bts2: 500000000, nilai: 270000, ket: 'BENDAHARA SKPD' },
+  { jns: 'E', kode: 'E4', bts1: 500000001, bts2: 1000000000, nilai: 345000, ket: 'BENDAHARA SKPD' },
+  { jns: 'E', kode: 'E5', bts1: 1000000001, bts2: 2500000000, nilai: 420000, ket: 'BENDAHARA SKPD' },
+  { jns: 'E', kode: 'E6', bts1: 2500000001, bts2: 5000000000, nilai: 570000, ket: 'BENDAHARA SKPD' },
+  { jns: 'E', kode: 'E7', bts1: 5000000001, bts2: 10000000000, nilai: 720000, ket: 'BENDAHARA SKPD' },
+  { jns: 'E', kode: 'E8', bts1: 10000000001, bts2: 25000000000, nilai: 870000, ket: 'BENDAHARA SKPD' },
+  { jns: 'E', kode: 'E9', bts1: 25000000001, bts2: 50000000000, nilai: 1095000, ket: 'BENDAHARA SKPD' },
+  { jns: 'E', kode: 'E10', bts1: 50000000001, bts2: 75000000000, nilai: 1320000, ket: 'BENDAHARA SKPD' },
+  { jns: 'E', kode: 'E11', bts1: 75000000001, bts2: 100000000000, nilai: 1545000, ket: 'BENDAHARA SKPD' },
+  { jns: 'E', kode: 'E12', bts1: 100000000001, bts2: 250000000000, nilai: 1770000, ket: 'BENDAHARA SKPD' },
+  { jns: 'E', kode: 'E13', bts1: 250000000001, bts2: 500000000000, nilai: 2070000, ket: 'BENDAHARA SKPD' },
+  { jns: 'E', kode: 'E14', bts1: 500000000001, bts2: 750000000000, nilai: 2370000, ket: 'BENDAHARA SKPD' },
+  { jns: 'E', kode: 'E15', bts1: 750000000001, bts2: 1000000000000, nilai: 2745000, ket: 'BENDAHARA SKPD' },
+  { jns: 'E', kode: 'E16', bts1: 1000000000001, bts2: Infinity, nilai: 3495000, ket: 'BENDAHARA SKPD' },
 
-  { jns: 'F', kode: 'F1', bts1: 0, bts2: 0, nilai: 350000, ket: 'Pengurus Barang Pengelola' },
-  { jns: 'F', kode: 'F2', bts1: 0, bts2: 0, nilai: 300000, ket: 'Pembantu Pengurus Barang Pengelola' },
-  { jns: 'F', kode: 'F3', bts1: 0, bts2: 0, nilai: 250000, ket: 'Pengurus Barang Pengguna' },
+  // Jenis F: BENDAHARA PEMBANTU SKPD
+  { jns: 'F', kode: 'F1', bts1: 0, bts2: 100000000, nilai: 105000, ket: 'BENDAHARA PEMBANTU SKPD' },
+  { jns: 'F', kode: 'F2', bts1: 100000001, bts2: 250000000, nilai: 180000, ket: 'BENDAHARA PEMBANTU SKPD' },
+  { jns: 'F', kode: 'F3', bts1: 250000001, bts2: 500000000, nilai: 255000, ket: 'BENDAHARA PEMBANTU SKPD' },
+  { jns: 'F', kode: 'F4', bts1: 500000001, bts2: 1000000000, nilai: 330000, ket: 'BENDAHARA PEMBANTU SKPD' },
+  { jns: 'F', kode: 'F5', bts1: 1000000001, bts2: 2500000000, nilai: 405000, ket: 'BENDAHARA PEMBANTU SKPD' },
+  { jns: 'F', kode: 'F6', bts1: 2500000001, bts2: 5000000000, nilai: 555000, ket: 'BENDAHARA PEMBANTU SKPD' },
+  { jns: 'F', kode: 'F7', bts1: 5000000001, bts2: 10000000000, nilai: 705000, ket: 'BENDAHARA PEMBANTU SKPD' },
+  { jns: 'F', kode: 'F8', bts1: 10000000001, bts2: 25000000000, nilai: 855000, ket: 'BENDAHARA PEMBANTU SKPD' },
+  { jns: 'F', kode: 'F9', bts1: 25000000001, bts2: 50000000000, nilai: 1080000, ket: 'BENDAHARA PEMBANTU SKPD' },
+  { jns: 'F', kode: 'F10', bts1: 50000000001, bts2: 75000000000, nilai: 1305000, ket: 'BENDAHARA PEMBANTU SKPD' },
+  { jns: 'F', kode: 'F11', bts1: 75000000001, bts2: 100000000000, nilai: 1530000, ket: 'BENDAHARA PEMBANTU SKPD' },
+  { jns: 'F', kode: 'F12', bts1: 100000000001, bts2: 250000000000, nilai: 1755000, ket: 'BENDAHARA PEMBANTU SKPD' },
+  { jns: 'F', kode: 'F13', bts1: 250000000001, bts2: 500000000000, nilai: 2055000, ket: 'BENDAHARA PEMBANTU SKPD' },
+  { jns: 'F', kode: 'F14', bts1: 500000000001, bts2: 750000000000, nilai: 2355000, ket: 'BENDAHARA PEMBANTU SKPD' },
+  { jns: 'F', kode: 'F15', bts1: 750000000001, bts2: 1000000000000, nilai: 2730000, ket: 'BENDAHARA PEMBANTU SKPD' },
+  { jns: 'F', kode: 'F16', bts1: 1000000000001, bts2: Infinity, nilai: 3480000, ket: 'BENDAHARA PEMBANTU SKPD' },
+
+  // Jenis G: Pengurus Barang
+  { jns: 'G', kode: 'G1', bts1: 0, bts2: 0, nilai: 350000, ket: 'PENGURUS BARANG PENGELOLA' },
+  { jns: 'G', kode: 'G2', bts1: 0, bts2: 0, nilai: 300000, ket: 'PEMBANTU PENGURUS BARANG PENGELOLA' },
+  { jns: 'G', kode: 'G3', bts1: 0, bts2: 0, nilai: 250000, ket: 'PENGURUS BARANG PENGGUNA' },
 ];
 
 export default function DataPol() {
@@ -183,9 +207,10 @@ export default function DataPol() {
   const [nmskpd, setNmskpd] = useState('');
   const [pagu, setPagu] = useState('');
 
-  // Personel States
+  // Personel States (Ditambah jbud untuk Jumlah BUD)
   const [jpa, setJpa] = useState('');
   const [jkpa, setJkpa] = useState('');
+  const [jbud, setJbud] = useState('');
   const [jpptk, setJpptk] = useState('');
   const [jppk, setJppk] = useState('');
   const [jbdh, setJbdh] = useState('');
@@ -194,9 +219,10 @@ export default function DataPol() {
   const [jbr2, setJbr2] = useState('');
   const [jbr3, setJbr3] = useState('');
 
-  // Indeks Honor
+  // Indeks Honor (Ditambah ijbud untuk Indeks Honor BUD)
   const [ijpa, setIjpa] = useState(0);
   const [ijkpa, setIjkpa] = useState(0);
+  const [ijbud, setIjbud] = useState(0);
   const [ijpptk, setIjpptk] = useState(0);
   const [ijppk, setIjppk] = useState(0);
   const [ijbdh, setIjbdh] = useState(0);
@@ -215,6 +241,7 @@ export default function DataPol() {
     pagu: useRef(null),
     jpa: useRef(null),
     jkpa: useRef(null),
+    jbud: useRef(null),
     jpptk: useRef(null),
     jppk: useRef(null),
     jbdh: useRef(null),
@@ -272,6 +299,7 @@ export default function DataPol() {
     setPagu('');
     setJpa('');
     setJkpa('');
+    setJbud('');
     setJpptk('');
     setJppk('');
     setJbdh('');
@@ -282,6 +310,7 @@ export default function DataPol() {
 
     setIjpa(0);
     setIjkpa(0);
+    setIjbud(0);
     setIjpptk(0);
     setIjppk(0);
     setIjbdh(0);
@@ -304,6 +333,7 @@ export default function DataPol() {
 
     setJpa(formatRupiah(row.jpa));
     setJkpa(formatRupiah(row.jkpa));
+    setJbud(formatRupiah(row.jbud));
     setJpptk(formatRupiah(row.jpptk));
     setJppk(formatRupiah(row.jppk));
     setJbdh(formatRupiah(row.jbdh));
@@ -314,15 +344,17 @@ export default function DataPol() {
 
     // Sinkronisasi Indeks Honorarium
     const indexA = getIndeksByAnggaran('A', valAnggaran);
+    const indexB = getIndeksByAnggaran('B', valAnggaran);
     setIjpa(row.ijpa || indexA);
     setIjkpa(row.ijkpa || indexA);
-    setIjpptk(row.ijpptk || getIndeksByAnggaran('B', valAnggaran));
-    setIjppk(row.ijppk || getIndeksByAnggaran('C', valAnggaran));
-    setIjbdh(row.ijbdh || getIndeksByAnggaran('D', valAnggaran));
-    setIjbdh1(row.ijbdh1 || getIndeksByAnggaran('E', valAnggaran));
-    setIjbr1(row.ijbr1 || getIndeksByKode('F1'));
-    setIjbr2(row.ijbr2 || getIndeksByKode('F2'));
-    setIjbr3(row.ijbr3 || getIndeksByKode('F3'));
+    setIjbud(row.ijbud || indexB);
+    setIjpptk(row.ijpptk || getIndeksByAnggaran('C', valAnggaran));
+    setIjppk(row.ijppk || getIndeksByAnggaran('D', valAnggaran));
+    setIjbdh(row.ijbdh || getIndeksByAnggaran('E', valAnggaran));
+    setIjbdh1(row.ijbdh1 || getIndeksByAnggaran('F', valAnggaran));
+    setIjbr1(row.ijbr1 || getIndeksByKode('G1'));
+    setIjbr2(row.ijbr2 || getIndeksByKode('G2'));
+    setIjbr3(row.ijbr3 || getIndeksByKode('G3'));
   };
 
   // Pengecekan Kunci Unik (tahun, st, kdskpd) untuk Mengaktifkan Mode Edit
@@ -381,19 +413,22 @@ export default function DataPol() {
 
     if (valAnggaran > 0) {
       const indexA = getIndeksByAnggaran('A', valAnggaran);
+      const indexB = getIndeksByAnggaran('B', valAnggaran);
       setIjpa(indexA);
       setIjkpa(indexA);
-      setIjpptk(getIndeksByAnggaran('B', valAnggaran));
-      setIjppk(getIndeksByAnggaran('C', valAnggaran));
-      setIjbdh(getIndeksByAnggaran('D', valAnggaran));
-      setIjbdh1(getIndeksByAnggaran('E', valAnggaran));
+      setIjbud(indexB);
+      setIjpptk(getIndeksByAnggaran('C', valAnggaran));
+      setIjppk(getIndeksByAnggaran('D', valAnggaran));
+      setIjbdh(getIndeksByAnggaran('E', valAnggaran));
+      setIjbdh1(getIndeksByAnggaran('F', valAnggaran));
 
-      setIjbr1(getIndeksByKode('F1'));
-      setIjbr2(getIndeksByKode('F2'));
-      setIjbr3(getIndeksByKode('F3'));
+      setIjbr1(getIndeksByKode('G1'));
+      setIjbr2(getIndeksByKode('G2'));
+      setIjbr3(getIndeksByKode('G3'));
     } else {
       setIjpa(0);
       setIjkpa(0);
+      setIjbud(0);
       setIjpptk(0);
       setIjppk(0);
       setIjbdh(0);
@@ -404,11 +439,12 @@ export default function DataPol() {
     }
   }, [pagu, klpol]);
 
-  // Perhitungan Jumlah POL Bulanan (9 Komponen Termasuk KPA)
+  // Perhitungan Jumlah POL Bulanan (10 Komponen Termasuk BUD)
   const jumlahPolBulanan = useMemo(() => {
     return (
       (ijpa * parseNumber(jpa)) +
       (ijkpa * parseNumber(jkpa)) +
+      (ijbud * parseNumber(jbud)) +
       (ijpptk * parseNumber(jpptk)) +
       (ijppk * parseNumber(jppk)) +
       (ijbdh * parseNumber(jbdh)) +
@@ -417,7 +453,7 @@ export default function DataPol() {
       (ijbr2 * parseNumber(jbr2)) +
       (ijbr3 * parseNumber(jbr3))
     );
-  }, [ijpa, jpa, ijkpa, jkpa, ijpptk, jpptk, ijppk, jppk, ijbdh, jbdh, ijbdh1, jbdh1, ijbr1, jbr1, ijbr2, jbr2, ijbr3, jbr3]);
+  }, [ijpa, jpa, ijkpa, jkpa, ijbud, jbud, ijpptk, jpptk, ijppk, jppk, ijbdh, jbdh, ijbdh1, jbdh1, ijbr1, jbr1, ijbr2, jbr2, ijbr3, jbr3]);
 
   // Perhitungan TOTAL POL TAHUNAN (DIKALI 12 BULAN)
   const jumlahPOLTahunan = useMemo(() => {
@@ -453,6 +489,8 @@ export default function DataPol() {
       ijpa,
       jkpa: parseNumber(jkpa),
       ijkpa,
+      jbud: parseNumber(jbud),
+      ijbud,
       jpptk: parseNumber(jpptk),
       ijpptk,
       jppk: parseNumber(jppk),
@@ -561,12 +599,13 @@ export default function DataPol() {
       );
   }, [dtpolList, tahun, st, searchGrid]);
 
-  // AKUMULASI GRAND TOTAL POL UNTUK SEMUA DATA PADA GRID (9 Komponen x 12 Bulan)
+  // AKUMULASI GRAND TOTAL POL UNTUK SEMUA DATA PADA GRID (10 Komponen x 12 Bulan)
   const grandTotalGrid = useMemo(() => {
     return filteredGridData.reduce((acc, row) => {
       const rowMonthly = (
         ((row.jpa || 0) * (row.ijpa || 0)) +
         ((row.jkpa || 0) * (row.ijkpa || 0)) +
+        ((row.jbud || 0) * (row.ijbud || 0)) +
         ((row.jpptk || 0) * (row.ijpptk || 0)) +
         ((row.jppk || 0) * (row.ijppk || 0)) +
         ((row.jbdh || 0) * (row.ijbdh || 0)) +
@@ -608,7 +647,6 @@ export default function DataPol() {
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('Laporan');
 
-      // Setup Halaman Landscape
       worksheet.pageSetup = {
         orientation: 'landscape',
         paperSize: 9, // A4
@@ -621,7 +659,7 @@ export default function DataPol() {
       worksheet.addRow([`TAHUN ANGGARAN ${tahun} - STATUS: ${st}`]);
       worksheet.addRow([]); // Baris kosong
 
-      // 2. Header Kolom Utama
+      // 2. Header Kolom Utama (Disertakan BUD)
       const headerRow = [
         'No',
         'KODE SKPD',
@@ -633,6 +671,9 @@ export default function DataPol() {
         'JUMLAH KPA (Orang)',
         'INDEKS KPA',
         'JUMLAH KPA (Rp)',
+        'JUMLAH BUD (Orang)',
+        'INDEKS BUD',
+        'JUMLAH BUD (Rp)',
         'JUMLAH PPTK (Orang)',
         'INDEKS PPTK',
         'JUMLAH PPTK (Rp)',
@@ -658,8 +699,8 @@ export default function DataPol() {
       ];
       worksheet.addRow(headerRow);
 
-      // 3. Nomor Urut Kolom (1 s.d 32)
-      const colNumbers = Array.from({ length: 32 }, (_, i) => i + 1);
+      // 3. Nomor Urut Kolom (1 s.d 35)
+      const colNumbers = Array.from({ length: 35 }, (_, i) => i + 1);
       worksheet.addRow(colNumbers);
 
       // 4. Masukkan Data Baris
@@ -673,6 +714,10 @@ export default function DataPol() {
         const jkpaVal = Number(row.jkpa || 0);
         const ijkpaVal = Number(row.ijkpa || 0);
         const totKpa = jkpaVal * ijkpaVal;
+
+        const jbudVal = Number(row.jbud || 0);
+        const ijbudVal = Number(row.ijbud || 0);
+        const totBud = jbudVal * ijbudVal;
 
         const jpptkVal = Number(row.jpptk || 0);
         const ijpptkVal = Number(row.ijpptk || 0);
@@ -702,7 +747,7 @@ export default function DataPol() {
         const ijbr3Val = Number(row.ijbr3 || 0);
         const totPbPengguna = jbr3Val * ijbr3Val;
 
-        const rowMonthly = totPa + totKpa + totPptk + totPpk + totBdh + totBpp + totPbPeng + totPmbPbPeng + totPbPengguna;
+        const rowMonthly = totPa + totKpa + totBud + totPptk + totPpk + totBdh + totBpp + totPbPeng + totPmbPbPeng + totPbPengguna;
         const rowYearly = rowMonthly * 12;
 
         worksheet.addRow([
@@ -716,6 +761,9 @@ export default function DataPol() {
           jkpaVal,
           ijkpaVal,
           totKpa,
+          jbudVal,
+          ijbudVal,
+          totBud,
           jpptkVal,
           ijpptkVal,
           totPptk,
@@ -742,12 +790,12 @@ export default function DataPol() {
       });
 
       // 5. Baris Grand Total
-      const grandTotalRow = Array(32).fill('');
+      const grandTotalRow = Array(35).fill('');
       grandTotalRow[2] = 'GRAND TOTAL:';
-      grandTotalRow[31] = grandTotalGrid;
+      grandTotalRow[34] = grandTotalGrid;
       worksheet.addRow(grandTotalRow);
 
-      // 6. Styling Komprehensif (Font Arial Narrow 11, Border, Alignment, Wrap Text, Format Angka)
+      // 6. Styling Komprehensif
       const borderStyle = {
         top: { style: 'thin', color: { argb: 'FFD3D3D3' } },
         left: { style: 'thin', color: { argb: 'FFD3D3D3' } },
@@ -757,41 +805,31 @@ export default function DataPol() {
 
       worksheet.eachRow((row, rowNumber) => {
         row.eachCell((cell, colNumber) => {
-          // Font Arial Narrow 12 untuk keseluruhan lembar kerja
           cell.font = { name: 'Arial Narrow', size: 11 };
           cell.border = borderStyle;
 
-          // Pengaturan Judul (Baris 1 & 2)
           if (rowNumber === 1 || rowNumber === 2) {
             cell.font = { name: 'Arial Narrow', size: 11, bold: true };
             cell.alignment = { horizontal: 'left', vertical: 'middle' };
-            cell.border = {}; // Tanpa border untuk judul
-          }
-          // Pengaturan Header Tabel (Baris 4 & 5)
-          else if (rowNumber === 4 || rowNumber === 5) {
+            cell.border = {};
+          } else if (rowNumber === 4 || rowNumber === 5) {
             cell.font = { name: 'Arial Narrow', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
-            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } }; // Slate-800
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
             cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-          }
-          // Baris Data & Total
-          else {
+          } else {
             cell.alignment = { vertical: 'middle', wrapText: true };
 
-            // Kolom tertentu format angka rupiah/ribuan
             const isNumericCol = colNumber === 4 || colNumber === 7 || colNumber === 10 || colNumber === 13 || 
                                  colNumber === 16 || colNumber === 19 || colNumber === 22 || colNumber === 25 || 
-                                 colNumber === 28 || colNumber === 31 || colNumber === 32;
+                                 colNumber === 28 || colNumber === 31 || colNumber === 34 || colNumber === 35;
 
             const isCountCol = colNumber === 5 || colNumber === 6 || colNumber === 8 || colNumber === 9 || 
                                colNumber === 11 || colNumber === 12 || colNumber === 14 || colNumber === 15 || 
                                colNumber === 17 || colNumber === 18 || colNumber === 20 || colNumber === 21 || 
                                colNumber === 23 || colNumber === 24 || colNumber === 26 || colNumber === 27 || 
-                               colNumber === 29 || colNumber === 30;
+                               colNumber === 29 || colNumber === 30 || colNumber === 32 || colNumber === 33;
 
-            if (isNumericCol) {
-              cell.numFmt = '#,##0';
-              cell.alignment = { horizontal: 'right', vertical: 'middle' };
-            } else if (isCountCol) {
+            if (isNumericCol || isCountCol) {
               cell.numFmt = '#,##0';
               cell.alignment = { horizontal: 'right', vertical: 'middle' };
             } else if (colNumber === 1 || colNumber === 2) {
@@ -800,38 +838,14 @@ export default function DataPol() {
               cell.alignment = { horizontal: 'left', vertical: 'middle' };
             }
 
-            // Jika baris Grand Total (baris terakhir)
             if (rowNumber === worksheet.rowCount) {
               cell.font = { name: 'Arial Narrow', size: 11, bold: true };
-              cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } }; // Light gray background
+              cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
             }
           }
         });
       });
 
-      // 7. Pengaturan Lebar Kolom
-      const colWidths = [
-        { width: 6 },   // No
-        { width: 25 },  // Klasifikasi (Kode SKPD)
-        { width: 42 },  // Nama SKPD
-        { width: 24 },  // Pagu
-        { width: 16 }, { width: 16 }, { width: 18 }, // PA
-        { width: 16 }, { width: 16 }, { width: 18 }, // KPA
-        { width: 16 }, { width: 16 }, { width: 18 }, // PPTK
-        { width: 16 }, { width: 16 }, { width: 18 }, // PPK
-        { width: 16 }, { width: 16 }, { width: 18 }, // Bendahara
-        { width: 16 }, { width: 16 }, { width: 18 }, // BPP
-        { width: 18 }, { width: 18 }, { width: 18 }, // PB Pengelola
-        { width: 22 }, { width: 22 }, { width: 22 }, // Pembantu PB Pengelola
-        { width: 18 }, { width: 18 }, { width: 18 }, // PB Pengguna
-        { width: 30 }   // Total
-      ];
-      
-      colWidths.forEach((w, index) => {
-        worksheet.getColumn(index + 1).width = w.width;
-      });
-
-      // 8. Ekspor File menggunakan FileSaver
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       saveAs(blob, `laporan_pol_${tahun}_${st}.xlsx`);
@@ -844,7 +858,7 @@ export default function DataPol() {
     }
   };
 
-  // Export PDF (TERURUT BERDASARKAN KODE SKPD)
+  // Export PDF (Disertakan BUD)
   const exportToPDF = () => {
     if (filteredGridData.length === 0) {
       alert('Tidak ada data untuk diekspor!');
@@ -857,13 +871,14 @@ export default function DataPol() {
       doc.text(`Laporan Data Belanja Pertimbangan Objektif Lainnya - Tahun ${tahun} (${st})`, 14, 15);
       
       const tableColumn = [
-        'No', 'Kode SKPD', 'Nama SKPD', 'Status Anggaran', 'PA', 'KPA', 'PPTK', 'PPK', 'BENDAHARA', 'BEND. PEMBANTU', 'Pengurus Brg Pengelola', 'Pembantu PBP', 'Pengurus Brg Pengguna', 'Total POL'
+        'No', 'Kode SKPD', 'Nama SKPD', 'Status Anggaran', 'PA', 'KPA', 'BUD', 'PPTK', 'PPK', 'BENDAHARA', 'BEND. PEMBANTU', 'Pengurus Brg Pengelola', 'Pembantu PBP', 'Pengurus Brg Pengguna', 'Total POL'
       ];
 
       const tableRows = filteredGridData.map((row, index) => {
         const rowTotal = 
           ((row.jpa || 0) * (row.ijpa || 0)) + 
           ((row.jkpa || 0) * (row.ijkpa || 0)) + 
+          ((row.jbud || 0) * (row.ijbud || 0)) + 
           ((row.jpptk || 0) * (row.ijpptk || 0)) + 
           ((row.jppk || 0) * (row.ijppk || 0)) + 
           ((row.jbdh || 0) * (row.ijbdh || 0)) + 
@@ -881,6 +896,7 @@ export default function DataPol() {
           row.st,
           `${row.jpa || 0}×${(row.ijpa || 0).toLocaleString('id-ID')}`,
           `${row.jkpa || 0}×${(row.ijkpa || 0).toLocaleString('id-ID')}`,
+          `${row.jbud || 0}×${(row.ijbud || 0).toLocaleString('id-ID')}`,
           `${row.jpptk || 0}×${(row.ijpptk || 0).toLocaleString('id-ID')}`,
           `${row.jppk || 0}×${(row.ijppk || 0).toLocaleString('id-ID')}`,
           `${row.jbdh || 0}×${(row.ijbdh || 0).toLocaleString('id-ID')}`,
@@ -893,7 +909,7 @@ export default function DataPol() {
       });
 
       tableRows.push([
-        '', '', '', '', '', '', '', '', '', '', '', '', 'GRAND TOTAL:', grandTotalGrid.toLocaleString('id-ID')
+        '', '', '', '', '', '', '', '', '', '', '', '', '', 'GRAND TOTAL:', grandTotalGrid.toLocaleString('id-ID')
       ]);
 
       autoTable(doc, {
@@ -1068,10 +1084,10 @@ export default function DataPol() {
               />
             </div>
 
-            {/* KELOMPOK 1: PEJABAT PENGELOLA */}
+            {/* KELOMPOK 1: PEJABAT PENGELOLA (PA, KPA, BUD, PPTK, PPK) */}
             <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
               <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider block border-b border-slate-800 pb-1">
-                // Kelompok Pejabat Pengelola Keuangan (PA, KPA, PPTK, PPK)
+                // Kelompok Pejabat Pengelola Keuangan (PA, KPA, BUD, PPTK, PPK)
               </span>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* PA */}
@@ -1108,7 +1124,7 @@ export default function DataPol() {
                       type="text"
                       value={jkpa}
                       onChange={(e) => setJkpa(formatRupiah(e.target.value))}
-                      onKeyDown={(e) => handleKeyDownNext(e, inputRefs.jpptk)}
+                      onKeyDown={(e) => handleKeyDownNext(e, inputRefs.jbud)}
                       placeholder="0"
                       className="w-full bg-slate-900 border border-slate-700 rounded-md p-2 text-white font-mono focus:border-cyan-500 focus:outline-none"
                     />
@@ -1119,6 +1135,31 @@ export default function DataPol() {
                       type="text"
                       disabled
                       value={ijkpa ? `Rp ${ijkpa.toLocaleString('id-ID')}` : 'Rp 0'}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-md p-2 text-emerald-400 cursor-not-allowed font-bold font-mono"
+                    />
+                  </div>
+                </div>
+
+                {/* BUD */}
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <label className="block mb-1 text-slate-300">Jumlah BUD</label>
+                    <input
+                      ref={inputRefs.jbud}
+                      type="text"
+                      value={jbud}
+                      onChange={(e) => setJbud(formatRupiah(e.target.value))}
+                      onKeyDown={(e) => handleKeyDownNext(e, inputRefs.jpptk)}
+                      placeholder="0"
+                      className="w-full bg-slate-900 border border-slate-700 rounded-md p-2 text-white font-mono focus:border-cyan-500 focus:outline-none"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block mb-1 text-slate-400">Indeks Honor BUD</label>
+                    <input
+                      type="text"
+                      disabled
+                      value={ijbud ? `Rp ${ijbud.toLocaleString('id-ID')}` : 'Rp 0'}
                       className="w-full bg-slate-800 border border-slate-700 rounded-md p-2 text-emerald-400 cursor-not-allowed font-bold font-mono"
                     />
                   </div>
@@ -1240,7 +1281,7 @@ export default function DataPol() {
                 // Kelompok Pengurus Barang (Pengelola, Pembantu Pengelola & Pengguna)
               </span>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* PENGURUS BARANG PENGELOLA (F1) */}
+                {/* PENGURUS BARANG PENGELOLA (G1) */}
                 <div className="flex flex-col gap-1">
                   <label className="block text-slate-300">Jml Pengurus Barang Pengelola</label>
                   <input
@@ -1260,7 +1301,7 @@ export default function DataPol() {
                   />
                 </div>
 
-                {/* PEMBANTU PB PENGELOLA (F2) */}
+                {/* PEMBANTU PB PENGELOLA (G2) */}
                 <div className="flex flex-col gap-1">
                   <label className="block text-slate-300">Jml Pembantu PB Pengelola</label>
                   <input
@@ -1280,7 +1321,7 @@ export default function DataPol() {
                   />
                 </div>
 
-                {/* PENGURUS BARANG PENGGUNA (F3) */}
+                {/* PENGURUS BARANG PENGGUNA (G3) */}
                 <div className="flex flex-col gap-1">
                   <label className="block text-slate-300">Jml Pengurus Barang Pengguna</label>
                   <input
@@ -1385,6 +1426,7 @@ export default function DataPol() {
                     <th className="p-2.5 text-center">Status Anggaran</th>
                     <th className="p-2.5 text-center min-w-[110px]">PA</th>
                     <th className="p-2.5 text-center min-w-[110px]">KPA</th>
+                    <th className="p-2.5 text-center min-w-[110px]">BUD</th>
                     <th className="p-2.5 text-center min-w-[110px]">PPTK</th>
                     <th className="p-2.5 text-center min-w-[110px]">PPK</th>
                     <th className="p-2.5 text-center min-w-[110px]">Bendahara</th>
@@ -1399,7 +1441,7 @@ export default function DataPol() {
                 <tbody className="divide-y divide-slate-800">
                   {filteredGridData.length === 0 ? (
                     <tr>
-                      <td colSpan="14" className="p-4 text-center text-slate-500">
+                      <td colSpan="15" className="p-4 text-center text-slate-500">
                         Belum ada data POL tersimpan untuk Tahun <strong>{tahun}</strong> dan Status <strong>{st}</strong>.
                       </td>
                     </tr>
@@ -1407,6 +1449,7 @@ export default function DataPol() {
                     filteredGridData.map((row, idx) => {
                       const valJpa = (row.jpa || 0) * (row.ijpa || 0);
                       const valJkpa = (row.jkpa || 0) * (row.ijkpa || 0);
+                      const valJbud = (row.jbud || 0) * (row.ijbud || 0);
                       const valJpptk = (row.jpptk || 0) * (row.ijpptk || 0);
                       const valJppk = (row.jppk || 0) * (row.ijppk || 0);
                       const valJbdh = (row.jbdh || 0) * (row.ijbdh || 0);
@@ -1415,7 +1458,7 @@ export default function DataPol() {
                       const valJbr2 = (row.jbr2 || 0) * (row.ijbr2 || 0);
                       const valJbr3 = (row.jbr3 || 0) * (row.ijbr3 || 0);
 
-                      const rowMonthly = valJpa + valJkpa + valJpptk + valJppk + valJbdh + valJbdh1 + valJbr1 + valJbr2 + valJbr3;
+                      const rowMonthly = valJpa + valJkpa + valJbud + valJpptk + valJppk + valJbdh + valJbdh1 + valJbr1 + valJbr2 + valJbr3;
                       const rowTotalYearly = rowMonthly * 12;
 
                       return (
@@ -1447,6 +1490,12 @@ export default function DataPol() {
                           <td className="p-2.5 text-right font-mono">
                             {row.jkpa || 0} × {(row.ijkpa || 0).toLocaleString('id-ID')}
                             <div className="text-[9px] text-slate-500">= {valJkpa.toLocaleString('id-ID')}</div>
+                          </td>
+
+                          {/* BUD */}
+                          <td className="p-2.5 text-right font-mono">
+                            {row.jbud || 0} × {(row.ijbud || 0).toLocaleString('id-ID')}
+                            <div className="text-[9px] text-slate-500">= {valJbud.toLocaleString('id-ID')}</div>
                           </td>
 
                           {/* PPTK */}
@@ -1534,7 +1583,7 @@ export default function DataPol() {
                 {filteredGridData.length > 0 && (
                   <tfoot className="bg-slate-900 border-t-2 border-cyan-500/50">
                     <tr>
-                      <td colSpan="12" className="p-3 text-right font-bold text-slate-200 tracking-wider">
+                      <td colSpan="13" className="p-3 text-right font-bold text-slate-200 tracking-wider">
                         JUMLAH BELANJA PERTIMBANGAN OBJEKTIF LAINNYA:
                       </td>
                       <td className="p-3 text-right font-mono">
@@ -1561,7 +1610,7 @@ export default function DataPol() {
                 Tabel Referensi Indeks Honor Pertimbangan Objektif Lainnya
               </h2>
               <p className="text-slate-400 text-[10px]">
-                Menampilkan seluruh data referensi
+                Menampilkan seluruh data referensi (99 Baris Kategori A s.d. G)
               </p>
             </div>
 
@@ -1601,9 +1650,9 @@ export default function DataPol() {
                     <tr key={idx} className="hover:bg-slate-900/50">
                       <td className="p-3 font-bold text-cyan-300 text-center">{row.jns}</td>
                       <td className="p-3 font-bold text-slate-200 text-center">{row.kode}</td>
-                      <td className="p-3 text-right">{row.bts1.toLocaleString('id-ID')}</td>
+                      <td className="p-3 text-right">{row.bts1 === 0 && row.bts2 === 0 ? '-' : row.bts1.toLocaleString('id-ID')}</td>
                       <td className="p-3 text-right">
-                        {row.bts2 === Infinity ? 'Tak Terhingga' : row.bts2.toLocaleString('id-ID')}
+                        {row.bts1 === 0 && row.bts2 === 0 ? '-' : (row.bts2 === Infinity ? 'Tak Terhingga' : row.bts2.toLocaleString('id-ID'))}
                       </td>
                       <td className="p-3 text-right font-bold text-emerald-400">
                         {row.nilai.toLocaleString('id-ID')}
